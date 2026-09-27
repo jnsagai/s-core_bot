@@ -110,6 +110,57 @@ server.hots: Extra inputs are not permitted
   directly adjoined by another letter (`tests/unit/test_redact.py::test_redact_does_not_mask_words_merely_containing_token`
   guards this).
 
+## Phase 4 (User Story 2 — `serve`) checkpoint — 2026-09-27
+
+```
+$ uv run ruff format --check . && uv run ruff check .
+102 files already formatted; All checks passed!
+
+$ uv run mypy src
+Success: no issues found in 34 source files
+
+$ uv run pytest -q
+102 passed (101 + 1 real subprocess integration test, `test_serve_loopback.py`, run separately
+to isolate its ~1s subprocess startup)
+```
+
+### Real end-to-end run (quickstart.md scenario F, against the workstation's real Ollama 0.34.0)
+
+```
+$ uv run score-assistant --config config/local.yaml serve &
+$ curl -s -i http://127.0.0.1:8080/health/live
+HTTP/1.1 200 OK ... {"status":"alive"}
+$ curl -s -i http://127.0.0.1:8080/health/ready
+HTTP/1.1 503 ... {"ready":false,"capabilities":{"search":{"available":false,"reasons":["corpus_missing"]},
+  "chat":{"available":false,"reasons":["corpus_missing","generation_model_missing"]},
+  "compare":{"available":false,"reasons":["not_implemented"]}}}
+$ curl -s http://127.0.0.1:8080/api/v1/capabilities
+{"schema_version":1,"app":{"name":"S-CORE Docs Assistant — Community Project","version":"0.1.0"},
+  "profile":"local","runs_locally":true, ... "models":{"generation":"qwen3:4b-instruct","embedding":"nomic-embed-text"}, ...}
+$ curl -s -i -H 'Origin: https://evil.example' http://127.0.0.1:8080/api/v1/capabilities
+HTTP/1.1 403 Forbidden ... {"error":{"code":"ORIGIN_NOT_ALLOWED", ...}}
+$ curl -s -i -H 'Host: attacker.example' http://127.0.0.1:8080/health/live
+HTTP/1.1 400 Bad Request ... {"error":{"code":"HOST_NOT_ALLOWED", ...}}
+$ ss -ltnp | grep 8080
+LISTEN 0 2048  127.0.0.1:8080  0.0.0.0:*  users:(("score-assistant",pid=654419,fd=6))
+$ kill 654419   # confirmed stopped (exit 143) before moving on
+```
+
+Matches quickstart.md scenario F exactly: listening on `127.0.0.1` only (never `0.0.0.0`), correct
+status codes and reason codes, guard rejects both the hostile Host and the disallowed Origin.
+
+### Notes
+
+- Fixed one circular-import bug the first `pytest` collection run caught: `doctor.py` and
+  `serve.py` both need a `profiles_path_for` helper, but `doctor.py` originally defined it while
+  also being imported by `serve.py`, and both are imported by `main.py` to register their
+  commands — a three-way cycle. Moved the helper to a dependency-free `cli/config_paths.py`.
+- The integration test (`test_serve_loopback.py`) starts a real `score-assistant serve`
+  subprocess against a real (fake) loopback Ollama HTTP server, confirms the listening socket is
+  127.0.0.1-only via `psutil`, and confirms readiness reasons change from not including
+  `runtime_unreachable` to including it after the fake runtime is shut down — passed on first real
+  run (1.08s).
+
 ## Blockers
 
 (none yet)

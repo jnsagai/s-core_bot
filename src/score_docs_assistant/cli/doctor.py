@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from score_docs_assistant import __version__
+from score_docs_assistant.cli.config_paths import profiles_path_for
 from score_docs_assistant.cli.main import cli_app, handle_common_errors
 from score_docs_assistant.cli.runtime_factory import build_runtime
 from score_docs_assistant.config.loader import load_config
@@ -16,12 +16,6 @@ from score_docs_assistant.diagnostics.doctor import render_json, render_text, ru
 from score_docs_assistant.domain.errors import ConfigError, ProfileNotFound
 from score_docs_assistant.models.profiles import get_profile, load_profiles
 from score_docs_assistant.storage.corpus_probe import FileCorpusProbe
-
-
-def profiles_path_for(config_path: Path | None) -> Path:
-    if config_path is not None:
-        return config_path.parent / "model-profiles.yaml"
-    return Path("config") / "model-profiles.yaml"
 
 
 @cli_app.command("doctor")

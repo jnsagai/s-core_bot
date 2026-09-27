@@ -57,3 +57,4 @@ def app() -> None:
 
 
 from score_docs_assistant.cli import doctor as _doctor  # noqa: E402,F401
+from score_docs_assistant.cli import serve as _serve  # noqa: E402,F401

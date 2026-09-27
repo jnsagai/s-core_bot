@@ -105,20 +105,20 @@ first and confirm they fail before implementing.
 
 ### Tests for User Story 2
 
-- [ ] T037 [P] [US2] Write `tests/contract/test_guard.py` hostile matrix with `TestClient`: disallowed Host (incl. `attacker.example`, `localhost:9999` when bound to 8080, `127.0.0.1.nip.io`) → 400; disallowed Origin, `Origin: null`, and `Sec-Fetch-Site: cross-site` without Origin → 403 for GET, POST, and OPTIONS; allowed origin gets exact ACAO + `Vary: Origin`, never `*`; no-Origin CLI request allowed; error envelope shape (FR-012, FR-013, FR-014, SC-003)
-- [ ] T038 [P] [US2] Write `tests/contract/test_health_api.py`: liveness body exactly `{"status":"alive"}`; readiness 503 with reason codes and no paths/URLs/versions; capabilities 200 shape per contracts/http-api.md; `Cache-Control: no-store`, `X-Request-ID`, no `Server` header; route inventory equals exactly the three routes and `/docs`, `/redoc`, `/openapi.json` return 404 (FR-009, FR-020, FR-021)
-- [ ] T039 [P] [US2] Write `tests/unit/test_readiness.py`: capability derivation table from data-model.md; cache TTL honoured; runtime stop→start reflected on next query with TTL 0 (FR-009, SC-007)
-- [ ] T040 [P] [US2] Write `tests/contract/test_cli_serve.py`: non-loopback host via file, env, and `--host` → exit 2 `BIND_NOT_LOOPBACK` with public-profile message, uvicorn never started (spy); port in use → exit 1 `BIND_FAILED` (FR-010, FR-011)
-- [ ] T041 [P] [US2] Write `tests/integration/test_serve_loopback.py`: start `serve` in a subprocess on a free loopback port with a loopback fake runtime; assert listening socket is bound to 127.0.0.1 only (psutil), endpoints respond, access log lines contain only request_id/method/path/status/duration_ms; stop fake runtime → readiness reasons change (FR-010, FR-020, SC-007, constitution VIII)
+- [x] T037 [P] [US2] Write `tests/contract/test_guard.py` hostile matrix with `TestClient`: disallowed Host (incl. `attacker.example`, `localhost:9999` when bound to 8080, `127.0.0.1.nip.io`) → 400; disallowed Origin, `Origin: null`, and `Sec-Fetch-Site: cross-site` without Origin → 403 for GET, POST, and OPTIONS; allowed origin gets exact ACAO + `Vary: Origin`, never `*`; no-Origin CLI request allowed; error envelope shape (FR-012, FR-013, FR-014, SC-003)
+- [x] T038 [P] [US2] Write `tests/contract/test_health_api.py`: liveness body exactly `{"status":"alive"}`; readiness 503 with reason codes and no paths/URLs/versions; capabilities 200 shape per contracts/http-api.md; `Cache-Control: no-store`, `X-Request-ID`, no `Server` header; route inventory equals exactly the three routes and `/docs`, `/redoc`, `/openapi.json` return 404 (FR-009, FR-020, FR-021)
+- [x] T039 [P] [US2] Write `tests/unit/test_readiness.py`: capability derivation table from data-model.md; cache TTL honoured; runtime stop→start reflected on next query with TTL 0 (FR-009, SC-007)
+- [x] T040 [P] [US2] Write `tests/contract/test_cli_serve.py`: non-loopback host via file, env, and `--host` → exit 2 `BIND_NOT_LOOPBACK` with public-profile message, uvicorn never started (spy); port in use → exit 1 `BIND_FAILED` (FR-010, FR-011)
+- [x] T041 [P] [US2] Write `tests/integration/test_serve_loopback.py`: start `serve` in a subprocess on a free loopback port with a loopback fake runtime; assert listening socket is bound to 127.0.0.1 only (psutil), endpoints respond, access log lines contain only request_id/method/path/status/duration_ms; stop fake runtime → readiness reasons change (FR-010, FR-020, SC-007, constitution VIII)
 
 ### Implementation for User Story 2
 
-- [ ] T042 [US2] Implement `ReadinessService` (cached, bounded probes) in `src/score_docs_assistant/readiness.py` (FR-009) — makes T039 pass
-- [ ] T043 [P] [US2] Implement response/error schemas in `src/score_docs_assistant/api/schemas.py` (contracts/http-api.md)
-- [ ] T044 [US2] Implement Host/Origin/cross-site guard + CORS as pure ASGI middleware in `src/score_docs_assistant/api/guard.py` (FR-012–FR-014, research R8) — makes T037 pass
-- [ ] T045 [P] [US2] Implement request-id and body-free JSON access logging middleware in `src/score_docs_assistant/api/logging.py` (constitution VIII)
-- [ ] T046 [US2] Implement routes in `src/score_docs_assistant/api/routes.py` and `create_app()` in `src/score_docs_assistant/api/app.py` (docs/redoc/openapi routes disabled, exception handlers returning the error envelope, no-store headers) (FR-020, FR-021) — makes T038 pass
-- [ ] T047 [US2] Implement `serve` command in `src/score_docs_assistant/cli/serve.py` (bind validation before uvicorn, `proxy_headers=False`, `server_header=False`, uvicorn access log off, `BIND_FAILED` mapping) and register in `cli/main.py` (FR-004, FR-010, FR-011) — makes T040, T041 pass
+- [x] T042 [US2] Implement `ReadinessService` (cached, bounded probes) in `src/score_docs_assistant/readiness.py` (FR-009) — makes T039 pass
+- [x] T043 [P] [US2] Implement response/error schemas in `src/score_docs_assistant/api/schemas.py` (contracts/http-api.md)
+- [x] T044 [US2] Implement Host/Origin/cross-site guard + CORS as pure ASGI middleware in `src/score_docs_assistant/api/guard.py` (FR-012–FR-014, research R8) — makes T037 pass
+- [x] T045 [P] [US2] Implement request-id and body-free JSON access logging middleware in `src/score_docs_assistant/api/logging.py` (constitution VIII)
+- [x] T046 [US2] Implement routes in `src/score_docs_assistant/api/routes.py` and `create_app()` in `src/score_docs_assistant/api/app.py` (docs/redoc/openapi routes disabled, exception handlers returning the error envelope, no-store headers) (FR-020, FR-021) — makes T038 pass
+- [x] T047 [US2] Implement `serve` command in `src/score_docs_assistant/cli/serve.py` (bind validation before uvicorn, `proxy_headers=False`, `server_header=False`, uvicorn access log off, `BIND_FAILED` mapping) and register in `cli/main.py` (FR-004, FR-010, FR-011) — makes T040, T041 pass
 
 **Checkpoint**: US1 and US2 work independently.
 
