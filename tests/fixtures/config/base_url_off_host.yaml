@@ -1,0 +1,4 @@
+schema_version: 1
+profile: local
+runtime:
+  base_url: http://192.168.1.10:11434

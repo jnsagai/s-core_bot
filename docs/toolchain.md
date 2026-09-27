@@ -41,3 +41,21 @@ Deviation from `PROJECT_SPEC.md` §15.1/§20: the spec assumed the Codex integra
 | Node.js | 20.20.2 |
 
 Low free disk is a known risk for model acquisition and snapshot staging; `doctor` must report it.
+
+## F001 locked dependencies (`uv.lock`, recorded 2026-09-27 after `uv sync --locked`)
+
+| Package | Version | | Package | Version |
+| --- | --- | --- | --- | --- |
+| fastapi | 0.141.1 | | pytest | 9.1.1 |
+| starlette | 1.7.0 | | pytest-cov | 7.1.0 |
+| uvicorn | 0.54.0 | | ruff | 0.16.9 |
+| pydantic | 2.13.5 | | mypy | 2.3.1 |
+| pydantic-core | 2.46.5 | | types-pyyaml | 6.0.12.20260906 |
+| typer | 0.27.2 | | pip-licenses | 5.5.5 |
+| httpx | 0.28.1 | | click | 8.5.0 |
+| pyyaml | 6.0.3 | | anyio | 4.15.1 |
+| psutil | 7.2.2 | | h11 | 0.16.0 |
+
+All 42 locked packages resolved and installed offline-reproducibly via `uv.lock`; versions match the
+minimums recorded in `specs/001-foundation/research.md` R2 exactly (uv resolved to the latest
+version satisfying each `>=` bound at lock time).

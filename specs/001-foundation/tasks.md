@@ -26,12 +26,12 @@ first and confirm they fail before implementing.
 
 **Purpose**: project initialisation and tooling
 
-- [ ] T001 Create `pyproject.toml` (name `s-core-docs-assistant`, package `score_docs_assistant`, `requires-python = ">=3.12,<3.13"`, hatchling backend, console script `score-assistant = score_docs_assistant.cli.main:app`, runtime and dev dependencies with minimum versions from research.md R2, ruff/mypy(strict)/pytest config incl. `real_runtime` marker) and `.python-version` = `3.12` (FR-017, FR-018)
-- [ ] T002 Create package skeleton with `__init__.py` files for `src/score_docs_assistant/{domain,config,models,storage,diagnostics,api,cli}/` and `__version__ = "0.1.0"` in `src/score_docs_assistant/__init__.py`; create `tests/{unit,contract,integration,fixtures}/` (plan: Project Structure)
-- [ ] T003 Run `uv lock` and `uv sync --locked` with Python 3.12 to produce `uv.lock`; record exact resolved versions of runtime deps in `docs/toolchain.md` (FR-017, OPS-005)
-- [ ] T004 [P] Create `config/local.yaml` mirroring contracts/config.md defaults with `data_dir: ../data` (FR-015, FR-016)
-- [ ] T005 [P] Create `config/model-profiles.yaml` with profile `local-small` (qwen3:4b-instruct ≈2.5 GB Apache-2.0; nomic-embed-text ≈274 MB license "to confirm"), each with `size_source` and date per research.md R6 (FR-022, FR-023)
-- [ ] T006 [P] Create `NOTICE` (project name, Apache-2.0, community-project/no-endorsement statement) and placeholder-free `README.md` with community label, scope, prerequisites, and F001 quickstart commands (FR-017, constitution XII)
+- [x] T001 Create `pyproject.toml` (name `s-core-docs-assistant`, package `score_docs_assistant`, `requires-python = ">=3.12,<3.13"`, hatchling backend, console script `score-assistant = score_docs_assistant.cli.main:app`, runtime and dev dependencies with minimum versions from research.md R2, ruff/mypy(strict)/pytest config incl. `real_runtime` marker) and `.python-version` = `3.12` (FR-017, FR-018)
+- [x] T002 Create package skeleton with `__init__.py` files for `src/score_docs_assistant/{domain,config,models,storage,diagnostics,api,cli}/` and `__version__ = "0.1.0"` in `src/score_docs_assistant/__init__.py`; create `tests/{unit,contract,integration,fixtures}/` (plan: Project Structure)
+- [x] T003 Run `uv lock` and `uv sync --locked` with Python 3.12 to produce `uv.lock`; record exact resolved versions of runtime deps in `docs/toolchain.md` (FR-017, OPS-005)
+- [x] T004 [P] Create `config/local.yaml` mirroring contracts/config.md defaults with `data_dir: ../data` (FR-015, FR-016)
+- [x] T005 [P] Create `config/model-profiles.yaml` with profile `local-small` (qwen3:4b-instruct ≈2.5 GB Apache-2.0; nomic-embed-text ≈274 MB license "to confirm"), each with `size_source` and date per research.md R6 (FR-022, FR-023)
+- [x] T006 [P] Create `NOTICE` (project name, Apache-2.0, community-project/no-endorsement statement) and placeholder-free `README.md` with community label, scope, prerequisites, and F001 quickstart commands (FR-017, constitution XII)
 
 ---
 
@@ -43,31 +43,31 @@ first and confirm they fail before implementing.
 
 ### Tests for Foundational
 
-- [ ] T007 Implement autouse network guard in `tests/conftest.py` that patches `socket.socket.connect`/`connect_ex` to allow only loopback and AF_UNIX, plus fixtures: `tmp_config_dir`, `tmp_data_dir`, `fake_runtime` (httpx.MockTransport serving `/api/version`, `/api/tags`, `/api/pull` from scenario dicts), and skip logic for `real_runtime` unless `SCORE_ASSISTANT_REAL_RUNTIME=1` (SC-004, research R12)
-- [ ] T008 [P] Add config fixtures in `tests/fixtures/config/` (valid, unknown top-level key, unknown nested key, wrong type, out-of-range port, non-loopback `server.host` variants incl. `0.0.0.0`/`192.168.1.10`/`example.com`, `::1` valid, off-host `runtime.base_url`, `https` base_url, userinfo in base_url, `cloud_fallback: true`, provider `openai`, `telemetry: true`, profile `public`, invalid YAML) (SC-005)
-- [ ] T009 [P] Write `tests/unit/test_config_schema.py` covering every fixture in T008 with the expected dotted error path and reason (FR-001, FR-002, FR-010, FR-011, FR-015)
-- [ ] T010 [P] Write `tests/unit/test_config_loader.py`: precedence matrix default<file<env<cli with per-key source tracking, `SCORE_ASSISTANT_CONFIG`, unknown `SCORE_ASSISTANT_*` env → `CONFIG_UNKNOWN_ENV`, relative path resolution against config dir and CWD, missing file → defaults notice (FR-016)
-- [ ] T011 [P] Write `tests/unit/test_redact.py`: URL userinfo, secret-named keys/env vars, nested dicts, strings quoting input; assert no fixture secret survives (FR-008, SC-006)
-- [ ] T012 [P] Write `tests/unit/test_ollama_runtime.py` using `fake_runtime`: version parse, tags parse into `InstalledModel` (`:latest` normalisation, `is_remote` from `remote_model`/`remote_host`), connect refused → `RuntimeUnreachable`, timeout → `RuntimeTimeout`, non-JSON/unexpected shape → `RuntimeIncompatible` (FR-005, research R3)
-- [ ] T013 [P] Write `tests/unit/test_hardware.py`: psutil values mapped; `nvidia-smi` absent, timeout, malformed output, and valid CSV (monkeypatched `subprocess.run`) → `not_detected`/`error`/`detected` (FR-005, FR-018)
-- [ ] T014 [P] Write `tests/unit/test_corpus_probe.py`: no catalog → `absent`; catalog file present → `incompatible` and file is never opened (patch `open`/`sqlite3.connect` to fail if called) (FR-024)
-- [ ] T015 [P] Write `tests/unit/test_profiles.py`: load `config/model-profiles.yaml`, unknown profile error, exactly one generation + one embedding role enforced, unknown size → `None` (FR-022, FR-023)
+- [x] T007 Implement autouse network guard in `tests/conftest.py` that patches `socket.socket.connect`/`connect_ex` to allow only loopback and AF_UNIX, plus fixtures: `tmp_config_dir`, `tmp_data_dir`, `fake_runtime` (httpx.MockTransport serving `/api/version`, `/api/tags`, `/api/pull` from scenario dicts), and skip logic for `real_runtime` unless `SCORE_ASSISTANT_REAL_RUNTIME=1` (SC-004, research R12)
+- [x] T008 [P] Add config fixtures in `tests/fixtures/config/` (valid, unknown top-level key, unknown nested key, wrong type, out-of-range port, non-loopback `server.host` variants incl. `0.0.0.0`/`192.168.1.10`/`example.com`, `::1` valid, off-host `runtime.base_url`, `https` base_url, userinfo in base_url, `cloud_fallback: true`, provider `openai`, `telemetry: true`, profile `public`, invalid YAML) (SC-005)
+- [x] T009 [P] Write `tests/unit/test_config_schema.py` covering every fixture in T008 with the expected dotted error path and reason (FR-001, FR-002, FR-010, FR-011, FR-015)
+- [x] T010 [P] Write `tests/unit/test_config_loader.py`: precedence matrix default<file<env<cli with per-key source tracking, `SCORE_ASSISTANT_CONFIG`, unknown `SCORE_ASSISTANT_*` env → `CONFIG_UNKNOWN_ENV`, relative path resolution against config dir and CWD, missing file → defaults notice (FR-016)
+- [x] T011 [P] Write `tests/unit/test_redact.py`: URL userinfo, secret-named keys/env vars, nested dicts, strings quoting input; assert no fixture secret survives (FR-008, SC-006)
+- [x] T012 [P] Write `tests/unit/test_ollama_runtime.py` using `fake_runtime`: version parse, tags parse into `InstalledModel` (`:latest` normalisation, `is_remote` from `remote_model`/`remote_host`), connect refused → `RuntimeUnreachable`, timeout → `RuntimeTimeout`, non-JSON/unexpected shape → `RuntimeIncompatible` (FR-005, research R3)
+- [x] T013 [P] Write `tests/unit/test_hardware.py`: psutil values mapped; `nvidia-smi` absent, timeout, malformed output, and valid CSV (monkeypatched `subprocess.run`) → `not_detected`/`error`/`detected` (FR-005, FR-018)
+- [x] T014 [P] Write `tests/unit/test_corpus_probe.py`: no catalog → `absent`; catalog file present → `incompatible` and file is never opened (patch `open`/`sqlite3.connect` to fail if called) (FR-024)
+- [x] T015 [P] Write `tests/unit/test_profiles.py`: load `config/model-profiles.yaml`, unknown profile error, exactly one generation + one embedding role enforced, unknown size → `None` (FR-022, FR-023)
 
 ### Implementation for Foundational
 
-- [ ] T016 [P] Implement typed errors with stable codes in `src/score_docs_assistant/domain/errors.py` (`ConfigError` carrying `[(path, reason)]`, `RuntimeUnreachable`, `RuntimeTimeout`, `RuntimeIncompatible`, `BindNotLoopback`, `DiskInsufficient`, `ProfileNotFound`) (FR-006)
-- [ ] T017 [P] Implement `CheckResult`, `CheckStatus`, `DiagnosticReport` with the exit-code invariant in `src/score_docs_assistant/domain/diagnostics.py` (FR-006, FR-007; data-model.md)
-- [ ] T018 [P] Implement `Capability`, `ReasonCode`, `CapabilityState`, `Readiness` in `src/score_docs_assistant/domain/readiness.py` (FR-009)
-- [ ] T019 [P] Implement `ModelProfile`, `ProfileModel`, `ModelLock`, `ModelLockEntry`, `InstalledModel`, `RuntimeInfo` in `src/score_docs_assistant/domain/models.py` (FR-022)
-- [ ] T020 Implement `AppConfig` and section models with `extra="forbid"` and all constraints from contracts/config.md (loopback validation per research R9) in `src/score_docs_assistant/config/schema.py` (FR-001, FR-002, FR-010, FR-011, FR-015) — makes T009 pass
-- [ ] T021 Implement loader (YAML `safe_load`, env parsing, CLI overrides, source tracking, path resolution, `EffectiveConfig`) in `src/score_docs_assistant/config/loader.py` (FR-016) — makes T010 pass
-- [ ] T022 [P] Implement redaction in `src/score_docs_assistant/config/redact.py` (FR-008) — makes T011 pass
-- [ ] T023 Implement `ModelRuntime` protocol plus `GenerationProvider` and `EmbeddingProvider` protocols (declarations only, no implementations) in `src/score_docs_assistant/models/runtime.py` (plan Key Design 1, constitution VI)
-- [ ] T024 Implement `OllamaRuntime` (httpx client with configured timeouts; `version()`, `list_models()`; `pull()` streaming generator) in `src/score_docs_assistant/models/ollama.py` (FR-005) — makes T012 pass
-- [ ] T025 [P] Implement profile loading in `src/score_docs_assistant/models/profiles.py` (FR-022) — makes T015 pass
-- [ ] T026 [P] Implement hardware probe in `src/score_docs_assistant/diagnostics/hardware.py` (research R11) — makes T013 pass
-- [ ] T027 [P] Implement `CorpusProbe` protocol and F001 `FileCorpusProbe` in `src/score_docs_assistant/storage/corpus_probe.py` (FR-024) — makes T014 pass
-- [ ] T028 Create Typer app skeleton with global `--config`, `--version`, SIGINT → exit 130, and `ConfigError` → exit 2 mapping in `src/score_docs_assistant/cli/main.py` (FR-003, FR-007)
+- [x] T016 [P] Implement typed errors with stable codes in `src/score_docs_assistant/domain/errors.py` (`ConfigError` carrying `[(path, reason)]`, `RuntimeUnreachable`, `RuntimeTimeout`, `RuntimeIncompatible`, `BindNotLoopback`, `DiskInsufficient`, `ProfileNotFound`) (FR-006)
+- [x] T017 [P] Implement `CheckResult`, `CheckStatus`, `DiagnosticReport` with the exit-code invariant in `src/score_docs_assistant/domain/diagnostics.py` (FR-006, FR-007; data-model.md)
+- [x] T018 [P] Implement `Capability`, `ReasonCode`, `CapabilityState`, `Readiness` in `src/score_docs_assistant/domain/readiness.py` (FR-009)
+- [x] T019 [P] Implement `ModelProfile`, `ProfileModel`, `ModelLock`, `ModelLockEntry`, `InstalledModel`, `RuntimeInfo` in `src/score_docs_assistant/domain/models.py` (FR-022)
+- [x] T020 Implement `AppConfig` and section models with `extra="forbid"` and all constraints from contracts/config.md (loopback validation per research R9) in `src/score_docs_assistant/config/schema.py` (FR-001, FR-002, FR-010, FR-011, FR-015) — makes T009 pass
+- [x] T021 Implement loader (YAML `safe_load`, env parsing, CLI overrides, source tracking, path resolution, `EffectiveConfig`) in `src/score_docs_assistant/config/loader.py` (FR-016) — makes T010 pass
+- [x] T022 [P] Implement redaction in `src/score_docs_assistant/config/redact.py` (FR-008) — makes T011 pass
+- [x] T023 Implement `ModelRuntime` protocol plus `GenerationProvider` and `EmbeddingProvider` protocols (declarations only, no implementations) in `src/score_docs_assistant/models/runtime.py` (plan Key Design 1, constitution VI)
+- [x] T024 Implement `OllamaRuntime` (httpx client with configured timeouts; `version()`, `list_models()`; `pull()` streaming generator) in `src/score_docs_assistant/models/ollama.py` (FR-005) — makes T012 pass
+- [x] T025 [P] Implement profile loading in `src/score_docs_assistant/models/profiles.py` (FR-022) — makes T015 pass
+- [x] T026 [P] Implement hardware probe in `src/score_docs_assistant/diagnostics/hardware.py` (research R11) — makes T013 pass
+- [x] T027 [P] Implement `CorpusProbe` protocol and F001 `FileCorpusProbe` in `src/score_docs_assistant/storage/corpus_probe.py` (FR-024) — makes T014 pass
+- [x] T028 Create Typer app skeleton with global `--config`, `--version`, SIGINT → exit 130, and `ConfigError` → exit 2 mapping in `src/score_docs_assistant/cli/main.py` (FR-003, FR-007)
 
 **Checkpoint**: `uv run pytest tests/unit` passes; foundation ready.
 

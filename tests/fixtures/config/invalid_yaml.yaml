@@ -1,0 +1,3 @@
+schema_version: 1
+profile: local
+server: [this is not, valid: yaml structure

@@ -1,0 +1,4 @@
+schema_version: 1
+profile: local
+runtime:
+  cloud_fallback: true
