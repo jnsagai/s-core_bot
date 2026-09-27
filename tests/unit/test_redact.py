@@ -45,6 +45,12 @@ def test_redact_mapping_handles_nested_lists_and_urls() -> None:
     assert SECRET_VALUE not in dumped
 
 
+def test_redact_does_not_mask_words_merely_containing_token() -> None:
+    data = {"runtime.context_tokens": "default", "runtime.output_tokens": "file"}
+    assert redact_mapping(data) == data
+    assert redact_text("context_tokens: 8192") == "context_tokens: 8192"
+
+
 def test_redact_mapping_leaves_non_secret_values_untouched() -> None:
     data = {"server": {"host": "127.0.0.1", "port": 8080}}
     assert redact_mapping(data) == data

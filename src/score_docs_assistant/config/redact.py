@@ -14,16 +14,16 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
-SECRET_KEY_PATTERN = re.compile(
-    r"(?i)(secret|token|password|passwd|api[_-]?key|authorization|credential)"
+# Bounded so "token" does not match inside an unrelated word like "context_tokens" (a real config
+# key, e.g. runtime.context_tokens): the keyword must not be directly adjoined by another letter.
+_KEYWORD = (
+    r"(?<![a-zA-Z])(?:secret|token|password|passwd|api[_-]?key|authorization|credential)"
+    r"(?![a-zA-Z])"
 )
+SECRET_KEY_PATTERN = re.compile(rf"(?i){_KEYWORD}")
 
 _USERINFO_RE = re.compile(r"(://)[^/@\s]+@")
-_KV_RE = re.compile(
-    r"(?i)([\w.-]*(?:secret|token|password|passwd|api[_-]?key|authorization|credential)[\w.-]*)"
-    r"(\s*[=:]\s*)(.+)$",
-    re.MULTILINE,
-)
+_KV_RE = re.compile(rf"(?i)([\w.-]*{_KEYWORD}[\w.-]*)(\s*[=:]\s*)(.+)$", re.MULTILINE)
 
 MASK = "***"
 

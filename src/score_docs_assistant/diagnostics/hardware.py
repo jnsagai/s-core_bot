@@ -73,7 +73,8 @@ def probe_gpu() -> tuple[list[GpuInfo], GpuDetection]:
 
 def probe_hardware(disk_path: Path) -> HardwareInfo:
     vm = psutil.virtual_memory()
-    du = psutil.disk_usage(str(disk_path))
+    existing_path = disk_path if disk_path.exists() else disk_path.parent
+    du = psutil.disk_usage(str(existing_path))
     gpus, gpu_detection = probe_gpu()
     return HardwareInfo(
         os=platform.system(),

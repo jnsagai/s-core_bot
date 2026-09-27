@@ -81,17 +81,17 @@ first and confirm they fail before implementing.
 
 ### Tests for User Story 1
 
-- [ ] T029 [P] [US1] Write `tests/unit/test_checks.py`: each check in contracts/cli.md order returns the specified status/code for its scenarios (runtime unreachable/timeout/incompatible, model missing/present/remote, lock match/mismatch/not locked, data dir missing/not writable, disk low, GPU not detected, corpus absent/incompatible), and every warning/failure has a `next_action` (FR-005, FR-006, FR-022, FR-024)
-- [ ] T030 [P] [US1] Write `tests/contract/test_cli_doctor.py` using Typer `CliRunner` + `fake_runtime`: exit 0 on unprepared-but-healthy machine, exit 1 on runtime unreachable, exit 2 on each config-error fixture with no runtime call made; `--json` schema matches contracts/cli.md; text and JSON contain the same check ids/statuses; no key/token fields present (FR-001, FR-007, US1 AS1–AS6)
-- [ ] T031 [P] [US1] Write `tests/contract/test_doctor_redaction_and_network.py`: userinfo/secret env fixtures never appear in text, JSON, or captured logs; doctor makes no pull request and no non-loopback connection (FR-004, FR-008, SC-006)
-- [ ] T032 [P] [US1] Write `tests/integration/test_doctor_timing.py`: runtime pointing at a loopback port that accepts but never responds; doctor completes in < 10 s and reports `RUNTIME_TIMEOUT` with next action (SC-002)
+- [x] T029 [P] [US1] Write `tests/unit/test_checks.py`: each check in contracts/cli.md order returns the specified status/code for its scenarios (runtime unreachable/timeout/incompatible, model missing/present/remote, lock match/mismatch/not locked, data dir missing/not writable, disk low, GPU not detected, corpus absent/incompatible), and every warning/failure has a `next_action` (FR-005, FR-006, FR-022, FR-024)
+- [x] T030 [P] [US1] Write `tests/contract/test_cli_doctor.py` using Typer `CliRunner` + `fake_runtime`: exit 0 on unprepared-but-healthy machine, exit 1 on runtime unreachable, exit 2 on each config-error fixture with no runtime call made; `--json` schema matches contracts/cli.md; text and JSON contain the same check ids/statuses; no key/token fields present (FR-001, FR-007, US1 AS1–AS6)
+- [x] T031 [P] [US1] Write `tests/contract/test_doctor_redaction_and_network.py`: userinfo/secret env fixtures never appear in text, JSON, or captured logs; doctor makes no pull request and no non-loopback connection (FR-004, FR-008, SC-006)
+- [x] T032 [P] [US1] Write `tests/integration/test_doctor_timing.py`: runtime pointing at a loopback port that accepts but never responds; doctor completes in < 10 s and reports `RUNTIME_TIMEOUT` with next action (SC-002)
 
 ### Implementation for User Story 1
 
-- [ ] T033 [P] [US1] Implement model-lock read/compare (read-only part) in `src/score_docs_assistant/models/lock.py` (FR-022)
-- [ ] T034 [US1] Implement checks as pure functions in `src/score_docs_assistant/diagnostics/checks.py`, including `runtime.cloud` info check with `OLLAMA_NO_CLOUD` guidance (research R4) and model-store disk path resolution (research R5) (FR-005, FR-006, FR-022, FR-024)
-- [ ] T035 [US1] Implement `run_doctor()` ordering, exit-code derivation, text and JSON rendering (all via redaction) in `src/score_docs_assistant/diagnostics/doctor.py` (FR-005–FR-008)
-- [ ] T036 [US1] Implement `doctor` command wiring in `src/score_docs_assistant/cli/doctor.py` and register it in `cli/main.py` (FR-003, FR-007)
+- [x] T033 [P] [US1] Implement model-lock read/compare (read-only part) in `src/score_docs_assistant/models/lock.py` (FR-022)
+- [x] T034 [US1] Implement checks as pure functions in `src/score_docs_assistant/diagnostics/checks.py`, including `runtime.cloud` info check with `OLLAMA_NO_CLOUD` guidance (research R4) and model-store disk path resolution (research R5) (FR-005, FR-006, FR-022, FR-024)
+- [x] T035 [US1] Implement `run_doctor()` ordering, exit-code derivation, text and JSON rendering (all via redaction) in `src/score_docs_assistant/diagnostics/doctor.py` (FR-005–FR-008)
+- [x] T036 [US1] Implement `doctor` command wiring in `src/score_docs_assistant/cli/doctor.py` and register it in `cli/main.py` (FR-003, FR-007)
 
 **Checkpoint**: US1 independently testable; MVP complete.
 

@@ -45,6 +45,71 @@ per tasks.md.
   fixtures that caught them.
 - No `real_runtime` tests exist yet at this checkpoint (they arrive with US3, Phase 5).
 
+## Phase 3 (User Story 1 — `doctor`, MVP) checkpoint — 2026-09-27
+
+```
+$ uv run ruff format --check . && uv run ruff check .
+89 files already formatted; All checks passed!
+
+$ uv run mypy src
+Success: no issues found in 26 source files
+
+$ uv run pytest -q
+72 passed in 3.48s
+```
+
+### Real end-to-end run (quickstart.md scenario C, runtime already running — not stopped/started
+since `sudo` is unavailable tonight)
+
+```
+$ uv run score-assistant --config config/local.yaml doctor
+[OK] config.valid: Configuration is valid.
+[INFO] app.version: score-assistant 0.1.0
+[INFO] platform: Linux x86_64, 32 CPU threads.
+[INFO] memory: 13848829952 bytes available of 33337810944 total.
+[INFO] gpu: Detected: NVIDIA GeForce RTX 4070 Laptop GPU.
+[OK] disk.data: 18170785792 bytes free at /home/jefferson/s-core_bot/data.
+[OK] disk.models: 18170785792 bytes free at /var/snap/ollama/common/models.
+[WARNING] data_dir.writable: /home/jefferson/s-core_bot/data does not exist yet.
+  → It is created automatically on first use, or create it yourself.
+[OK] runtime.reachable: Ollama 0.34.0 reachable at http://127.0.0.1:11434.
+[INFO] runtime.cloud: Cannot verify from this client whether Ollama cloud features are disabled on the runtime host.
+  → Set OLLAMA_NO_CLOUD=1 or "disable_ollama_cloud": true in ~/.ollama/server.json on the machine running Ollama.
+[WARNING] model.generation: qwen3:4b-instruct is not installed.
+  → Run `score-assistant models pull --profile local-small`.
+[WARNING] model.embedding: nomic-embed-text:latest is not installed.
+  → Run `score-assistant models pull --profile local-small`.
+[WARNING] model.lock: One or more configured models are not locked.
+  → Run `models pull` to (re)lock installed models.
+[WARNING] corpus.state: No document corpus is installed yet.
+  → Corpus ingestion is not implemented in F001; see F002+.
+```
+
+This matches quickstart.md scenario C exactly (real Ollama 0.34.0, both models correctly reported
+missing with the exact `models pull --profile local-small` command, no download occurred).
+
+Config-error path also verified for real (quickstart scenario E, first command only):
+
+```
+$ uv run score-assistant --config tests/fixtures/config/unknown_nested_key.yaml doctor
+server.hots: Extra inputs are not permitted
+(exit code 2)
+```
+
+### Notes
+
+- Scenario B (stop Ollama, `sudo snap stop ollama`) was **not run**: `sudo` is unavailable tonight
+  per the overnight policy. `RUNTIME_UNREACHABLE`/`RUNTIME_TIMEOUT` paths are instead covered by
+  `tests/unit/test_checks.py`, `tests/contract/test_cli_doctor.py`, and the real-socket integration
+  test `tests/integration/test_doctor_timing.py` (a loopback port that accepts but never responds).
+- Fixed two bugs surfaced by the first `--json` contract-test run: `probe_hardware` crashed with
+  `FileNotFoundError` when `data_dir` did not exist yet (now falls back to the nearest existing
+  ancestor, matching `check_disk`'s existing behavior); and `SECRET_KEY_PATTERN`/`_KV_RE` matched
+  "token" as a substring of the legitimate config key `runtime.context_tokens`, silently masking it
+  in `doctor --json` output — fixed with lookaround word boundaries so the keyword must not be
+  directly adjoined by another letter (`tests/unit/test_redact.py::test_redact_does_not_mask_words_merely_containing_token`
+  guards this).
+
 ## Blockers
 
 (none yet)

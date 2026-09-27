@@ -54,3 +54,6 @@ def main_callback(
 
 def app() -> None:
     cli_app()
+
+
+from score_docs_assistant.cli import doctor as _doctor  # noqa: E402,F401
