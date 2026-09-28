@@ -3,11 +3,18 @@
 research.md R8, contracts/http-api.md.
 
 Runs inside `RequestContextMiddleware`, so `scope["state"]["request_id"]` is always already set.
+
+F006 adds one narrow exemption (specs/006-local-web-ui/research.md R5, FR-011a): a top-level
+`GET` for the static frontend document/assets is let through the `Sec-Fetch-Site: cross-site`
+check so a user can open/bookmark the app, while every `/api/v1/*`/`/health/*` request keeps the
+unmodified guard. The predicate is keyed on the server's own known static-path shape, never on
+client-supplied headers, and the Host check always still applies.
 """
 
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -67,6 +74,13 @@ async def _send_json(
     await send({"type": "http.response.body", "body": body})
 
 
+def default_static_get_paths(path: str) -> bool:
+    """The exact, complete set of paths F006's frontend build emits (research.md R4:
+    `vite.config.ts` sets `publicDir: false`, so `/` and hashed files under `/assets/` are the
+    only output paths)."""
+    return path == "/" or path.startswith("/assets/")
+
+
 class HostOriginGuard:
     def __init__(
         self,
@@ -75,11 +89,13 @@ class HostOriginGuard:
         allowed_hosts: list[str],
         allowed_origins: list[str],
         bound_port: int,
+        static_get_paths: Callable[[str], bool] | None = None,
     ) -> None:
         self._app = app
         self._allowed_hosts = allowed_hosts
         self._allowed_origins = set(allowed_origins)
         self._bound_port = bound_port
+        self._static_get_paths = static_get_paths
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -105,7 +121,12 @@ class HostOriginGuard:
             await _send_json(send, 403, body, [])
             return
 
-        if sec_fetch_site == "cross-site":
+        is_exempt_static_get = (
+            scope["method"] == "GET"
+            and self._static_get_paths is not None
+            and self._static_get_paths(scope["path"])
+        )
+        if sec_fetch_site == "cross-site" and not is_exempt_static_get:
             body = _error_body(
                 "CROSS_SITE_REQUEST", "Cross-site requests are not allowed.", request_id
             )
