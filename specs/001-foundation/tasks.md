@@ -132,16 +132,16 @@ first and confirm they fail before implementing.
 
 ### Tests for User Story 3
 
-- [ ] T048 [P] [US3] Write `tests/contract/test_cli_models.py` with `fake_runtime`: `inspect` lists roles/presence/digests/lock status and never calls `/api/pull`; `pull` help text first line states network use; unknown profile → exit 2; disk shortfall → exit 1 `DISK_INSUFFICIENT` with no pull request sent; unknown size without `--allow-unknown-size` → refused; successful pull writes lock with digests from `/api/tags`; second run → `already_present`, no pull; remote model in tags → failure (FR-003, FR-004, FR-022, FR-023, US3 AS1–AS5)
-- [ ] T049 [P] [US3] Write `tests/unit/test_model_lock.py`: atomic write (temp + replace), unknown fields rejected, interrupted pull (generator raises `KeyboardInterrupt`) leaves previous lock byte-identical, compare outcomes `match|mismatch|missing_installed|not_locked` (FR-022, FR-023)
-- [ ] T050 [P] [US3] Write `tests/contract/test_no_pull_outside_models_pull.py`: spy on `OllamaRuntime.pull`; run `doctor`, `models inspect`, `serve` startup + all endpoints; assert zero pull calls (FR-004, US3 AS4)
-- [ ] T051 [P] [US3] Write `tests/integration/test_real_runtime.py` marked `real_runtime`: real `/api/version`, `/api/tags`, identity parsing; optional real pull gated by `SCORE_ASSISTANT_REAL_PULL=1` that verifies `/api/pull` stream fields (`status`, `digest`, `total`, `completed`) on Ollama 0.34.0 (research R3 verification item)
+- [x] T048 [P] [US3] Write `tests/contract/test_cli_models.py` with `fake_runtime`: `inspect` lists roles/presence/digests/lock status and never calls `/api/pull`; `pull` help text first line states network use; unknown profile → exit 2; disk shortfall → exit 1 `DISK_INSUFFICIENT` with no pull request sent; unknown size without `--allow-unknown-size` → refused; successful pull writes lock with digests from `/api/tags`; second run → `already_present`, no pull; remote model in tags → failure (FR-003, FR-004, FR-022, FR-023, US3 AS1–AS5)
+- [x] T049 [P] [US3] Write `tests/unit/test_model_lock.py`: atomic write (temp + replace), unknown fields rejected, interrupted pull (generator raises `KeyboardInterrupt`) leaves previous lock byte-identical, compare outcomes `match|mismatch|missing_installed|not_locked` (FR-022, FR-023)
+- [x] T050 [P] [US3] Write `tests/contract/test_no_pull_outside_models_pull.py`: spy on `OllamaRuntime.pull`; run `doctor`, `models inspect`, `serve` startup + all endpoints; assert zero pull calls (FR-004, US3 AS4)
+- [x] T051 [P] [US3] Write `tests/integration/test_real_runtime.py` marked `real_runtime`: real `/api/version`, `/api/tags`, identity parsing; optional real pull gated by `SCORE_ASSISTANT_REAL_PULL=1` that verifies `/api/pull` stream fields (`status`, `digest`, `total`, `completed`) on Ollama 0.34.0 (research R3 verification item)
 
 ### Implementation for User Story 3
 
-- [ ] T052 [US3] Add atomic lock write and compare to `src/score_docs_assistant/models/lock.py` (FR-022) — makes T049 pass
-- [ ] T053 [US3] Add `required_free_bytes(profile, margin)` to `src/score_docs_assistant/diagnostics/checks.py`, reusing the model-store path resolver created in T034 (no second resolver), for use by pull (FR-023, research R5)
-- [ ] T054 [US3] Implement `models inspect` and `models pull` in `src/score_docs_assistant/cli/models.py` (progress to stderr, JSON result, SIGINT handling, idempotency) and register in `cli/main.py` (FR-003, FR-004, FR-022, FR-023) — makes T048, T050 pass
+- [x] T052 [US3] Add atomic lock write and compare to `src/score_docs_assistant/models/lock.py` (FR-022) — makes T049 pass
+- [x] T053 [US3] Add `required_free_bytes(profile, margin)` to `src/score_docs_assistant/diagnostics/checks.py`, reusing the model-store path resolver created in T034 (no second resolver), for use by pull (FR-023, research R5)
+- [x] T054 [US3] Implement `models inspect` and `models pull` in `src/score_docs_assistant/cli/models.py` (progress to stderr, JSON result, SIGINT handling, idempotency) and register in `cli/main.py` (FR-003, FR-004, FR-022, FR-023) — makes T048, T050 pass
 
 **Checkpoint**: US1–US3 work independently.
 

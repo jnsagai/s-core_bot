@@ -161,6 +161,47 @@ status codes and reason codes, guard rejects both the hostile Host and the disal
   `runtime_unreachable` to including it after the fake runtime is shut down — passed on first real
   run (1.08s).
 
+## Phase 5 (User Story 3 — `models inspect`/`models pull`) checkpoint — 2026-09-27
+
+```
+$ uv run ruff format --check . && uv run ruff check .
+107 files already formatted; All checks passed!
+
+$ uv run mypy src
+Success: no issues found in 35 source files
+
+$ uv run pytest -q
+118 passed, 2 skipped in 4.95s
+```
+
+The 2 skipped are `tests/integration/test_real_runtime.py` (marked `real_runtime`) — reported as
+**skipped, not passed**, since `SCORE_ASSISTANT_REAL_RUNTIME=1` was not set this run.
+
+### Real end-to-end run (quickstart.md scenario C, `models inspect` half)
+
+```
+$ uv run score-assistant --config config/local.yaml models inspect
+generation: qwen3:4b-instruct (missing, lock=not_locked)
+embedding: nomic-embed-text:latest (missing, lock=not_locked)
+```
+
+Matches quickstart.md scenario C exactly (real Ollama 0.34.0, both models correctly reported
+missing). `models pull` was **not run for real**: it is denied by `.claude/settings.json`
+(`*models*pull*` is on the deny list) and the overnight policy separately forbids any real model
+download tonight (disk ~95% full). `models pull` is instead verified entirely against the fake
+Ollama transport in `tests/contract/test_cli_models.py` (writes the lock with digests from
+`/api/tags`, idempotent second run, disk-shortfall/unknown-size/remote-model refusals) and the
+atomic-write/interrupted-write guarantees in `tests/unit/test_model_lock.py`.
+
+### Notes
+
+- Fixed two test bugs the first run caught (both in the test file, not the implementation):
+  `--help` output always starts with a Click "Usage: ..." line before the command's own
+  description, so the network-use sentence is the *second* non-blank line, not the first; and
+  Typer's `CliRunner` mixes stdout and stderr by default, so a test parsing `result.output` as JSON
+  must take the *last* line (the final JSON result), since `models pull`'s stderr progress lines
+  are interleaved into the same captured stream.
+
 ## Blockers
 
 (none yet)
