@@ -204,3 +204,23 @@ def test_missing_lock_entry_disables_with_pull_guidance(
     report = _validate(data, snapshot)
     assert report.semantic == "disabled"
     assert any("models pull" in g for g in report.guidance)
+
+
+@pytest.mark.parametrize("defect", ["required source failed", "coverage missing"])
+def test_manifest_gates_for_activation(
+    built: tuple[Path, Path], tmp_path: Path, defect: str
+) -> None:
+    """FR-012: a manifest claiming a failed required source, or lacking the coverage report,
+    fails integrity even if its checksums are consistent (e.g. a crafted bundle)."""
+    data, snapshot = _copy(built, tmp_path)
+    manifest = json.loads((snapshot / "manifest.json").read_text())
+    if defect == "required source failed":
+        manifest["sources"][0]["status"] = "failed"
+        expected = "manifest.sources"
+    else:
+        (snapshot / "reports" / "coverage.json").unlink()
+        manifest["files"] = [f for f in manifest["files"] if f["path"] != "reports/coverage.json"]
+        expected = "manifest.coverage"
+    (snapshot / "manifest.json").write_text(json.dumps(manifest))
+    report = _validate(data, snapshot)
+    assert expected in _failed(report)

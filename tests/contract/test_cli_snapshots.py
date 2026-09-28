@@ -46,7 +46,7 @@ def test_activate_list_rollback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     assert by_id[b]["active"] and by_id[b]["state"] == "active"
     assert by_id[a]["state"] == "retired" and by_id[a]["pinned"] is True
     text = invoke(env, "snapshots", "list").stdout
-    assert f"* {b}" in text and "PINNED" in text
+    assert f"* {b}" in text and "PINNED" in text and "ACTIVATED" in text
 
     result = invoke(env, "snapshots", "rollback")
     assert result.exit_code == 0, result.output

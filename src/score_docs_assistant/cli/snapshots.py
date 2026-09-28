@@ -77,13 +77,16 @@ def list_command(
     if not records:
         typer.echo("No snapshots. Run `score-assistant index build`.")
         return
-    typer.echo(f"  {'ID':<27} {'STATE':<9} {'SEMANTIC':<8} {'CHUNKS':>6}  CREATED  PINNED")
+    typer.echo(
+        f"  {'ID':<27} {'STATE':<9} {'SEMANTIC':<8} {'CHUNKS':>6}  {'CREATED':<19}  "
+        f"{'ACTIVATED':<19}  PINNED"
+    )
     for r in records:
         marker = "*" if r["active"] else " "
         typer.echo(
             f"{marker} {r['snapshot_id']:<27} {r['state']:<9} {r['semantic'] or '-':<8} "
             f"{r['chunks'] if r['chunks'] is not None else '-':>6}  {r['created_at'][:19]}  "
-            f"{'yes' if r['pinned'] else 'no'}"
+            f"{(r['activated_at'] or '-')[:19]:<19}  {'yes' if r['pinned'] else 'no'}"
         )
 
 

@@ -206,3 +206,9 @@ Each story checkpoint runs the full local gate and is committed separately.
 - `real_runtime` tests skipped = "not run", never "passed".
 - Never execute ingested content; never enable SQLite extensions; never `extractall` a bundle.
 - Keep `data/` out of git; the real snapshot is evidence recorded by hash and counts, not committed.
+
+## Phase 7: Convergence
+
+- [x] T060 Add integrity checks to `SnapshotValidator` in `src/score_docs_assistant/storage/validation.py`: every `required` source in `manifest.sources` has status `ok`, and `reports/coverage.json` is listed in `manifest.files`; test with a crafted manifest in `tests/unit/test_validation.py` and a hostile bundle in `tests/integration/test_bundles.py` per FR-012 (partial)
+- [x] T061 Add `documents_without_chunks` to `ManifestCounts` (default 0, so existing manifests still parse) and populate it in `src/score_docs_assistant/storage/build.py`; assert it in `tests/integration/test_build.py` per spec Edge Cases (partial)
+- [x] T062 Add the `ACTIVATED` column to the `snapshots list` text table in `src/score_docs_assistant/cli/snapshots.py` and assert it in `tests/contract/test_cli_snapshots.py` per contracts/cli.md (partial)

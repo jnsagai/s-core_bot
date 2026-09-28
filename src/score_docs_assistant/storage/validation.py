@@ -94,6 +94,17 @@ class SnapshotValidator:
                 else f"{MANIFEST_NAME} changed since it was registered",
             )
 
+        failed_required = [s.source_id for s in manifest.sources if s.required and s.status != "ok"]
+        record(
+            "manifest.sources",
+            f"required source(s) not ok: {failed_required}" if failed_required else None,
+        )
+        record(
+            "manifest.coverage",
+            None
+            if any(f.path == "reports/coverage.json" for f in manifest.files)
+            else "coverage report missing from the snapshot",
+        )
         files_ok = self._check_files(directory, manifest, record)
         if files_ok:
             self._check_corpus(directory, manifest, record)

@@ -55,6 +55,7 @@ def test_build_publishes_validated_snapshot(tmp_path: Path) -> None:
     assert manifest["source_revisions"] == {"alpha": "a" * 40, "beta": "b" * 40}
     assert manifest["token_count_method"] == "pretoken-v1"
     assert [e["path"] for e in manifest["license_review"]] == ["docs/sharealike.rst"]
+    assert manifest["counts"]["documents_without_chunks"] == 0
     assert {f["path"] for f in manifest["files"]} == CONTRACT_FILES - {"manifest.json"}
 
     conn = sqlite3.connect(f"file:{snapshot / 'corpus.sqlite'}?mode=ro", uri=True)
@@ -176,3 +177,15 @@ def test_second_concurrent_build_is_busy(tmp_path: Path) -> None:
         assert exc_info.value.code == "BUILD_BUSY"
     finally:
         kill9(proc)
+
+
+def test_document_without_chunkable_text_is_counted(tmp_path: Path) -> None:
+    sources = default_sources()
+    files = dict(sources[1].files)
+    files["docs/only-dynamic.rst"] = (
+        ".. SPDX-License-Identifier: Apache-2.0\n\n.. needtable::\n   :types: std_req\n"
+    )
+    sources[1] = SourceSpec("beta", files, revision="b" * 40)
+    env = make_env(tmp_path, sources)
+    result = build(env)
+    assert result.counts.documents_without_chunks == 1

@@ -184,3 +184,41 @@ def test_inspect_writes_nothing(exported: tuple[Path, str, Path], tmp_path: Path
     assert result.manifest.snapshot_id == snapshot_id
     assert result.snapshot_manifest["counts"]
     assert list(data.iterdir()) == []
+
+
+def test_consistently_rehashed_bundle_with_failed_required_source_rejected(
+    exported: tuple[Path, str, Path], tmp_path: Path
+) -> None:
+    """FR-012 via import: every hash in the crafted bundle is consistent, but its snapshot
+    manifest claims a failed required source, so validation must refuse it."""
+    import hashlib
+    import json
+
+    path, _, _ = exported
+    members = read_members(path)
+    index = next(i for i, (info, _) in enumerate(members) if info.name == "snapshot/manifest.json")
+    snap = json.loads(members[index][1] or b"{}")
+    snap["sources"][0]["status"] = "failed"
+    new_bytes = json.dumps(snap).encode()
+    members[index] = (members[index][0], new_bytes)
+    digest = hashlib.sha256(new_bytes).hexdigest()
+
+    def update(data: dict) -> None:  # type: ignore[type-arg]
+        data["manifest_sha256"] = digest
+        for entry in data["files"]:
+            if entry["path"] == "snapshot/manifest.json":
+                entry["sha256"] = digest
+                entry["size"] = len(new_bytes)
+        # total_size includes the serialized manifest itself; settle it.
+        for _ in range(5):
+            data["total_size"] = sum(e["size"] for e in data["files"]) + len(
+                json.dumps(data).encode()
+            )
+
+    members = with_manifest(members, update)
+    crafted = write_members(tmp_path / "crafted.tar.gz", members)
+    data = _fresh(tmp_path)
+    with pytest.raises(SnapshotError) as exc_info:
+        bundles.import_bundle(config=app_config(data), path=crafted)
+    assert "validation_failed" in exc_info.value.message
+    assert "manifest.sources" in exc_info.value.message

@@ -150,6 +150,7 @@ class ManifestCounts(BaseModel):
     relations: int
     chunks: int
     chunks_by_kind: dict[str, int]
+    documents_without_chunks: int = 0
     embedded_reused: int = 0
     embedded_new: int = 0
 

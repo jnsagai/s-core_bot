@@ -196,6 +196,27 @@ lexical-over-semantic warning; retention deleted the tampered snapshot), `snapsh
   list`, `index validate`, `bundle *`).
 - `docs/TRACEABILITY.md`: SRC-009, RET-007, OPS-002, OPS-003 → verified (F003 scope); SRC-010,
   SRC-011 F003 parts verified; LOC-003, LOC-006, SRC-012 notes extended.
-- `docs/ASSUMPTIONS.md`: A-019 to A-023 added. `docs/BACKLOG.md`: F003 implemented, converge
-  pending.
+- `docs/ASSUMPTIONS.md`: A-019 to A-023 added. `docs/BACKLOG.md`: F003 implemented at this
+  checkpoint (set to done after convergence, below).
 - Environment: root filesystem still 99 % used (≈ 4.2 GiB free) at the end of the session.
+
+## Phase 7 (Convergence) — 2026-09-28
+
+The first converge pass (22 FRs, 8 SCs, 16 acceptance scenarios, 18 edge cases, plan decisions,
+constitution I–XII) found 3 partial gaps, appended as T060–T062 and implemented:
+
+- T060 (FR-012): the validator now fails `manifest.sources` when a required source is not `ok`
+  and `manifest.coverage` when the coverage report is absent. A crafted, consistently re-hashed
+  bundle claiming a failed required source is rejected at import (`validation_failed:
+  manifest.sources…`). The real active snapshot still validates (integrity ok, semantic enabled).
+- T061 (edge case "zero chunkable text"): `counts.documents_without_chunks` in the manifest,
+  tested with a document containing only a `needtable`. Older manifests parse (default 0).
+- T062 (contracts/cli.md): `snapshots list` shows the `ACTIVATED` column.
+
+```text
+$ uv run ruff format --check . && uv run ruff check . && uv run mypy src && uv run pytest -q
+570 passed, 6 skipped
+```
+
+The second converge assessment found no remaining gaps: **converged**. Agent review, not a human
+approval.

@@ -323,6 +323,9 @@ class BuildService:
                 relations=counts["relations"],
                 chunks=counts["chunks"],
                 chunks_by_kind=_kinds(chunks),
+                documents_without_chunks=len(
+                    {d.document_key for d in outcome.documents} - {c.document_key for c in chunks}
+                ),
                 embedded_reused=reused,
                 embedded_new=new,
             ),
