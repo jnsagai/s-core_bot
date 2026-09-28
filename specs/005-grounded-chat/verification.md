@@ -116,3 +116,9 @@ needs a human with sudo).
   shared helpers to `cli/search_support.py`.
 - `OllamaGenerationProvider` bound its async HTTP client to the first event loop, so a second
   `asyncio.run` failed with "Event loop is closed"; it now opens a client per call.
+
+## Convergence — 2026-09-28
+
+First converge pass: 2 LOW findings, appended as T035–T036 and done. The fallback-without-excerpts
+outcome is documented (contract + A-033), and `answers/injection.py` is recorded in the research
+amendment. Second assessment: **converged** (agent review, not a human approval).

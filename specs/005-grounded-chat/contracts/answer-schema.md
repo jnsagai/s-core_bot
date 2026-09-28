@@ -42,5 +42,8 @@ server:
 | `EMPTY_CLAIM` | whitespace-only claim text |
 | `INJECTION_SUSPECTED` | a claim cites an excerpt marked `untrusted="instructions-like"` (text addressed to AI assistants) and reads as advice (you should…, run/execute…, a backtick command, `rm -`). Added after a real-model run repeated an injected command (verification.md) |
 
-At most one repair round (`generation.repair_attempts`). Then either an extractive fallback
-(research R5) or `ANSWER_INVALID` when there is no evidence.
+At most one repair round (`generation.repair_attempts`). Then an extractive fallback (research
+R5). When no usable excerpt remains for the fallback (every supplied excerpt is instruction-like),
+the result is `insufficient_evidence` with the fallback limitation rather than `ANSWER_INVALID`,
+because that is the honest answer status and nothing unchecked is returned (ASSUMPTIONS A-033).
+`ANSWER_INVALID` remains defined for completeness but is not produced by the current flow.

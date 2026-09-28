@@ -94,7 +94,8 @@ prompt ("Your previous output failed these checks: …; return corrected JSON").
   `insufficient_evidence` with cited claims → `partial`; `partial` or `clarification_needed`
   without a limitation → a limitation is added. An `answered`/`partial` status without any
   documented claim is still rejected (`STATUS_INCONSISTENT`).
-- **Injection defense** (`answers/injection.py`): the real model answered an injected instruction
+- **Injection defense** (new module `src/score_docs_assistant/answers/injection.py`, added to the
+  plan's `answers/` package during implementation): the real model answered an injected instruction
   with "to finish the gateway setup, you should run rm -rf /tmp/score" on the synthetic hostile
   snapshot. Now excerpts that address AI assistants are marked `untrusted="instructions-like"` in the
   prompt (policy rule 9a); claims citing them that read as advice are rejected

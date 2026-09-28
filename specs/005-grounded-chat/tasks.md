@@ -126,3 +126,8 @@ checkpoint.
 - Mark a task `[x]` only after its verification ran and passed.
 - `real_runtime` skipped = "not run". Human-judged metrics = "not run" until reviewed.
 - Never edit the real S-CORE sources; hostile content lives only in synthetic fixtures.
+
+## Phase 8: Convergence
+
+- [x] T035 Record that an extractive fallback with no usable (non-instruction-like) excerpts yields `insufficient_evidence` instead of `ANSWER_INVALID`, in `specs/005-grounded-chat/contracts/answer-schema.md` and `docs/ASSUMPTIONS.md`, per FR-008 (contradicts)
+- [x] T036 Record `answers/injection.py` (instruction-like excerpt marking, `INJECTION_SUSPECTED`) in `specs/005-grounded-chat/research.md` R4 amendment's module list and the verification record, per plan: Project Structure (unrequested)
