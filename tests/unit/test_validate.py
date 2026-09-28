@@ -88,9 +88,8 @@ def test_valid_drafts(draft: dict, status: str) -> None:  # type: ignore[type-ar
         (_draft("answered", ("Uses static views.", "documented", ["E9"])), "UNKNOWN_EVIDENCE_ID"),
         (_draft("answered", ("Uses static views.", "documented", [])), "MISSING_CITATION"),
         (_draft("answered", DOC, ("Reading.", "interpretation", [])), "MISSING_CITATION"),
-        (_draft("insufficient_evidence", DOC), "STATUS_INCONSISTENT"),  # observed on the real model
         (_draft("answered", LIM), "STATUS_INCONSISTENT"),
-        (_draft("partial", DOC), "STATUS_INCONSISTENT"),
+        (_draft("partial", LIM), "STATUS_INCONSISTENT"),
         (
             _draft(
                 "answered",
@@ -133,3 +132,29 @@ def test_truncated_and_oversized_output() -> None:
 
 def test_too_many_claims() -> None:
     assert "SCHEMA_INVALID" in _check(_draft("answered", *([DOC] * 13)))
+
+
+@pytest.mark.parametrize(
+    ("draft", "status", "note"),
+    [
+        # Observed on the real model: cited documented claims labelled insufficient_evidence.
+        (
+            _draft("insufficient_evidence", DOC),
+            "partial",
+            "insufficient_evidence with cited claims",
+        ),
+        (_draft("partial", DOC), "partial", "partial without a stated gap"),
+        (_draft("clarification_needed"), "clarification_needed", "without a stated need"),
+    ],
+)
+def test_benign_status_mismatches_are_normalized(draft: dict, status: str, note: str) -> None:  # type: ignore[type-arg]
+    outcome = validate_draft(
+        json.dumps(draft),
+        truncated=False,
+        evidence=_evidence(),
+        max_claims=12,
+        max_claim_characters=1200,
+    )
+    assert outcome.ok and outcome.status == status
+    assert any(note in n for n in outcome.notes)
+    assert outcome.claims[-1].kind == "limitation"

@@ -89,10 +89,10 @@ as "not run" when skipped. Synthetic fixtures carry `SYNTHETIC — not S-CORE gu
 
 ## Phase 6: User Story 4 — Evaluation (P4)
 
-- [ ] T027 [P] [US4] Write `tests/unit/test_answer_evaluation.py`: case-file schema (statuses, `safe_handling`, `snapshot_fixture`), status agreement, citation integrity (resolves and equals the stored excerpt), evidence overlap with F004 locators, safe-handling counts, review sheet shape with null reviewer fields, human metrics "not run" without a filled sheet and computed from a filled sheet (FR-025)
-- [ ] T028 [US4] Implement `answers/evaluation.py` and `eval answers` in `cli/evaluate.py` with `tests/contract/test_cli_eval_answers.py` (help line, exit codes, report + sheet files)
-- [ ] T029 [US4] Author `eval/answers-dev.yaml` (real snapshot: ≥ 5 unanswerable/out-of-scope cases, the rest covered questions with expected evidence read from the sources) and `eval/answers-injection.yaml` (≥ 3 injection cases for the synthetic hostile snapshot), ≥ 20 cases in total across both files; `review_status: "unreviewed (agent-authored)"` (FR-026)
-- [ ] T030 [US4] Add `real_runtime` tests in `tests/integration/test_real_runtime.py`: real generation answers a fixture question with valid citations; injection cases on the hostile fixture snapshot produce no policy override (SC-004 real); record outputs (FR-013, FR-014)
+- [x] T027 [P] [US4] Write `tests/unit/test_answer_evaluation.py`: case-file schema (statuses, `safe_handling`, `snapshot_fixture`), status agreement, citation integrity (resolves and equals the stored excerpt), evidence overlap with F004 locators, safe-handling counts, review sheet shape with null reviewer fields, human metrics "not run" without a filled sheet and computed from a filled sheet (FR-025)
+- [x] T028 [US4] Implement `answers/evaluation.py` and `eval answers` in `cli/evaluate.py` with `tests/contract/test_cli_eval_answers.py` (help line, exit codes, report + sheet files)
+- [x] T029 [US4] Author `eval/answers-dev.yaml` (real snapshot: ≥ 5 unanswerable/out-of-scope cases, the rest covered questions with expected evidence read from the sources) and `eval/answers-injection.yaml` (≥ 3 injection cases for the synthetic hostile snapshot), ≥ 20 cases in total across both files; `review_status: "unreviewed (agent-authored)"` (FR-026)
+- [x] T030 [US4] Add `real_runtime` tests in `tests/integration/test_real_runtime.py`: real generation answers a fixture question with valid citations; injection cases on the hostile fixture snapshot produce no policy override (SC-004 real); record outputs (FR-013, FR-014)
 
 **Checkpoint**: gate green; quickstart B, E on the real snapshot recorded.
 
@@ -100,10 +100,10 @@ as "not run" when skipped. Synthetic fixtures carry `SYNTHETIC — not S-CORE gu
 
 ## Phase 7: Polish
 
-- [ ] T031 [P] Update `README.md`, `CLAUDE.md` (ask, eval answers, chat API)
-- [ ] T032 [P] Update `docs/BACKLOG.md`, `docs/TRACEABILITY.md` (ANS-001–ANS-012, RET-005, LOC-002, SEC-001, OPS-006), `docs/ASSUMPTIONS.md` (new decisions)
-- [ ] T033 Run the full gate plus `SCORE_ASSISTANT_REAL_RUNTIME=1 uv run pytest -m real_runtime`; record in `specs/005-grounded-chat/verification.md`
-- [ ] T034 Walk quickstart A–F; record real answers, evaluation metrics (labelled development measurement), the blocked-egress result or its recorded constraint, and deviations in `verification.md`
+- [x] T031 [P] Update `README.md`, `CLAUDE.md` (ask, eval answers, chat API)
+- [x] T032 [P] Update `docs/BACKLOG.md`, `docs/TRACEABILITY.md` (ANS-001–ANS-012, RET-005, LOC-002, SEC-001, OPS-006), `docs/ASSUMPTIONS.md` (new decisions)
+- [x] T033 Run the full gate plus `SCORE_ASSISTANT_REAL_RUNTIME=1 uv run pytest -m real_runtime`; record in `specs/005-grounded-chat/verification.md`
+- [x] T034 Walk quickstart A–F; record real answers, evaluation metrics (labelled development measurement), the blocked-egress result or its recorded constraint, and deviations in `verification.md`
 
 ---
 

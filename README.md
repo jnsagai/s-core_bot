@@ -22,14 +22,23 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   `index build | validate`, `snapshots list | activate | rollback`,
   `bundle export | inspect | import`.
 
-- **F004 (implemented)** — evidence search over one pinned snapshot: exact requirement-ID lookup
+- **F004 (done)** — evidence search over one pinned snapshot: exact requirement-ID lookup
   with stored relationships, keyword search, and semantic search with the local embedding model,
   fused into a short ranked list with provenance. It falls back to keyword-only search (stated
   plainly) when embeddings are unavailable, and never needs the answer model. `search`, `lookup`,
   `eval retrieval | exact-ids | latency`, and HTTP `/api/v1/search`, `/entities`,
   `/relationships`, `/snapshots`, `/sources`, `/citations/…`.
 
-There is no chat yet — answers arrive in F005 (see `docs/BACKLOG.md`).
+- **F005 (implemented)** — grounded local answers: `ask "question"` and `POST /api/v1/chat`
+  (JSON or a server-sent-event progress stream) answer from one snapshot with the locked local
+  model. Answers are short claims, each documented claim citing stored excerpts (with exact-revision
+  GitHub links where provable). They are validated server-side, with one repair and otherwise a
+  labelled extractive fallback. Weak evidence gives `insufficient_evidence`/`partial`, one answer is
+  generated at a time with a bounded queue, and there is no cloud fallback.
+  `eval answers` measures status, citation integrity and evidence overlap; human-judged quality stays
+  "not run" until reviewed.
+
+There is no web UI yet — it arrives in F006 (see `docs/BACKLOG.md`).
 
 ## Scope
 
@@ -76,6 +85,10 @@ uv run score-assistant --config config/local.yaml bundle export --snapshot <id> 
 uv run score-assistant --config config/local.yaml search "How do I build the documentation?"
 uv run score-assistant --config config/local.yaml lookup feat_req__com__interfaces --relationships
 uv run score-assistant --config config/local.yaml eval retrieval --cases eval/retrieval-dev.yaml
+
+# Grounded answers (local model; cites stored evidence)
+uv run score-assistant --config config/local.yaml ask "Which work products does the architecture process require?"
+uv run score-assistant --config config/local.yaml eval answers --cases eval/answers-dev.yaml
 ```
 
 A build ends `validated` (integrity-checked, not an engineering approval) and is served only after

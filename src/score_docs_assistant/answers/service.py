@@ -250,6 +250,7 @@ class AnswerService:
                 assert outcome.status is not None
                 if repaired:
                     warnings.append("repaired: the first model output failed validation")
+                warnings += outcome.notes
                 status: AnswerStatus = outcome.status
                 origin: AnswerOrigin = "model"
                 claims = outcome.claims
@@ -264,10 +265,12 @@ class AnswerService:
                     "model_output_invalid: the model output failed validation "
                     f"({', '.join(codes)}); showing extractive excerpts"
                 )
-                status, origin = "partial", "extractive_fallback"
                 claims = extractive_fallback(
                     prompt.evidence, self._config.generation.fallback_excerpts
                 )
+                has_excerpts = any(c.kind == "documented" for c in claims)
+                status = "partial" if has_excerpts else "insufficient_evidence"
+                origin = "extractive_fallback"
             return self._envelope(
                 request_id=request_id,
                 request=request,

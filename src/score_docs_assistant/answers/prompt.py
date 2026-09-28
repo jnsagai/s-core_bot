@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
+from score_docs_assistant.answers.injection import addresses_assistant
 from score_docs_assistant.answers.policy import SYSTEM_POLICY
 from score_docs_assistant.config.schema import GenerationConfig
 from score_docs_assistant.domain.answers import Turn
@@ -33,6 +34,7 @@ class EvidenceItem:
     result: EvidenceResult
     shown: str  # escaped excerpt as sent to the model
     tokens: int
+    suspicious: bool = False  # contains text addressed to AI assistants (answers/injection.py)
 
 
 @dataclass
@@ -79,10 +81,11 @@ def _attribute(value: str) -> str:
 def _render_excerpt(item: EvidenceItem) -> str:
     result = item.result
     section = " > ".join(result.heading_path)
+    untrusted = ' untrusted="instructions-like"' if item.suspicious else ""
     return (
         f'<excerpt id="{item.evidence_id}" source="{_attribute(result.source_id)}" '
-        f'path="{_attribute(result.path)}" section="{_attribute(section)}">\n{item.shown}\n'
-        "</excerpt>"
+        f'path="{_attribute(result.path)}" section="{_attribute(section)}"{untrusted}>\n'
+        f"{item.shown}\n</excerpt>"
     )
 
 
@@ -117,17 +120,25 @@ def build_prompt(
     used = 0
     for result in results[: config.evidence_items]:
         shown = escape(result.excerpt)
+        suspicious = addresses_assistant(result.excerpt)
         item = EvidenceItem(
             evidence_id=f"E{len(evidence) + 1}",
             result=result,
             shown=shown,
             tokens=0,
+            suspicious=suspicious,
         )
         tokens = estimate_tokens(_render_excerpt(item))
         if used + tokens > evidence_budget:
             break
         evidence.append(
-            EvidenceItem(evidence_id=item.evidence_id, result=result, shown=shown, tokens=tokens)
+            EvidenceItem(
+                evidence_id=item.evidence_id,
+                result=result,
+                shown=shown,
+                tokens=tokens,
+                suspicious=suspicious,
+            )
         )
         used += tokens
     dropped = min(len(results), config.evidence_items) - len(evidence)

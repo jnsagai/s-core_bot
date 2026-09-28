@@ -12,11 +12,14 @@ from dataclasses import dataclass, field
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from score_docs_assistant.answers.injection import reads_as_advice
 from score_docs_assistant.answers.prompt import EvidenceItem
 from score_docs_assistant.domain.answers import AnswerStatus, Claim, ClaimKind
 
 MAX_RAW_BYTES = 64 * 1024
 MIN_QUOTE_CHARACTERS = 12
+NORMALIZED_PARTIAL = "The supplied evidence may answer only part of this question."
+NORMALIZED_CLARIFICATION = "More context (for example the release or module) is needed."
 _URL = re.compile(r"(https?://|www\.|file:|mailto:)", re.IGNORECASE)
 _THOUGHT = re.compile(r"</?think>|<\|thinking\|>", re.IGNORECASE)
 _QUOTES = (
@@ -45,6 +48,7 @@ class ValidationOutcome:
     status: AnswerStatus | None = None
     claims: list[Claim] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
@@ -96,6 +100,12 @@ def validate_draft(
             errors.append(f"UNKNOWN_EVIDENCE_ID: {label} cites {unknown}")
         if claim.kind in ("documented", "interpretation") and not claim.evidence_ids:
             errors.append(f"MISSING_CITATION: {label} ({claim.kind}) cites no evidence")
+        if any(
+            evidence[e].suspicious for e in claim.evidence_ids if e in evidence
+        ) and reads_as_advice(claim.text):
+            errors.append(
+                f"INJECTION_SUSPECTED: {label} turns text addressed to AI assistants into advice"
+            )
         if _URL.search(claim.text):
             errors.append(f"URL_IN_TEXT: {label}")
         if _THOUGHT.search(claim.text):
@@ -111,20 +121,30 @@ def validate_draft(
                 needle = _normalize(quoted)
                 if not any(needle in hay for hay in haystacks):
                     errors.append(f"QUOTE_NOT_IN_EVIDENCE: {label} quotes text not in its evidence")
-    kinds = [c.kind for c in draft.claims if c.text.strip()]
-    documented = kinds.count("documented")
-    rules = {
-        "answered": documented >= 1,
-        "partial": documented >= 1 and "limitation" in kinds,
-        "insufficient_evidence": documented == 0 and "interpretation" not in kinds,
-        "clarification_needed": "limitation" in kinds,
-    }
-    if not rules[draft.status]:
-        errors.append(f"STATUS_INCONSISTENT: status {draft.status} does not match the claims")
-    outcome.status = draft.status
-    outcome.claims = [
+    claims = [
         Claim(text=c.text.strip(), kind=c.kind, evidence_ids=list(dict.fromkeys(c.evidence_ids)))
         for c in draft.claims
         if c.text.strip()
     ]
+    kinds = [c.kind for c in claims]
+    documented = kinds.count("documented")
+    status: AnswerStatus = draft.status
+    # The status is metadata; the claims are validated independently. Benign status mismatches
+    # (observed often with the local model) are normalized with a server-authored gap statement
+    # instead of discarding validated, cited claims. Only an answer without any documented claim
+    # is rejected (research R4 as amended).
+    if status in ("answered", "partial") and documented == 0:
+        errors.append(f"STATUS_INCONSISTENT: status {status} without a documented claim")
+    elif status == "insufficient_evidence" and (documented or "interpretation" in kinds):
+        status = "partial"
+        outcome.notes.append("status_normalized: insufficient_evidence with cited claims → partial")
+        claims.append(Claim(text=NORMALIZED_PARTIAL, kind="limitation"))
+    elif status == "partial" and "limitation" not in kinds:
+        outcome.notes.append("status_normalized: partial without a stated gap")
+        claims.append(Claim(text=NORMALIZED_PARTIAL, kind="limitation"))
+    elif status == "clarification_needed" and "limitation" not in kinds:
+        outcome.notes.append("status_normalized: clarification_needed without a stated need")
+        claims.append(Claim(text=NORMALIZED_CLARIFICATION, kind="limitation"))
+    outcome.status = status
+    outcome.claims = claims
     return outcome

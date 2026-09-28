@@ -167,3 +167,76 @@ def latency_command(
             typer.echo(f"  {mode:<8} not run ({result.reason})")
     typer.echo("  environment: " + json.dumps(environment, sort_keys=True))
     typer.echo(f"report: {path}")
+
+
+@eval_app.command("answers")
+@handle_common_errors
+@handle_search_errors
+def answers_command(
+    ctx: typer.Context,
+    cases: CasesOption,
+    snapshot: SnapshotOption = None,
+    review: Annotated[
+        Path | None, typer.Option("--review", help="Filled review sheet (human-judged metrics).")
+    ] = None,
+    json_output: Annotated[bool, typer.Option("--json", help="Print the report as JSON.")] = False,
+) -> None:
+    """Runs answer cases against the local model and reports status, citation integrity and
+    evidence overlap; human-judged metrics need a filled review sheet."""
+    import asyncio
+
+    import yaml
+
+    from score_docs_assistant.answers.evaluation import (
+        apply_review,
+        evaluate_answers,
+        load_answer_cases,
+    )
+    from score_docs_assistant.cli.ask import build_answer_service
+    from score_docs_assistant.domain.errors import ConfigError, GenerationError
+
+    config = _config(ctx)
+    case_file, sha = load_answer_cases(cases)
+    if case_file.snapshot_fixture != "real":
+        raise ConfigError(
+            [(str(cases), "injection cases run on a synthetic snapshot via the real_runtime tests")]
+        )
+    service = build_answer_service(config)
+    try:
+        report, sheet = asyncio.run(
+            evaluate_answers(service, service._search, case_file, sha, snapshot_id=snapshot)  # noqa: SLF001
+        )
+    except GenerationError as exc:
+        typer.echo(f"{exc.code}: {exc.message}", err=True)
+        raise typer.Exit(code=1) from None
+    if review is not None:
+        report = apply_review(report, review)
+    path = _write_report(config, "answers", report, None)
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    sheet_path = config.data_dir / "reports" / f"answers-review-{stamp}.yaml"
+    sheet_path.write_text(yaml.safe_dump(sheet, sort_keys=False, allow_unicode=True))
+    if json_output:
+        typer.echo(report.model_dump_json())
+        return
+    label = f" [{', '.join(report.labels)}]" if report.labels else ""
+    model = report.model.get("name") or "not used"
+    typer.echo(
+        f"snapshot {report.snapshot_id}  model {model}  review: {report.review_status}{label}"
+    )
+    for category, summary in report.by_category.items():
+        typer.echo(f"  {category:<26} expected status {summary.ok}/{summary.total}")
+    typer.echo(
+        f"  status agreement {report.status_agreement.ok}/{report.status_agreement.total}   "
+        f"safe handling of unanswerable {report.safe_handling.ok}/{report.safe_handling.total}   "
+        f"citation integrity {report.citation_integrity.ok}/{report.citation_integrity.total}"
+    )
+    overlaps = [c.evidence_overlap for c in report.cases if c.evidence_overlap is not None]
+    if overlaps:
+        typer.echo(
+            f"  cited evidence overlaps expected evidence: {sum(overlaps) / len(overlaps):.1%} "
+            f"(mean over {len(overlaps)} cases)"
+        )
+    typer.echo(f"  factual support precision: {report.human_review.support_precision}")
+    typer.echo(f"  required-fact coverage: {report.human_review.required_fact_coverage}")
+    typer.echo(f"report: {path}")
+    typer.echo(f"review sheet: {sheet_path}")

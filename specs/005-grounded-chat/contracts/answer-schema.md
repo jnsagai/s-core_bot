@@ -40,6 +40,7 @@ server:
 | `URL_IN_TEXT` | claim text contains `http://`, `https://`, `www.`, `file:` or `mailto:` |
 | `HIDDEN_THOUGHT` | `<think>`/`</think>` or similar markers |
 | `EMPTY_CLAIM` | whitespace-only claim text |
+| `INJECTION_SUSPECTED` | a claim cites an excerpt marked `untrusted="instructions-like"` (text addressed to AI assistants) and reads as advice (you should…, run/execute…, a backtick command, `rm -`). Added after a real-model run repeated an injected command (verification.md) |
 
 At most one repair round (`generation.repair_attempts`). Then either an extractive fallback
 (research R5) or `ANSWER_INVALID` when there is no evidence.

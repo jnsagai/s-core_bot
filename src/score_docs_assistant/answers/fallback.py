@@ -26,7 +26,7 @@ def extractive_fallback(evidence: Sequence[EvidenceItem], count: int) -> list[Cl
             kind="documented",
             evidence_ids=[item.evidence_id],
         )
-        for item in evidence[:count]
+        for item in [e for e in evidence if not e.suspicious][:count]
     ]
     claims.append(Claim(text=FALLBACK_LIMITATION, kind="limitation", evidence_ids=[]))
     return claims

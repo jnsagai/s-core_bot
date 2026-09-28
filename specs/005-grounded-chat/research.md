@@ -86,6 +86,21 @@ quoted strings ≥ 12 characters (in `"…"` or backticks) must appear, whitespa
 cited excerpt. Each violation yields a machine-readable error list, used for the single repair
 prompt ("Your previous output failed these checks: …; return corrected JSON").
 
+### R4 amendment (implementation, real-model evidence, 2026-09-28)
+
+- **Status normalization**: in real runs the model often labels cited, valid claims with an
+  inconsistent status. Rejecting them threw away validated content, so benign mismatches are now
+  normalized with a server-authored gap statement and a `status_normalized` warning:
+  `insufficient_evidence` with cited claims → `partial`; `partial` or `clarification_needed`
+  without a limitation → a limitation is added. An `answered`/`partial` status without any
+  documented claim is still rejected (`STATUS_INCONSISTENT`).
+- **Injection defense** (`answers/injection.py`): the real model answered an injected instruction
+  with "to finish the gateway setup, you should run rm -rf /tmp/score" on the synthetic hostile
+  snapshot. Now excerpts that address AI assistants are marked `untrusted="instructions-like"` in the
+  prompt (policy rule 9a); claims citing them that read as advice are rejected
+  (`INJECTION_SUSPECTED`); and they are left out of the extractive fallback. On the same fixture
+  the real model then produced no override (verification.md).
+
 ## R5. Extractive fallback (FR-008, clarification Q1)
 
 Built only from stored data: the top ≤ 3 supplied evidence items become `documented` claims whose

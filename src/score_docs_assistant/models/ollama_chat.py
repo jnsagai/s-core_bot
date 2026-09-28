@@ -9,7 +9,8 @@ connection and the runtime stops generating.
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
+from contextlib import asynccontextmanager
 from typing import Any
 
 import httpx
@@ -39,23 +40,29 @@ class OllamaGenerationProvider:
             )
         self._base_url = base_url.rstrip("/")
         self._tag = normalize_tag(model_tag)
-        self._client = client or httpx.AsyncClient(
-            base_url=self._base_url,
-            timeout=httpx.Timeout(
-                connect=connect_timeout_seconds,
-                read=timeout_seconds,
-                write=timeout_seconds,
-                pool=connect_timeout_seconds,
-            ),
+        self._injected = client
+        self._timeout = httpx.Timeout(
+            connect=connect_timeout_seconds,
+            read=timeout_seconds,
+            write=timeout_seconds,
+            pool=connect_timeout_seconds,
         )
         self._capabilities: list[str] | None = None
 
-    async def aclose(self) -> None:
-        await self._client.aclose()
+    @asynccontextmanager
+    async def _client(self) -> AsyncIterator[httpx.AsyncClient]:
+        # An async client is bound to the event loop that created it, so one is opened per call
+        # (cheap on loopback) unless a test injects its own.
+        if self._injected is not None:
+            yield self._injected
+            return
+        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as client:
+            yield client
 
     async def _json(self, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
         try:
-            response = await self._client.request(method, path, json=body)
+            async with self._client() as client:
+                response = await client.request(method, path, json=body)
         except httpx.HTTPError as exc:
             raise GenerationError(
                 "GENERATION_UNAVAILABLE",
@@ -135,7 +142,10 @@ class OllamaGenerationProvider:
         prompt_tokens: int | None = None
         eval_tokens: int | None = None
         try:
-            async with self._client.stream("POST", "/api/chat", json=body) as response:
+            async with (
+                self._client() as client,
+                client.stream("POST", "/api/chat", json=body) as response,
+            ):
                 if response.status_code == 404:
                     raise GenerationError(
                         "GENERATION_UNAVAILABLE",

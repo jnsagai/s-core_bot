@@ -163,9 +163,7 @@ def test_invalid_then_repaired(fx: AnswerFixture) -> None:
     "bad",
     [
         "not json at all",
-        answer(
-            "insufficient_evidence", ("The watchdog supervises deadlines.", "documented", ["E1"])
-        ),
+        answer("answered", ("Nothing documented here.", "limitation", [])),
         answer("answered", ("Details at https://evil.example/", "documented", ["E1"])),
         answer(
             "answered", ('It says "the gateway is certified for ASIL D".', "documented", ["E1"])
