@@ -1,0 +1,20 @@
+# Model profiles for the local Ollama runtime.
+#
+# Sizes are approximate, sourced from ollama.com model pages, and recorded with the date they were
+# read. They are used only to size the disk check before `models pull`; the authoritative model
+# identity (sha256 digest) is recorded in the model lock after a real pull.
+schema_version: 1
+
+profiles:
+  local-small:
+    models:
+      - role: generation
+        tag: qwen3:4b-instruct
+        approx_size_bytes: 2500000000
+        size_source: "ollama.com library page, 2026-09-27"
+        license: Apache-2.0
+      - role: embedding
+        tag: nomic-embed-text
+        approx_size_bytes: 274000000
+        size_source: "ollama.com library page, 2026-09-27"
+        license: "to confirm"

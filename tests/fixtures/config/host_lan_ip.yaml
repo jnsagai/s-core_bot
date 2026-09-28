@@ -1,0 +1,4 @@
+schema_version: 1
+profile: local
+server:
+  host: 192.168.1.10

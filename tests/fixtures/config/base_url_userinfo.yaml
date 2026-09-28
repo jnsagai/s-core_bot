@@ -1,0 +1,4 @@
+schema_version: 1
+profile: local
+runtime:
+  base_url: http://user:pass@127.0.0.1:11434

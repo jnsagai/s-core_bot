@@ -1,0 +1,52 @@
+# S-CORE Docs Assistant — Community Project
+
+A local-first, open-source documentation assistant for Eclipse S-CORE. This is an
+**independent community project** — it is not endorsed by, affiliated with, or certified by the
+Eclipse Foundation or the Eclipse S-CORE maintainers.
+
+## Status
+
+F001 (Foundation and Local Runtime Contract) is in progress: project skeleton, validated
+configuration, an Ollama runtime client, hardware/corpus probes, the `score-assistant` CLI
+(`doctor`, `models inspect`, `models pull`, `serve`), and a loopback-only HTTP service exposing
+liveness, readiness, and capabilities. There is no ingestion, search, or chat yet — those arrive in
+later features (see `docs/BACKLOG.md`).
+
+## Scope
+
+- Runs entirely on your own machine: no paid API, API key, vendor login, or cloud inference.
+- Network access is used only for explicit preparation steps (`uv sync`, `models pull`); the
+  `serve` path makes no external calls.
+- Binds to `127.0.0.1` by default; a public-facing profile is a separate, not-yet-available mode.
+
+See `docs/PROJECT_SPEC.md` for the full product baseline and `.specify/memory/constitution.md` for
+the non-negotiable project principles.
+
+## Prerequisites
+
+- Linux x86-64
+- `git`
+- [`uv`](https://docs.astral.sh/uv/) ≥ 0.12 (manages the Python 3.12 environment)
+- Optional, for runtime-dependent commands: [Ollama](https://ollama.com) running on
+  `127.0.0.1:11434`
+
+## Quickstart
+
+```bash
+uv sync --locked                       # install the locked Python 3.12 environment
+uv run ruff format --check . && uv run ruff check .
+uv run mypy src
+uv run pytest                          # deterministic tests; no network, no models
+uv run python scripts/check_licenses.py
+uv run score-assistant doctor --config config/local.yaml
+```
+
+`doctor` reports local readiness (runtime reachable, models present, disk/memory, corpus state)
+with stable status codes and exit codes `0` (ok), `1` (operational failure), or `2`
+(configuration/usage error). See `specs/001-foundation/contracts/cli.md` for the full contract and
+`specs/001-foundation/quickstart.md` for the complete validation walkthrough.
+
+## Development
+
+This project uses [Spec Kit](https://github.com/github/spec-kit) for spec-first development; see
+`CLAUDE.md` for the governing documents and workflow.
