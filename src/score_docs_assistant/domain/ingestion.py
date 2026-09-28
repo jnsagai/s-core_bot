@@ -165,6 +165,7 @@ class LockedSource(BaseModel):
     release_mapping: None = None
     fetched_at: datetime
     selector_sha256: str | None = None
+    excluded_by_selector: int | None = None
     files: list[LockedFile] = []
     notice_files: list[LockedFile] = []
     skipped: list[SkippedEntry] = []

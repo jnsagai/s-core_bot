@@ -152,8 +152,13 @@ def make_malicious_global_config(root: Path, marker: Path) -> Path:
     hooks = root / "global-hooks"
     for name in ("reference-transaction", "post-checkout", "post-merge", "pre-auto-gc"):
         _executable(hooks / name, f"#!/bin/sh\ntouch {marker}\n")
+    # For file:// fetches git runs upload-pack locally, and upload-pack honours a *global*
+    # `uploadpack.packObjectsHook` — a real code-execution vector if global config were read.
+    pack_hook = hooks / "pack-objects-hook"
+    _executable(pack_hook, f'#!/bin/sh\ntouch {marker}\nexec "$@"\n')
     config = root / "gitconfig"
     config.write_text(
+        f"[uploadpack]\n\tpackObjectsHook = {pack_hook}\n"
         f"[core]\n\thooksPath = {hooks}\n"
         f'[filter "evil"]\n\tsmudge = touch {marker}; cat\n'
         '[url "file:///nonexistent/"]\n\tinsteadOf = https://\n'

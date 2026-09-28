@@ -25,6 +25,7 @@ Unknown fields rejected on read. Consumed by `sources inspect` and (F003) `index
       "release_mapping": null,
       "fetched_at": "2026-09-28T09:00:00Z",
       "selector_sha256": "<sha256 of canonical {include, exclude}>",
+      "excluded_by_selector": 1402,
       "files": [{"path": "docs/index.rst", "sha256": "…", "size": 1234}],
       "notice_files": [{"path": "LICENSE", "sha256": "…", "size": 11357},
                        {"path": "NOTICE", "sha256": "…", "size": 1500}],

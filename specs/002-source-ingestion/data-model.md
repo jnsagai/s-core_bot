@@ -40,7 +40,7 @@ file's parsed content.
 
 **LockedSource**: `source_id`, `kind`, `status: ok|failed`, `failure: str|None`, `revision`
 (git: 40-hex SHA; export: SHA-256 of bytes), `ref` (git), `url`/`repository`, `fetched_at`,
-`selector_sha256` (git), `authority`, `repository_license`, `parser_profile` (git),
+`selector_sha256` + `excluded_by_selector` count (git), `authority`, `repository_license`, `parser_profile` (git),
 `associated_source` + `docs_root` (export), `files: list[LockedFile]`, `notice_files: list[LockedFile]`,
 `revision_status: pinned|unverified`, `release_mapping: None`, `skipped: list[SkippedEntry]`.
 
