@@ -212,8 +212,11 @@ files are reported clearly.
   MUST be labelled `alias` and show the original spelling. Lookup never returns fuzzy or
   similarity-based matches.
 - **FR-003**: When several entities share an ID (across sources, or duplicates within a source),
-  lookup MUST return all of them with their namespaced keys, ordered deterministically (source ID,
-  then key), without preferring one. A `source_id:ID` query MUST restrict to that source.
+  lookup MUST return all of them with their namespaced keys, ordered deterministically: records
+  bound to a pinned git revision before `unverified` export copies, then by source ID, then by key.
+  No other preference is invented between sources. A `source_id:ID` query MUST restrict to that
+  source. (Plan research R1: in the real corpus every git-source need also exists in its
+  `needs-export` copy, so an unfiltered lookup always has two matches.)
 - **FR-004**: Each lookup result MUST include the namespaced key, original ID, type, title, status
   (if stated), source ID, revision, revision status (`pinned` or `unverified`), path, line span, the
   entity's options as stored, and a readable excerpt from the entity's chunk(s).
