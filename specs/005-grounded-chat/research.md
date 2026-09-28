@@ -62,7 +62,10 @@ the schema; no URLs). The user message contains delimited data blocks:
 
 Excerpt text is escaped so that `</excerpt>`, `<evidence>` and similar sequences inside documents
 cannot close the data block (`<` → `‹` inside data only; citations keep the stored excerpt).
-The policy text states that content inside these tags is data.
+The policy text states that content inside these tags is data. The same escaping applies to history turns (a
+turn containing `</conversation>` cannot end the block). The quote-consistency check compares
+against the escaped excerpt the model saw **and** the stored text, so escaping never causes a
+false failure (checklist CHK006).
 
 ## R4. Validation rules (FR-003, FR-007) and an observed failure
 
@@ -76,7 +79,7 @@ The policy text states that content inside these tags is data.
 - `clarification_needed`: ≥ 1 limitation claim stating what is needed; documented claims allowed
   only if cited (partial context).
 
-Other checks: JSON parse; strict schema (unknown keys rejected); ≤ 12 claims, each ≤ 1 200
+Other checks: raw output ≤ 64 KiB before parsing (checklist CHK008); JSON parse; strict schema (unknown keys rejected); ≤ 12 claims, each ≤ 1 200
 characters; every `evidence_ids` entry in the supplied set; documented and interpretation claims
 cite ≥ 1 ID; no `http(s)://`, `www.` or `file:` in claim text; no `<think>`/`</think>` markers;
 quoted strings ≥ 12 characters (in `"…"` or backticks) must appear, whitespace-normalized, in a
@@ -109,14 +112,18 @@ slot plus a counter for waiters (≤ `queued_generations`). A request beyond tha
 `async` handler. Retrieval and validation run in the threadpool (`run_in_threadpool`), and
 generation uses an async httpx stream so a client disconnect (Starlette `request.is_disconnected()`
 polled while waiting, plus task cancellation) closes the provider stream. A single deadline
-(`asyncio.timeout`) covers queueing, retrieval, generation and repair. Expiry → 504
+(`asyncio.timeout`) covers queueing, retrieval, generation and repair. A repair is attempted
+only if at least 15 seconds of the deadline remain; otherwise the fallback is used at once
+(checklist CHK010). Expiry → 504
 `DEADLINE_EXCEEDED`. Search keeps its own gate (F004) and is not blocked by the generation queue.
 
 ## R8. Streaming (FR-021, clarification Q2)
 
 `Accept: text/event-stream` → `StreamingResponse` with `text/event-stream`, lines `id: n`, `event:
 <name>`, `data: <json>`. Events are `progress` {stage, position?}, `answer` {envelope}, `error`
-{error envelope}, `done` {}. IDs increase from 1. Otherwise a normal JSON response. Headers
+{error envelope}, `done` {}. Each `data:` line is compact single-line JSON (`json.dumps` without
+indentation; newlines inside strings are escaped by JSON), so document or model text can never
+inject SSE fields (checklist CHK009). IDs increase from 1. Otherwise a normal JSON response. Headers
 `cache-control: no-store`, `x-accel-buffering: no`.
 
 ## R9. Answer evaluation (FR-025, FR-026)
