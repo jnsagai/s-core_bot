@@ -368,7 +368,19 @@ $ uv run pytest -q          # unset, normal shell
 ```
 
 Both environments now produce identical results. Ruff/mypy re-confirmed clean after the change.
-Next push should be checked for a green run.
+
+**Confirmed fixed for real**: next push (`gh run 36391821731` / `36391825343`, 2026-09-28) both
+completed `success`. Real step output pulled from the Actions log, not just the pass/fail badge:
+
+```
+Format check:              111 files already formatted
+Lint:                      All checks passed!
+Type check:                Success: no issues found in 35 source files
+Test:                      127 passed, 2 skipped, 1 warning in 3.83s
+Dependency license check:  39 packages, all allowed or reviewed.
+```
+
+Matches the local run exactly. This closes the "CI has never actually run" gap.
 
 ## Scenario D — real `models pull` — 2026-09-28 (run by project owner)
 
