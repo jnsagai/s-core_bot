@@ -66,6 +66,7 @@ def app() -> None:
     cli_app()
 
 
+from score_docs_assistant.cli import bundle as _bundle  # noqa: E402,F401
 from score_docs_assistant.cli import doctor as _doctor  # noqa: E402,F401
 from score_docs_assistant.cli import index as _index  # noqa: E402,F401
 from score_docs_assistant.cli import models as _models  # noqa: E402,F401

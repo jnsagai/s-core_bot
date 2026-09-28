@@ -9,11 +9,18 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
 - **F001 (done)** — validated configuration, Ollama runtime client, hardware/corpus probes,
   `score-assistant doctor | models inspect | models pull | serve`, and a loopback-only HTTP service
   exposing liveness, readiness, and capabilities.
-- **F002 (implemented, verification in progress)** — approved-source registry
+- **F002 (done)** — approved-source registry
   (`config/sources.yaml`), `sources validate | sync | inspect`: pinned acquisition of the S-CORE
   documentation repositories without executing any repository content, and offline normalization
   of RST, Markdown (incl. MyST directives) and Sphinx-Needs requirement records with exact source
   locations, relationships and licensing.
+
+- **F003 (implemented)** — immutable corpus snapshots: structure-aware chunking, an SQLite
+  corpus with a full-text index, local embeddings from `nomic-embed-text` (never truncated, reused
+  across builds), manifests with checksums, staged builds, atomic activation and rollback,
+  reader pins, retention, and verified bundle export/import:
+  `index build | validate`, `snapshots list | activate | rollback`,
+  `bundle export | inspect | import`.
 
 There is no search or chat yet — those arrive in later features (see `docs/BACKLOG.md`).
 
@@ -21,7 +28,8 @@ There is no search or chat yet — those arrive in later features (see `docs/BAC
 
 - Runs entirely on your own machine: no paid API, API key, vendor login, or cloud inference.
 - Network access is used only for explicit preparation steps (`uv sync`, `models pull`,
-  `sources sync`); `serve` and `sources inspect` make no external calls.
+  `sources sync`); `serve`, `sources inspect`, `snapshots` and `bundle` make no external calls.
+  `index build` talks only to the local embedding runtime on loopback.
 - Binds to `127.0.0.1` by default; a public-facing profile is a separate, not-yet-available mode.
 
 See `docs/PROJECT_SPEC.md` for the full product baseline and `.specify/memory/constitution.md` for
@@ -49,7 +57,17 @@ uv run score-assistant --config config/local.yaml doctor
 uv run score-assistant sources validate --config config/sources.yaml
 uv run score-assistant --config config/local.yaml sources sync --config config/sources.yaml
 uv run score-assistant --config config/local.yaml sources inspect --lock data/source-lock.json
+
+# Snapshots (offline; index build uses only the local Ollama embedding runtime)
+uv run score-assistant --config config/local.yaml index build --activate   # add --lexical-only without Ollama
+uv run score-assistant --config config/local.yaml snapshots list
+uv run score-assistant --config config/local.yaml index validate --snapshot <id>
+uv run score-assistant --config config/local.yaml snapshots rollback
+uv run score-assistant --config config/local.yaml bundle export --snapshot <id> --output <file>
 ```
+
+A build ends `validated` (integrity-checked, not an engineering approval) and is served only after
+activation. See `specs/003-snapshot-index/quickstart.md` for the full walkthrough.
 
 The global `--config` (before the subcommand) selects the app configuration; `sources … --config`
 selects the source registry.

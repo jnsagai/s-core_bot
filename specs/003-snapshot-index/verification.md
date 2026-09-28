@@ -133,3 +133,69 @@ All four locked source revisions and both git caches were kept (all referenced b
 Operator note: the reader was killed together with the agent's shell (a `pkill -f` pattern
 matched the shell's own command line), which is still a kill of the pin holder; its pin was
 released as designed.
+
+## Phase 5 (US3 — validate and bundles) checkpoint and Phase 6 polish — 2026-09-28
+
+### Full gate
+
+```text
+$ uv run ruff format --check . && uv run ruff check . && uv run mypy src
+248 files already formatted / All checks passed! / Success: no issues found in 82 source files
+$ uv run pytest -q
+566 passed, 6 skipped (opt-in markers; not run in this invocation)
+$ SCORE_ASSISTANT_REAL_RUNTIME=1 uv run pytest -q -m real_runtime
+4 passed, 1 skipped (real model pull, separate opt-in: not run)
+$ uv run python scripts/check_licenses.py
+License check passed: 42 packages, all allowed or reviewed.
+```
+
+Mocked-provider coverage for US3: `index validate` exit codes (semantic `disabled`/`unverified`
+exit 0, integrity failure exit 1 naming the file, unknown ID exit 1, usage exit 2), report written
+to `data/reports/`, snapshot directory mtimes unchanged; bundle round trip on a fresh data dir;
+**18 hostile bundles** (tampered, same-size byte flip, `..`, absolute, outside prefix, backslash,
+symlink, hardlink, device, FIFO, directory entry, duplicate, unlisted, missing member, manifest not
+first, manifest > 1 MiB, newer schema, wrong declared total), each rejected with its own reason,
+nothing registered and staging removed; entry-count and size caps; disk check before extraction;
+same-ID no-op, `id_conflict`, revival of a deleted ID; the license-review gate and recorded
+acknowledgement; bundle commands proven socket-free.
+
+### Real runs on the workstation
+
+**Quickstart D (integrity)**: `index validate` on retired `20260928T135835Z-3e756999` → exit 0.
+After appending to its `reports/coverage.json`:
+`FAIL file:reports/coverage.json: reports/coverage.json: checksum mismatch`, exit 1.
+`snapshots activate` → `CHECKSUM_MISMATCH: … reports/coverage.json changed or missing`, exit 1,
+active unchanged.
+
+**Quickstart E (runtime unavailable)**: stopping the snap-managed Ollama needs sudo, which the
+agent does not have. Instead, a config copy pointed `runtime.base_url` at `http://127.0.0.1:9`
+(nothing listening), which the client sees exactly as a stopped runtime:
+`index build` → `EMBEDDING_UNAVAILABLE: no embedding runtime at http://127.0.0.1:9: [Errno 111]
+Connection refused (use --lexical-only …)`, exit 1; `index build --lexical-only` → validated,
+`semantic: absent`, 5 658 chunks, `network_used: none`; `index validate` → `semantic: unverified`,
+exit 0. **Deviation**: the literal `snap stop ollama` step was not run.
+
+**Quickstart F (bundles)**: export without acknowledgement → `LICENSE_REVIEW_REQUIRED` listing the
+3 CC-BY-SA-4.0 `score-process` files; with `--acknowledge-license-review "local verification only;
+not redistributed"` → 20.4 MB bundle (40.5 MB uncompressed, 7 entries) in 1.6 s; `bundle inspect`
+shows identity, counts, embedding, revisions, license notes and the acknowledgement; import into a
+fresh data dir in 1.3 s → `validated`, not active. **SC-006**: `sha256sum` of all 6 snapshot files
+is identical between the original and the imported snapshot. In the fresh data dir (no model lock),
+`index validate` reports integrity ok and semantic `disabled` with `models pull` guidance.
+
+**Quickstart G (offline, `unshare -rn`, no network at all, not even loopback to Ollama)**:
+`index validate` (exit 0, semantic `unverified`: "Network is unreachable"), `snapshots list`,
+`bundle inspect`, `snapshots activate` of a lexical-only snapshot (with the
+lexical-over-semantic warning; retention deleted the tampered snapshot), `snapshots rollback`,
+`index build --lexical-only`, and `bundle import` into another fresh data dir all succeeded.
+
+### Polish
+
+- README Status/Scope/Quickstart and CLAUDE.md Commands list the new commands; the documented
+  offline commands were re-run (`sources validate`, `doctor` → `[OK] corpus.state`, `snapshots
+  list`, `index validate`, `bundle *`).
+- `docs/TRACEABILITY.md`: SRC-009, RET-007, OPS-002, OPS-003 → verified (F003 scope); SRC-010,
+  SRC-011 F003 parts verified; LOC-003, LOC-006, SRC-012 notes extended.
+- `docs/ASSUMPTIONS.md`: A-019 to A-023 added. `docs/BACKLOG.md`: F003 implemented, converge
+  pending.
+- Environment: root filesystem still 99 % used (≈ 4.2 GiB free) at the end of the session.

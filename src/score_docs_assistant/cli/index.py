@@ -94,3 +94,63 @@ def build_command(
     else:
         typer.echo(f"{result.snapshot_id}  {result.state}  semantic {result.semantic}")
     sys.stdout.flush()
+
+
+@index_app.command("validate")
+@handle_common_errors
+def validate_command(
+    ctx: typer.Context,
+    snapshot: Annotated[str, typer.Option("--snapshot", help="Snapshot ID to validate.")],
+    json_output: Annotated[bool, typer.Option("--json", help="Print the report as JSON.")] = False,
+) -> None:
+    """Validates a snapshot offline; may query the local runtime for model identity (never embeds).
+
+    Exit 0 when no integrity check fails (semantic `disabled`/`unverified` are warnings), 1 on
+    any integrity failure or an unknown snapshot.
+    """
+    from datetime import UTC, datetime
+
+    from score_docs_assistant.domain.errors import SnapshotError
+    from score_docs_assistant.storage.build import chunker_config
+    from score_docs_assistant.storage.catalog import Catalog
+    from score_docs_assistant.storage.manifest import dump_json
+    from score_docs_assistant.storage.pins import Pin
+    from score_docs_assistant.storage.validation import SnapshotValidator
+
+    config = _config(ctx)
+    catalog = Catalog.open(config.data_dir, create=False)
+    if catalog is None:
+        raise SnapshotError("SNAPSHOT_NOT_FOUND", "no catalog yet; run `index build` first")
+    with catalog:
+        row = catalog.get(snapshot)
+    directory = config.data_dir / "snapshots" / snapshot
+    if row is None or row.state in ("deleted", "building") or not directory.is_dir():
+        state = "missing" if row is None else row.state
+        raise SnapshotError("SNAPSHOT_NOT_FOUND", f"snapshot {snapshot} is {state}")
+    try:
+        runtime = runtime_factory.build_embedding_provider(config)
+    except SnapshotError:
+        runtime = None
+    with Pin(config.data_dir, snapshot):
+        report = SnapshotValidator(
+            data_dir=config.data_dir,
+            embedding_model=config.runtime.embedding_model,
+            chunker_config=chunker_config(config),
+            runtime=runtime,
+        ).validate(directory, expected_manifest_sha256=row.manifest_sha256)
+    reports = config.data_dir / "reports"
+    reports.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    (reports / f"validate-{snapshot}-{stamp}.json").write_bytes(dump_json(report))
+    if json_output:
+        typer.echo(report.model_dump_json())
+    else:
+        for check in report.integrity:
+            if check.status == "fail":
+                typer.echo(f"FAIL {check.id}: {check.detail}")
+        verdict = "integrity ok" if report.integrity_ok else "integrity FAILED"
+        typer.echo(f"{snapshot}: {verdict}")
+        typer.echo(f"semantic: {report.semantic} ({report.semantic_detail})")
+        for hint in report.guidance:
+            typer.echo(f"  guidance: {hint}")
+    raise typer.Exit(code=0 if report.integrity_ok else 1)

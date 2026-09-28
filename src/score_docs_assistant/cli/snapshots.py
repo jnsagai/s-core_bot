@@ -1,4 +1,4 @@
-"""`score-assistant snapshots list|activate|rollback` (specs/003-snapshot-index/contracts/cli.md)."""
+"""`score-assistant snapshots list|activate|rollback` (specs/003-snapshot-index/contracts)."""
 
 from __future__ import annotations
 

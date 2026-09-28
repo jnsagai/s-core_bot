@@ -46,6 +46,10 @@ uv run score-assistant --config config/local.yaml serve
 uv run score-assistant sources validate --config config/sources.yaml     # offline
 uv run score-assistant sources sync --config config/sources.yaml         # NETWORK
 uv run score-assistant sources inspect --lock data/source-lock.json      # offline
+uv run score-assistant --config config/local.yaml index build [--activate] [--lexical-only]  # loopback embeddings only
+uv run score-assistant --config config/local.yaml index validate --snapshot <id>
+uv run score-assistant --config config/local.yaml snapshots list|activate <id>|rollback
+uv run score-assistant --config config/local.yaml bundle export|inspect|import       # offline
 # Opt-in tests: SCORE_ASSISTANT_REAL_RUNTIME=1 (Ollama), SCORE_ASSISTANT_REAL_NETWORK=1 (GitHub)
 ```
 
