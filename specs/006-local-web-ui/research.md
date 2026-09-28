@@ -12,20 +12,57 @@ installed yet at research time; `node --version` on the workstation is v20.20.2)
 | `react`, `react-dom` | 19.3.0 | UI runtime |
 | `vite` | 8.3.1 | Build tool / dev server |
 | `@vitejs/plugin-react` | 6.1.1 | Vite React plugin |
-| `typescript` | 7.0.2 | Language/type checker |
+| `typescript` | 5.9.3 | Language/type checker |
 | `react-markdown` | 10.1.0 | Markdown → React elements (no raw HTML by default, see R2) |
 | `remark-gfm` | 4.0.1 | GitHub-flavoured Markdown (tables, strikethrough) for `react-markdown` |
-| `vitest`, `@vitest/coverage-v8` | 5.0.2 | Test runner (no browser needed; jsdom environment) |
+| `vitest`, `@vitest/coverage-v8` | 4.1.11 | Test runner (no browser needed; jsdom environment) |
 | `@testing-library/react` | 16.3.3 | Component rendering/queries |
 | `@testing-library/user-event` | 14.6.7 | Keyboard/pointer simulation for a11y-relevant tests |
-| `jsdom` | 30.1.1 | DOM environment for Vitest |
+| `jsdom` | 25.0.1 | DOM environment for Vitest |
 | `axe-core` | 4.13.0 | Static accessibility rule engine, run over jsdom-rendered markup |
 | `eslint`, `typescript-eslint` | 10.11.0, 8.71.0 | Lint |
-| `license-checker-rseidelsohn` | 5.0.1 | npm dependency license inventory (maintained fork; original `license-checker` is unmaintained) |
+| `license-checker-rseidelsohn` | 4.4.2 | npm dependency license inventory (maintained fork; original `license-checker` is unmaintained) |
 | `@types/react`, `@types/react-dom` | 19.3.0 | Type definitions matching the runtime major |
+
+Node.js on this workstation is v20.20.2 (`node --version`). `vite@8.3.1`, `eslint@10.11.0`, and
+`typescript-eslint@8.71.0` all declare an engines range that includes `^20.19.0`/`^20.9.0`, so
+20.20.2 is genuinely supported by those, not merely "not yet blocked."
 
 **Decision**: pin these exact versions in `frontend/package.json` and commit the resulting
 `package-lock.json` (`npm install` once, then `npm ci` for every reproducible install per FR-019).
+
+**Amendment 1 (discovered during `npm install`)**: `vitest@5.0.2`'s own peer-dependency graph
+(`peerDependenciesMeta`, several exact-pinned optional peers such as `@vitest/coverage-v8:
+"5.0.2"`) crashes this workstation's npm (`10.8.2`) with `TypeError: Cannot read properties of
+null (reading 'edgesOut')` inside `@npmcli/arborist`'s `#loadPeerSet` — reproduced in complete
+isolation (`npm install vitest@5.0.2` alone in an empty scratch package, no other dependencies
+present). `vitest@4.1.11` (the latest release on the maintained `V4` dist-tag) has a materially
+simpler peer set and installs cleanly with the same `vite@8.3.1`
+(peer range `^6.0.0 || ^7.0.0 || ^8.0.0` — still satisfied). Pinned `vitest` and
+`@vitest/coverage-v8` to `4.1.11` instead of forcing the crash away with
+`--force`/`--legacy-peer-deps`, which would have hidden the actual peer-graph problem rather than
+resolved it.
+
+**Amendment 2 (discovered during `npm install`)**: the first successful install produced
+`EBADENGINE` warnings for `@testing-library/jest-dom@7.0.1` (needs Node ≥22),
+`jsdom@30.1.1` (needs Node ^22.22.2/^24.15.0/≥26), and `license-checker-rseidelsohn@5.0.1`
+(needs Node ≥24) plus several of jsdom's own transitive dependencies — this workstation runs
+Node v20.20.2. Running test tooling outside its declared engine range risks undiagnosed runtime
+failures, so each was pinned down to the newest release that still declares Node 20 support and
+was confirmed to install with zero `EBADENGINE` warnings: `@testing-library/jest-dom@6.9.1`
+(`node: ">=14"`), `jsdom@25.0.1` (`node: ">=18"`), `license-checker-rseidelsohn@4.4.2`
+(`node: ">=18"`).
+
+**Amendment 3 (discovered during `npm install`)**: the registry's `typescript@latest` is `7.0.2`,
+but `typescript-eslint@8.71.0`'s own `peerDependencies` require `typescript: ">=4.8.4 <6.1.0"`
+(confirmed via `npm view typescript-eslint peerDependencies`); there is no stable `6.x` release
+yet (`npm view typescript dist-tags` shows only `beta: 6.0.0-beta`, and `latest` jumps straight
+to `7.0.2`), and no `typescript-eslint` release (including its `canary`/`rc-v8` tags) supports
+TypeScript 7 yet. Rather than force an unsupported peer resolution (`--force`/
+`--legacy-peer-deps`), `typescript` is pinned to `5.9.3` — the newest stable release the rest of
+the toolchain actually supports — and this note stays here as the reason, so a future contributor
+does not "helpfully" bump it back to `latest` without re-checking `typescript-eslint`'s peer
+range first.
 
 ## R2. `react-markdown` does not render raw HTML by default (FR-009)
 
