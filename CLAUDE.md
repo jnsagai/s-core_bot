@@ -50,6 +50,9 @@ uv run score-assistant --config config/local.yaml index build [--activate] [--le
 uv run score-assistant --config config/local.yaml index validate --snapshot <id>
 uv run score-assistant --config config/local.yaml snapshots list|activate <id>|rollback
 uv run score-assistant --config config/local.yaml bundle export|inspect|import       # offline
+uv run score-assistant --config config/local.yaml search "query" [--lexical] [--json]  # loopback embeddings only
+uv run score-assistant --config config/local.yaml lookup <ID> [--relationships]
+uv run score-assistant --config config/local.yaml eval retrieval --cases eval/retrieval-dev.yaml | exact-ids | latency
 # Opt-in tests: SCORE_ASSISTANT_REAL_RUNTIME=1 (Ollama), SCORE_ASSISTANT_REAL_NETWORK=1 (GitHub)
 ```
 

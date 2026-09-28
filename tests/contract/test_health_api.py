@@ -106,30 +106,41 @@ def test_wrong_method_is_405(client: TestClient) -> None:
     assert response.json()["error"]["code"] == "METHOD_NOT_ALLOWED"
 
 
-def test_compatible_corpus_keeps_search_and_chat_not_implemented(tmp_path: Path) -> None:
-    """FR-021: a compatible corpus must not make search (F004) or chat (F005) look available."""
+def test_compatible_corpus_search_available_chat_not_implemented(tmp_path: Path) -> None:
+    """F004 FR-015: a compatible corpus makes search available (degraded visibly when semantic
+    search is unusable); chat stays not_implemented until F005."""
     from tests.helpers.lifecycle import activate, snapshots
     from tests.helpers.snapshot_env import make_env
 
     env = make_env(tmp_path)
     [a] = snapshots(env, 1)
     activate(env, a)
-    config = AppConfig(data_dir=env.data)
-    service = ReadinessService(
-        config=config,
-        runtime=_FakeRuntime(
-            [InstalledModel(tag="qwen3:4b-instruct", digest="sha256:x", size_bytes=1)]
-        ),
-        corpus_probe=FileCorpusProbe(env.data),
-        profile=_profile(),
-        cache_seconds=0,
-    )
-    app = create_app(config=config, readiness_service=service)
-    response = TestClient(app, base_url="http://127.0.0.1:8080").get(
-        "/health/ready", headers={"host": "127.0.0.1:8080"}
-    )
-    payload = response.json()
-    assert payload["capabilities"]["search"]["reasons"] == ["not_implemented"]
-    assert "not_implemented" in payload["capabilities"]["chat"]["reasons"]
-    assert "corpus_missing" not in str(payload)
-    assert payload["ready"] is False
+
+    def payload(probe: object) -> dict:  # type: ignore[type-arg]
+        config = AppConfig(data_dir=env.data)
+        service = ReadinessService(
+            config=config,
+            runtime=_FakeRuntime(
+                [InstalledModel(tag="qwen3:4b-instruct", digest="sha256:x", size_bytes=1)]
+            ),
+            corpus_probe=FileCorpusProbe(env.data),
+            profile=_profile(),
+            cache_seconds=0,
+            semantic_probe=probe,  # type: ignore[arg-type]
+        )
+        app = create_app(config=config, readiness_service=service)
+        response = TestClient(app, base_url="http://127.0.0.1:8080").get(
+            "/health/ready", headers={"host": "127.0.0.1:8080"}
+        )
+        assert response.status_code == 200
+        return response.json()
+
+    healthy = payload(lambda: True)
+    assert healthy["ready"] is True
+    assert healthy["capabilities"]["search"] == {"available": True, "reasons": []}
+    assert "not_implemented" in healthy["capabilities"]["chat"]["reasons"]
+    degraded = payload(lambda: False)
+    assert degraded["capabilities"]["search"] == {
+        "available": True,
+        "reasons": ["semantic_unavailable"],
+    }

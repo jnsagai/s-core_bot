@@ -102,3 +102,30 @@ def test_real_fixture_build_validates(tmp_path) -> None:  # type: ignore[no-unty
         assert result.state == "validated" and result.semantic == "present"
     finally:
         provider.close()
+
+
+def test_real_hybrid_search_on_fixture_snapshot(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """F004 FR-012: real query embeddings (search_query: prefix) give a hybrid result list."""
+    from score_docs_assistant.domain.retrieval import SearchRequest
+    from score_docs_assistant.retrieval.service import SearchService
+    from score_docs_assistant.storage.build import BuildService
+    from tests.helpers.build import app_config
+    from tests.helpers.lifecycle import activate
+    from tests.helpers.search import search_sources
+    from tests.helpers.snapshot_env import PROFILES, make_env, write_model_lock
+
+    env = make_env(tmp_path, search_sources())
+    provider = _embedding_provider()
+    try:
+        write_model_lock(env.data, provider.identity().model_digest)
+        snapshot = BuildService(
+            config=app_config(env.data), profiles_dir=PROFILES, provider=provider
+        ).run(env.lock_path)
+        activate(env, snapshot.snapshot_id, runtime=provider)
+        service = SearchService(config=app_config(env.data), provider=provider)
+        response = service.search(SearchRequest(query="How is the documentation built?"))
+        assert response.mode == "hybrid" and response.semantic_status == "enabled"
+        assert any("semantic" in r.matched_by for r in response.results)
+        assert response.results[0].path == "docs/build.md"
+    finally:
+        provider.close()

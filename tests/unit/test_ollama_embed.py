@@ -91,3 +91,15 @@ def test_missing_model_is_unavailable() -> None:
 def test_only_loopback_accepted() -> None:
     with pytest.raises(SnapshotError):
         OllamaEmbeddingProvider("http://10.0.0.5:11434", "m", config=ChunkerConfig())
+
+
+def test_embed_query_uses_query_prefix_and_no_truncation() -> None:
+    seen: list[dict] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json={"embeddings": [[0.0, 1.0, 0.0]]})
+
+    assert _provider(handler).embed_query("how to build") == [0.0, 1.0, 0.0]
+    assert seen[0]["input"] == ["search_query: how to build"]
+    assert seen[0]["truncate"] is False

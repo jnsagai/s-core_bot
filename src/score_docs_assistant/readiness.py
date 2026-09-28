@@ -37,6 +37,7 @@ class ReadinessService:
         profile: ModelProfile,
         cache_seconds: float | None = None,
         clock: Callable[[], float] = time.monotonic,
+        semantic_probe: Callable[[], bool | None] | None = None,
     ) -> None:
         self._config = config
         self._runtime = runtime
@@ -48,6 +49,8 @@ class ReadinessService:
             else config.diagnostics.readiness_cache_seconds
         )
         self._clock = clock
+        # Returns whether the active snapshot's semantic search is usable (None: unknown).
+        self._semantic_probe = semantic_probe
         self._cached: Readiness | None = None
         self._cached_at: float | None = None
 
@@ -97,9 +100,14 @@ class ReadinessService:
                 chat_reasons.append(ReasonCode.MODEL_IDENTITY_MISMATCH)
 
         if corpus_state == CorpusState.COMPATIBLE:
-            # Search arrives in F004 and answers in F005; a compatible corpus alone must not make
-            # either capability look available (research R11, docs/ASSUMPTIONS.md A-022).
-            search_state = _state([ReasonCode.NOT_IMPLEMENTED])
+            # F004: search works on any compatible active snapshot, degraded to keyword-only when
+            # semantic search is unusable (still available, with a visible reason; LOC-006).
+            # Answers arrive in F005, so chat stays not_implemented (docs/ASSUMPTIONS.md A-022).
+            degraded = self._semantic_probe is not None and self._semantic_probe() is False
+            search_state = CapabilityState(
+                available=True,
+                reasons=[ReasonCode.SEMANTIC_UNAVAILABLE] if degraded else [],
+            )
             chat_reasons.append(ReasonCode.NOT_IMPLEMENTED)
         chat_state = _state(chat_reasons)
         compare_state = _state([ReasonCode.NOT_IMPLEMENTED])

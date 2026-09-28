@@ -9,19 +9,34 @@ from starlette.types import ASGIApp
 from score_docs_assistant.api.guard import HostOriginGuard
 from score_docs_assistant.api.logging import RequestContextMiddleware
 from score_docs_assistant.api.routes import register_error_handlers, register_routes
+from score_docs_assistant.api.search_routes import register_search_routes
 from score_docs_assistant.config.schema import AppConfig
 from score_docs_assistant.readiness import ReadinessService
+from score_docs_assistant.retrieval.service import SearchService
 
 
-def create_fastapi_app(*, config: AppConfig, readiness_service: ReadinessService) -> FastAPI:
+def create_fastapi_app(
+    *,
+    config: AppConfig,
+    readiness_service: ReadinessService,
+    search_service: SearchService | None = None,
+) -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     register_error_handlers(app)
     register_routes(app, config=config, readiness_service=readiness_service)
+    register_search_routes(app, search_service or SearchService(config=config, provider=None))
     return app
 
 
-def create_app(*, config: AppConfig, readiness_service: ReadinessService) -> ASGIApp:
-    fastapi_app = create_fastapi_app(config=config, readiness_service=readiness_service)
+def create_app(
+    *,
+    config: AppConfig,
+    readiness_service: ReadinessService,
+    search_service: SearchService | None = None,
+) -> ASGIApp:
+    fastapi_app = create_fastapi_app(
+        config=config, readiness_service=readiness_service, search_service=search_service
+    )
     guarded: ASGIApp = HostOriginGuard(
         fastapi_app,
         allowed_hosts=config.server.allowed_hosts,
