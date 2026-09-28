@@ -1,0 +1,7 @@
+# Reviewed license exceptions (research.md R13).
+#
+# An entry here means a human actually checked the named package's real license and accepted it
+# for this project's use — never a way to silence a check_licenses.py failure without reading the
+# license. Each entry MUST record who/when reviewed it and why it is acceptable.
+schema_version: 1
+exceptions: []

@@ -202,6 +202,45 @@ atomic-write/interrupted-write guarantees in `tests/unit/test_model_lock.py`.
   must take the *last* line (the final JSON result), since `models pull`'s stderr progress lines
   are interleaved into the same captured stream.
 
+## Phase 6 (User Story 4 — license gate, CI) checkpoint — 2026-09-28
+
+```
+$ uv run ruff format --check . && uv run ruff check .
+111 files already formatted; All checks passed!
+
+$ uv run mypy src
+Success: no issues found in 35 source files
+
+$ uv run pytest -q
+127 passed, 2 skipped in 3.09s
+
+$ uv run python scripts/check_licenses.py --write-notices
+Wrote /home/jefferson/s-core_bot/THIRD_PARTY_NOTICES.md (39 packages).
+License check passed: 39 packages, all allowed or reviewed.
+```
+
+The 2 skipped are `real_runtime` (opt-in, not run — reported skipped, not passed).
+
+### Real environment finding: `pip-licenses` sees ROS packages without a PYTHONPATH fix
+
+The same ROS `PYTHONPATH` contamination noted in the Phase 1/2 checkpoint (A-009) affects
+`pip-licenses` too: run naively, it reported on packages from `/opt/ros/iron/lib/python3.10/
+site-packages` (dozens of `UNKNOWN`-licensed ROS packages) instead of only this project's synced
+venv. Confirmed by comparing `uv run pip-licenses --format=json` (picks up ROS packages) against
+the same command with `PYTHONPATH=` cleared (exactly the 39 real locked dependencies). Fixed by
+having `run_pip_licenses()` in `scripts/check_licenses.py` strip `PYTHONPATH` from the subprocess
+environment before invoking `pip-licenses`. Real run against the actual synced environment: **all
+39 locked dependencies pass** (MIT, BSD-2/3-Clause, Apache-2.0, MPL-2.0, ISC, PSF-2.0) — no
+exceptions were needed in `config/license-exceptions.yaml`. This resolves `docs/ASSUMPTIONS.md`
+A-005's open dependency-license review.
+
+`.github/workflows/ci.yml` created with `actions/checkout` and `astral-sh/setup-uv` pinned by
+commit SHA (resolved from each action's latest release tag via the GitHub API on 2026-09-28:
+checkout v7.0.1 → `3d3c42e5aac5ba805825da76410c181273ba90b1`; setup-uv v10.2.0 →
+`c18668ad3cf93ea998bef934396af7bb5c839dc7`). Not run in a real GitHub Actions environment tonight
+(no CI trigger available from this workstation); YAML syntax validated locally with
+`yaml.safe_load`. First real CI run should be checked after this branch is pushed.
+
 ## Blockers
 
-(none yet)
+(none)

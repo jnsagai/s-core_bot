@@ -155,13 +155,13 @@ first and confirm they fail before implementing.
 
 ### Tests for User Story 4
 
-- [ ] T055 [P] [US4] Write `tests/unit/test_check_licenses.py`: fake `pip-licenses` JSON inventory → allowed pass, unknown/unlisted license fails naming the package, reviewed exception honoured (FR-017)
+- [x] T055 [P] [US4] Write `tests/unit/test_check_licenses.py`: fake `pip-licenses` JSON inventory → allowed pass, unknown/unlisted license fails naming the package, reviewed exception honoured (FR-017)
 
 ### Implementation for User Story 4
 
-- [ ] T056 [US4] Implement `scripts/check_licenses.py` (allowlist per research R13, `config/license-exceptions.yaml`, `--write-notices` generating `THIRD_PARTY_NOTICES.md`) and create `config/license-exceptions.yaml` (empty list) (FR-017, OPS-005) — makes T055 pass
-- [ ] T057 [US4] Generate `THIRD_PARTY_NOTICES.md` from the synced environment via `uv run python scripts/check_licenses.py --write-notices`; review and resolve any failing package (FR-017, SRC-012)
-- [ ] T058 [US4] Create `.github/workflows/ci.yml` (ubuntu-latest x86-64, `astral-sh/setup-uv` pinned by commit SHA, `uv sync --locked`, `ruff format --check`, `ruff check`, `mypy src`, `pytest`, license check; no Ollama, no model download) (FR-018, FR-019)
+- [x] T056 [US4] Implement `scripts/check_licenses.py` (allowlist per research R13, `config/license-exceptions.yaml`, `--write-notices` generating `THIRD_PARTY_NOTICES.md`) and create `config/license-exceptions.yaml` (empty list) (FR-017, OPS-005) — makes T055 pass
+- [x] T057 [US4] Generate `THIRD_PARTY_NOTICES.md` from the synced environment via `uv run python scripts/check_licenses.py --write-notices`; review and resolve any failing package (FR-017, SRC-012)
+- [x] T058 [US4] Create `.github/workflows/ci.yml` (ubuntu-latest x86-64, `astral-sh/setup-uv` pinned by commit SHA, `uv sync --locked`, `ruff format --check`, `ruff check`, `mypy src`, `pytest`, license check; no Ollama, no model download) (FR-018, FR-019)
 
 **Checkpoint**: all stories complete.
 
