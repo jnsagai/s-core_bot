@@ -332,6 +332,30 @@ refused with the public-profile message, both exit 2.
 Already run for real at the Phase 4 checkpoint above, against the workstation's live Ollama.
 Not repeated here.
 
+## `/speckit-converge` — 2026-09-28
+
+Ran after all 63 tasks were implemented and verified. Independently re-inspected (not just
+trusted from checkboxes) the config schema/loader/redaction, CLI exit-code mapping, corpus probe
+(confirmed it never opens the catalog file), Host/Origin/cross-site guard, readiness derivation,
+runtime/provider protocols (confirmed `GenerationProvider`/`EmbeddingProvider` remain
+declarations-only), access-log middleware (confirmed body-free, no query string), and scanned all
+of `src/` for stubs and suppressed lint/type errors.
+
+**Result: ✅ Converged — zero findings (0 missing, 0 partial, 0 contradicts, 0 unrequested).**
+`tasks.md` left unmodified; no Convergence phase appended. All 12 constitution principles hold.
+
+## Known gaps for a human to close before treating F001 as field-verified
+
+- **Scenario B** (stop Ollama) and **Scenario D** (real `models pull`) were never run for real
+  this session — both require actions this session's policy denies (`sudo`, a real model
+  download). Their code paths are covered by tests against fakes; recommend running both for real
+  once convenient.
+- **CI has never actually executed in GitHub Actions** — `.github/workflows/ci.yml` is validated
+  only as syntactically-correct YAML and by running the same commands locally. Push the branch and
+  check the first real run.
+- **`docker`/GPU acceleration path is untested** — LOC-007's GPU qualification and F009's container
+  packaging are out of F001's scope by design (see spec.md Out of Scope).
+
 ## Blockers
 
 (none)
