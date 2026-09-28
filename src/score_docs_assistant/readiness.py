@@ -96,6 +96,11 @@ class ReadinessService:
             elif compare_role(lock, "generation", installed) == "mismatch":
                 chat_reasons.append(ReasonCode.MODEL_IDENTITY_MISMATCH)
 
+        if corpus_state == CorpusState.COMPATIBLE:
+            # Search arrives in F004 and answers in F005; a compatible corpus alone must not make
+            # either capability look available (research R11, docs/ASSUMPTIONS.md A-022).
+            search_state = _state([ReasonCode.NOT_IMPLEMENTED])
+            chat_reasons.append(ReasonCode.NOT_IMPLEMENTED)
         chat_state = _state(chat_reasons)
         compare_state = _state([ReasonCode.NOT_IMPLEMENTED])
 

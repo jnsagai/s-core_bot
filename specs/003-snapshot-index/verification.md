@@ -85,3 +85,51 @@ $ … index build --json          # unchanged lock, second run
 - All 2 168 git-source need entities have need chunks (2 265 need chunks including continuations).
 - **Deviation**: quickstart B used the `sqlite3` CLI, which is not installed on the workstation;
   the quickstart now uses a `uv run python` one-liner.
+
+## Phase 4 (US2 — activate, pin, roll back, retain) checkpoint — 2026-09-28
+
+```text
+$ uv run ruff format --check . && uv run ruff check . && uv run mypy src && uv run pytest -q
+533 passed, 6 skipped
+```
+
+Mocked-provider coverage: activation/rollback transitions, history and double rollback,
+no-op re-activation, `NOT_ACTIVATABLE`, checksum/manifest tamper refusal with the active
+snapshot unchanged, lexical-over-semantic warning, semantic `disabled`/`unverified` warnings;
+**cross-process pins with a real child process** (retention skips the pinned snapshot, SIGKILL
+releases it, and the next retention deletes it); a pinned handle keeps reading the original
+manifest, FTS and vectors after another snapshot is activated; `pin_active` retry; retention
+keeps active plus rollback target even when newer validated snapshots exist; source and git-cache
+pruning; crash mid-deletion completed by the next retention; probe `absent|incompatible|
+compatible`; readiness keeps search and chat `not_implemented` with a compatible corpus;
+`snapshots` CLI exit codes, `BUILD_BUSY` during a held ingest lock, and no foreign sockets.
+
+- Test-design correction: the first retention tests built several snapshots before activating
+  the oldest, and retention (correctly, research R12) deleted the newer validated ones. The
+  tests now build and activate one at a time.
+
+### Real run on the workstation (quickstart C)
+
+```text
+$ score-assistant --config config/local.yaml snapshots activate 20260928T135739Z-9f1f3a1a
+activated 20260928T135739Z-9f1f3a1a
+$ score-assistant --config config/local.yaml doctor | grep corpus
+[OK] corpus.state: An active, compatible corpus snapshot is installed.
+(background reader holding flock(LOCK_SH) on data/pins/20260928T135739Z-9f1f3a1a.pin)
+$ … snapshots activate 20260928T135835Z-3e756999
+activated 20260928T135835Z-3e756999 (previous: 20260928T135739Z-9f1f3a1a)
+$ … index build --activate --json          # 9.4 s, embedded_reused 5658, new 0
+activated 20260928T140548Z-7c6a05b3 (previous: 20260928T135835Z-3e756999)
+retention: kept 20260928T135739Z-9f1f3a1a (pinned by a reader)
+(reader process killed)
+$ … snapshots rollback
+rolled back to 20260928T135835Z-3e756999 (previous: 20260928T140548Z-7c6a05b3)
+retention: deleted 20260928T135739Z-9f1f3a1a
+$ … snapshots rollback
+rolled back to 20260928T140548Z-7c6a05b3 (previous: 20260928T135835Z-3e756999)
+```
+
+All four locked source revisions and both git caches were kept (all referenced by the lock).
+Operator note: the reader was killed together with the agent's shell (a `pkill -f` pattern
+matched the shell's own command line), which is still a kill of the pin holder; its pin was
+released as designed.
