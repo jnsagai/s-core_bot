@@ -48,3 +48,38 @@ class ProfileNotFound(Exception):
     def __init__(self, profile: str) -> None:
         self.profile = profile
         super().__init__(f"Unknown model profile: {profile}")
+
+
+class SnapshotError(Exception):
+    """F003 operational failure with a stable code (specs/003-snapshot-index/data-model.md).
+
+    The CLI maps every SnapshotError to exit 1 and prints `<CODE>: <message>`.
+    """
+
+    CODES = frozenset(
+        {
+            "BUILD_BUSY",
+            "REQUIRED_SOURCE_FAILED",
+            "CHUNK_UNSPLITTABLE",
+            "EMBEDDING_UNAVAILABLE",
+            "EMBEDDING_INPUT_TOO_LONG",
+            "EMBEDDING_INVALID_VECTOR",
+            "SCHEMA_UNSUPPORTED",
+            "CHECKSUM_MISMATCH",
+            "NOT_ACTIVATABLE",
+            "NO_ROLLBACK_TARGET",
+            "SNAPSHOT_NOT_FOUND",
+            "LICENSE_REVIEW_REQUIRED",
+            "BUNDLE_REJECTED",
+            "DISK_INSUFFICIENT",
+            "CATALOG_UNREADABLE",
+            "BUILD_FAILED",
+        }
+    )
+
+    def __init__(self, code: str, message: str) -> None:
+        if code not in self.CODES:
+            raise ValueError(f"unknown SnapshotError code {code!r}")
+        self.code = code
+        self.message = message
+        super().__init__(f"{code}: {message}")

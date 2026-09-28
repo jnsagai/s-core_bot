@@ -89,3 +89,13 @@ these pins are still current before the next CI-affecting change if much time ha
 | types-docutils (dev) | 0.23.0.20260923 | Apache-2.0 | Type stubs for `mypy --strict` |
 
 `sources sync` additionally requires `git` ≥ 2.34 on PATH (workstation: 2.34.1).
+
+## F003 dependency additions (`uv.lock`, recorded 2026-09-28)
+
+| Package | Version | License | Purpose |
+| --- | --- | --- | --- |
+| numpy | 2.5.3 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 (all permissive; passes the license gate without an exception) | float32 vector files, validation, exact cosine (F004) |
+
+Runtime facts used by F003 (measured 2026-09-28, F003 research R1): Ollama 0.34.0;
+`nomic-embed-text:latest` context bound 2048 tokens, dimension 768, Apache-2.0; SQLite 3.53.1 with
+FTS5 (Python stdlib `sqlite3`).

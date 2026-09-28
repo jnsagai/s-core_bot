@@ -27,9 +27,9 @@ Synthetic fixtures carry a `SYNTHETIC — not S-CORE guidance` comment.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Add `numpy` to `[project].dependencies` in `pyproject.toml`; run `uv lock` and `uv sync --locked`; run `uv run python scripts/check_licenses.py --write-notices` (must pass without an exception, BSD-3-Clause) and record the resolved version in `docs/toolchain.md` (research R5)
-- [ ] T002 [P] Set the `nomic-embed-text` license to `Apache-2.0` in `config/model-profiles.yaml`, with a comment citing `/api/show` on 2026-09-28 (research R1, constitution XI)
-- [ ] T003 [P] Create empty modules/packages: `src/score_docs_assistant/domain/snapshots.py`, `src/score_docs_assistant/ingestion/tokens.py`, `src/score_docs_assistant/ingestion/chunking.py`, `src/score_docs_assistant/models/ollama_embed.py`, `src/score_docs_assistant/storage/{sqlite_util,corpus_db,vectors,manifest,catalog,locks,pins,validation,snapshot_store,build,lifecycle,bundles}.py`, `src/score_docs_assistant/cli/{index,snapshots,bundle}.py` (docstring only)
+- [x] T001 Add `numpy` to `[project].dependencies` in `pyproject.toml`; run `uv lock` and `uv sync --locked`; run `uv run python scripts/check_licenses.py --write-notices` (must pass without an exception, BSD-3-Clause) and record the resolved version in `docs/toolchain.md` (research R5)
+- [x] T002 [P] Set the `nomic-embed-text` license to `Apache-2.0` in `config/model-profiles.yaml`, with a comment citing `/api/show` on 2026-09-28 (research R1, constitution XI)
+- [x] T003 [P] Create empty modules/packages: `src/score_docs_assistant/domain/snapshots.py`, `src/score_docs_assistant/ingestion/tokens.py`, `src/score_docs_assistant/ingestion/chunking.py`, `src/score_docs_assistant/models/ollama_embed.py`, `src/score_docs_assistant/storage/{sqlite_util,corpus_db,vectors,manifest,catalog,locks,pins,validation,snapshot_store,build,lifecycle,bundles}.py`, `src/score_docs_assistant/cli/{index,snapshots,bundle}.py` (docstring only)
 
 ---
 
@@ -39,19 +39,19 @@ Synthetic fixtures carry a `SYNTHETIC — not S-CORE guidance` comment.
 
 ### Tests for Foundational
 
-- [ ] T004 [P] Write `tests/unit/test_index_config.py`: defaults from data-model "Configuration additions"; `config/local.yaml` without `index`/`bundles` still loads; unknown keys rejected; `retention_count < 2`, overlap outside 50–100, `chunk_min_tokens > chunk_max_tokens`, `chunk_max_tokens > embedding_max_input_tokens - 200`, non-positive caps → errors (data-model config)
-- [ ] T005 [P] Write `tests/unit/test_tokens.py`: `pretoken-v1` on fixed cases (empty → 2; `hello` → 5; `feat_req__x` counts letters ÷2 ceil plus one per `_`; digits and punctuation one per byte; `ä` two; CJK three per char); monotonic under concatenation (est(a+" "+b) ≤ est(a)+est(b)); deterministic (FR-003, research R2)
-- [ ] T006 [P] Write `tests/unit/test_snapshot_records.py`: frozen/extra-forbid models in `domain/snapshots.py`; `EmbeddingIdentity` equality over all six fields; manifest JSON round-trip; `chunk_id` derivation stable and sensitive to chunker version, document key, ordinal and content hash (FR-004, FR-005, data-model)
-- [ ] T007 [P] Write `tests/unit/test_sqlite_hardening.py`: helper `open_hardened(path, readonly)` sets `trusted_schema=OFF`, `cell_size_check=ON`, `SQLITE_DBCONFIG_DEFENSIVE`; read-only URIs use `mode=ro` (+ `immutable=1` for snapshot corpora); a grep test asserts `enable_load_extension` appears nowhere in `src/` (FR-006, research R4, checklist CHK007)
+- [x] T004 [P] Write `tests/unit/test_index_config.py`: defaults from data-model "Configuration additions"; `config/local.yaml` without `index`/`bundles` still loads; unknown keys rejected; `retention_count < 2`, overlap outside 50–100, `chunk_min_tokens > chunk_max_tokens`, `chunk_max_tokens > embedding_max_input_tokens - 200`, non-positive caps → errors (data-model config)
+- [x] T005 [P] Write `tests/unit/test_tokens.py`: `pretoken-v1` on fixed cases (empty → 2; `hello` → 5; `feat_req__x` counts letters ÷2 ceil plus one per `_`; digits and punctuation one per byte; `ä` two; CJK three per char); monotonic under concatenation (est(a+" "+b) ≤ est(a)+est(b)); deterministic (FR-003, research R2)
+- [x] T006 [P] Write `tests/unit/test_snapshot_records.py`: frozen/extra-forbid models in `domain/snapshots.py`; `EmbeddingIdentity` equality over all six fields; manifest JSON round-trip; `chunk_id` derivation stable and sensitive to chunker version, document key, ordinal and content hash (FR-004, FR-005, data-model)
+- [x] T007 [P] Write `tests/unit/test_sqlite_hardening.py`: helper `open_hardened(path, readonly)` sets `trusted_schema=OFF`, `cell_size_check=ON`, `SQLITE_DBCONFIG_DEFENSIVE`; read-only URIs use `mode=ro` (+ `immutable=1` for snapshot corpora); a grep test asserts `enable_load_extension` appears nowhere in `src/` (FR-006, research R4, checklist CHK007)
 
 ### Implementation for Foundational
 
-- [ ] T008 Add `IndexConfig` and `BundleConfig` to `src/score_docs_assistant/config/schema.py` (fields, defaults and validators per data-model) and wire them into `AppConfig` — makes T004 pass
-- [ ] T009 [P] Implement `estimate_tokens()` (`pretoken-v1`) in `src/score_docs_assistant/ingestion/tokens.py` — makes T005 pass (research R2)
-- [ ] T010 [P] Implement the records in `src/score_docs_assistant/domain/snapshots.py` (`Chunk`, `ChunkerConfig`, `EmbeddingIdentity`, `SnapshotManifest`, `EmbeddingManifest`, `CorpusSnapshot`, `ActivationRecord`, `BuildJob`, `ValidationReport`, `BundleManifest`, `SnapshotStore` protocol) and `chunk_id()` — makes T006 pass (data-model)
-- [ ] T011 [P] Add the `SnapshotError` family with the codes listed in data-model "Error types" to `src/score_docs_assistant/domain/errors.py`, and make `handle_common_errors` in `src/score_docs_assistant/cli/main.py` map `SnapshotError` to exit 1, printing `<CODE>: <message>` on stderr
-- [ ] T012 [P] Implement `open_hardened()` in `src/score_docs_assistant/storage/sqlite_util.py` — makes T007 pass (research R4)
-- [ ] T013 Fill in the `EmbeddingProvider` protocol in `src/score_docs_assistant/models/runtime.py` (`identity() -> EmbeddingIdentity`, `context_tokens() -> int`, `embed(texts: Sequence[str]) -> list[list[float]]`), and create `tests/helpers/fake_embedding.py` `FakeEmbeddingProvider` (deterministic SHA-256-seeded unit vectors; records calls and the `truncate` flag; configurable modes: unreachable, wrong dimension, NaN, too-long threshold, digest override) (plan Testing)
+- [x] T008 Add `IndexConfig` and `BundleConfig` to `src/score_docs_assistant/config/schema.py` (fields, defaults and validators per data-model) and wire them into `AppConfig` — makes T004 pass
+- [x] T009 [P] Implement `estimate_tokens()` (`pretoken-v1`) in `src/score_docs_assistant/ingestion/tokens.py` — makes T005 pass (research R2)
+- [x] T010 [P] Implement the records in `src/score_docs_assistant/domain/snapshots.py` (`Chunk`, `ChunkerConfig`, `EmbeddingIdentity`, `SnapshotManifest`, `EmbeddingManifest`, `CorpusSnapshot`, `ActivationRecord`, `BuildJob`, `ValidationReport`, `BundleManifest`, `SnapshotStore` protocol) and `chunk_id()` — makes T006 pass (data-model)
+- [x] T011 [P] Add the `SnapshotError` family with the codes listed in data-model "Error types" to `src/score_docs_assistant/domain/errors.py`, and make `handle_common_errors` in `src/score_docs_assistant/cli/main.py` map `SnapshotError` to exit 1, printing `<CODE>: <message>` on stderr
+- [x] T012 [P] Implement `open_hardened()` in `src/score_docs_assistant/storage/sqlite_util.py` — makes T007 pass (research R4)
+- [x] T013 Fill in the `EmbeddingProvider` protocol in `src/score_docs_assistant/models/runtime.py` (`identity() -> EmbeddingIdentity`, `context_tokens() -> int`, `embed(texts: Sequence[str]) -> list[list[float]]`), and create `tests/helpers/fake_embedding.py` `FakeEmbeddingProvider` (deterministic SHA-256-seeded unit vectors; records calls and the `truncate` flag; configurable modes: unreachable, wrong dimension, NaN, too-long threshold, digest override) (plan Testing)
 
 **Checkpoint**: `uv run pytest tests/unit && uv run mypy src && uv run ruff check .` green.
 

@@ -1,12 +1,13 @@
-"""Runtime and provider protocols. Declarations only — F001 implements only `ModelRuntime`
-(via `OllamaRuntime`); `GenerationProvider`/`EmbeddingProvider` are implemented in F003/F005."""
+"""Runtime and provider protocols. `ModelRuntime` is implemented by `OllamaRuntime` (F001),
+`EmbeddingProvider` by `OllamaEmbeddingProvider` (F003); `GenerationProvider` arrives in F005."""
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import Any, Protocol
 
 from score_docs_assistant.domain.models import InstalledModel, RuntimeInfo
+from score_docs_assistant.domain.snapshots import EmbeddingIdentity
 
 
 def normalize_tag(tag: str) -> str:
@@ -26,4 +27,12 @@ class GenerationProvider(Protocol):
 
 
 class EmbeddingProvider(Protocol):
-    """Embedding provider interface. Implemented starting in F003."""
+    """Local document embedding (FR-007). Implementations MUST NOT truncate inputs silently: an
+    input over the model's context bound raises `SnapshotError("EMBEDDING_INPUT_TOO_LONG")`, and
+    an unreachable runtime or missing model raises `SnapshotError("EMBEDDING_UNAVAILABLE")`."""
+
+    def identity(self) -> EmbeddingIdentity: ...
+
+    def context_tokens(self) -> int: ...
+
+    def embed(self, texts: Sequence[str]) -> list[list[float]]: ...

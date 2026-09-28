@@ -17,4 +17,5 @@ profiles:
         tag: nomic-embed-text
         approx_size_bytes: 274000000
         size_source: "ollama.com library page, 2026-09-27"
-        license: "to confirm"
+        # Confirmed from the runtime (`/api/show` license field) on 2026-09-28, F003 research R1.
+        license: Apache-2.0

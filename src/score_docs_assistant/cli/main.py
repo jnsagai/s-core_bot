@@ -14,7 +14,7 @@ from typing import Annotated, Any
 import typer
 
 from score_docs_assistant import __version__
-from score_docs_assistant.domain.errors import ConfigError
+from score_docs_assistant.domain.errors import ConfigError, SnapshotError
 
 # rich_markup_mode=None forces plain, undecorated Click-style help text everywhere, instead of
 # Typer's default Rich-based rendering. Rich's own styling detection (the default when `rich` is
@@ -26,7 +26,8 @@ cli_app = typer.Typer(add_completion=False, no_args_is_help=True, rich_markup_mo
 
 
 def handle_common_errors[F: Callable[..., Any]](func: F) -> F:
-    """Maps `ConfigError` to exit 2 and `KeyboardInterrupt` to exit 130 for every command."""
+    """Maps `ConfigError` to exit 2, `SnapshotError` to exit 1 and `KeyboardInterrupt` to exit 130
+    for every command."""
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -36,6 +37,9 @@ def handle_common_errors[F: Callable[..., Any]](func: F) -> F:
             for path, reason in exc.errors:
                 typer.echo(f"{path}: {reason}", err=True)
             raise typer.Exit(code=2) from None
+        except SnapshotError as exc:
+            typer.echo(f"{exc.code}: {exc.message}", err=True)
+            raise typer.Exit(code=1) from None
         except KeyboardInterrupt:
             raise typer.Exit(code=130) from None
 

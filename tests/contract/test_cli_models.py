@@ -178,9 +178,20 @@ def test_pull_unknown_size_requires_override(
     assert result.exit_code == 2, result.output
 
 
+def _plenty_of_disk(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Keeps these tests independent of the machine's real free space (they failed on the
+    # workstation once the models disk dropped below the profile size).
+    monkeypatch.setattr(
+        models_module.shutil,
+        "disk_usage",
+        lambda path: type("S", (), {"free": 10**15, "total": 10**15})(),
+    )
+
+
 def test_pull_writes_lock_and_second_run_is_already_present(
     isolated_cwd: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    _plenty_of_disk(monkeypatch)
     config_file = _write_local_config(isolated_cwd)
     state = {"pulled_gen": False, "pulled_emb": False}
 
@@ -250,6 +261,7 @@ def test_pull_refuses_remote_model(
     fake_runtime: Callable[[dict | None], httpx.Client],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    _plenty_of_disk(monkeypatch)
     config_file = _write_local_config(isolated_cwd)
     monkeypatch.setattr(
         models_module,
