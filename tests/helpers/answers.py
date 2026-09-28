@@ -70,7 +70,7 @@ def evidence_ids(messages: list[dict[str, str]]) -> dict[str, str]:
     """E# → excerpt text as shown in the prompt (for scripting realistic outputs)."""
     import re
 
-    user = messages[-1]["content"] if messages[-1]["role"] == "user" else messages[1]["content"]
+    user = messages[1]["content"]  # the original user message (repairs append later turns)
     return {
         m.group(1): m.group(2).strip()
         for m in re.finditer(r'<excerpt id="(E\d+)"[^>]*>\n(.*?)\n</excerpt>', user, re.S)
