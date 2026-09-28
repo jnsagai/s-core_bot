@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from fastapi import FastAPI, Query, Request
+from fastapi import Depends, FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
@@ -26,7 +26,7 @@ from score_docs_assistant.domain.retrieval import (
 )
 from score_docs_assistant.domain.snapshots import ChunkKind
 from score_docs_assistant.retrieval.query import valid_snapshot_id
-from score_docs_assistant.retrieval.service import MAX_ID_LENGTH, SearchService
+from score_docs_assistant.retrieval.service import CHUNK_KINDS, MAX_ID_LENGTH, SearchService
 
 
 class SearchBody(BaseModel):
@@ -60,6 +60,17 @@ def _error(request: Request, status: int, code: str, message: str, retryable: bo
     )
 
 
+def _only(*allowed: str):  # type: ignore[no-untyped-def]
+    """Dependency rejecting query parameters a route does not define (FR-016)."""
+
+    def check(request: Request) -> None:
+        unknown = sorted(set(request.query_params) - set(allowed))
+        if unknown:
+            raise SearchError("QUERY_INVALID", f"unknown query parameter(s): {unknown}")
+
+    return Depends(check)
+
+
 def _check_snapshot(snapshot_id: str | None) -> None:
     if snapshot_id is not None and not valid_snapshot_id(snapshot_id):
         raise SearchError("QUERY_INVALID", "snapshot_id has an invalid format")
@@ -78,7 +89,10 @@ def register_search_routes(app: FastAPI, service: SearchService) -> None:
                 request, 400, "MALFORMED_REQUEST", "Request body is not valid JSON.", False
             )
         fields = sorted({".".join(str(p) for p in e.get("loc", ())[1:]) for e in errors})
-        return _error(request, 422, "REQUEST_INVALID", f"Invalid request fields: {fields}", False)
+        message = f"Invalid request fields: {fields}"
+        if any(f.startswith("kinds") for f in fields):
+            message += f"; allowed kinds: {list(CHUNK_KINDS)}"
+        return _error(request, 422, "REQUEST_INVALID", message, False)
 
     @app.post("/api/v1/search", response_model=SearchResponse)
     def search(body: SearchBody) -> SearchResponse:
@@ -94,7 +108,11 @@ def register_search_routes(app: FastAPI, service: SearchService) -> None:
                 )
             )
 
-    @app.get("/api/v1/entities", response_model=LookupResponse)
+    @app.get(
+        "/api/v1/entities",
+        response_model=LookupResponse,
+        dependencies=[_only("id", "snapshot_id", "source_id")],
+    )
     def entities(
         id: Annotated[str, Query(min_length=1, max_length=MAX_ID_LENGTH)],
         snapshot_id: str | None = None,
@@ -104,7 +122,11 @@ def register_search_routes(app: FastAPI, service: SearchService) -> None:
         with service.admitted():
             return service.lookup(id, snapshot_id=snapshot_id, source_id=source_id)
 
-    @app.get("/api/v1/relationships", response_model=RelationshipsResponse)
+    @app.get(
+        "/api/v1/relationships",
+        response_model=RelationshipsResponse,
+        dependencies=[_only("key", "snapshot_id", "direction", "limit", "offset")],
+    )
     def relationships(
         key: Annotated[str, Query(min_length=1, max_length=MAX_ID_LENGTH)],
         snapshot_id: str | None = None,
@@ -118,18 +140,22 @@ def register_search_routes(app: FastAPI, service: SearchService) -> None:
                 key, snapshot_id=snapshot_id, direction=direction, limit=limit, offset=offset
             )
 
-    @app.get("/api/v1/snapshots", response_model=SnapshotsResponse)
+    @app.get("/api/v1/snapshots", response_model=SnapshotsResponse, dependencies=[_only()])
     def snapshots() -> SnapshotsResponse:
         with service.admitted():
             return service.snapshots()
 
-    @app.get("/api/v1/sources", response_model=SourcesResponse)
+    @app.get("/api/v1/sources", response_model=SourcesResponse, dependencies=[_only("snapshot_id")])
     def sources(snapshot_id: str | None = None) -> SourcesResponse:
         _check_snapshot(snapshot_id)
         with service.admitted():
             return service.sources(snapshot_id)
 
-    @app.get("/api/v1/citations/{snapshot_id}/{chunk_id}", response_model=CitationRecord)
+    @app.get(
+        "/api/v1/citations/{snapshot_id}/{chunk_id}",
+        response_model=CitationRecord,
+        dependencies=[_only()],
+    )
     def citation(snapshot_id: str, chunk_id: str) -> CitationRecord:
         if not valid_snapshot_id(snapshot_id):
             raise SearchError("SNAPSHOT_NOT_FOUND", "unknown snapshot")

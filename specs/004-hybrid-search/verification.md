@@ -162,3 +162,20 @@ README (Status, Quickstart) and CLAUDE.md commands updated, and documented comma
 TRACEABILITY: RET-001–RET-004, RET-008 and LOC-006 are verified (F004 scope); RET-005 notes
 search-level binding. ASSUMPTIONS: A-025–A-028 added. BACKLOG: F003 done; F004 implemented, with
 converge pending at this point.
+
+## Phase 7 (Convergence) — 2026-09-28
+
+The first converge pass (22 FRs, 7 SCs, 17 acceptance scenarios, 16 edge cases, plan decisions,
+constitution I–XII) found 2 partial gaps, appended as T040–T041 and implemented:
+
+- T040 (FR-016): GET evidence routes reject unknown query parameters (`?model=…`, `?url=…`,
+  `?options=…`, `?runtime=…`) with 422 instead of ignoring them.
+- T041 (edge case): the HTTP 422 for an invalid `kinds` value lists the allowed kinds.
+
+```text
+$ uv run ruff format --check . && uv run ruff check . && uv run mypy src && uv run pytest -q
+728 passed, 7 skipped
+```
+
+The second converge assessment found no remaining gaps: **converged** (agent review, not a human
+approval).

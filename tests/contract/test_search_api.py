@@ -195,3 +195,27 @@ def test_readiness_reports_search_available(client: TestClient) -> None:
     payload = client.get("/health/ready", headers=HOST).json()
     assert payload["capabilities"]["search"] == {"available": True, "reasons": []}
     assert "not_implemented" in payload["capabilities"]["chat"]["reasons"]
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/api/v1/entities?id=MLE.3.BP1&model=gpt-4",
+        "/api/v1/relationships?key=alpha:MLE.3.BP1&url=http://evil",
+        "/api/v1/snapshots?options=x",
+        "/api/v1/sources?runtime=remote",
+    ],
+)
+def test_unknown_query_parameters_rejected(client: TestClient, url: str) -> None:
+    response = client.get(url, headers=HOST)
+    assert response.status_code == 422
+    assert "unknown query parameter" in response.json()["error"]["message"]
+
+
+def test_invalid_kind_lists_allowed_values(client: TestClient) -> None:
+    response = _post(client, {"query": "x", "kinds": ["image"]})
+    assert response.status_code == 422
+    assert (
+        "allowed kinds: ['prose', 'need', 'table', 'code', 'literal', 'diagram']"
+        in (response.json()["error"]["message"])
+    )

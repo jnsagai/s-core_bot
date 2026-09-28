@@ -134,3 +134,8 @@ commit per checkpoint.
 - Mark a task `[x]` only after its verification ran and passed.
 - `real_runtime` skipped = "not run".
 - Gold evaluation locations come from reading the sources, never from this system's output.
+
+## Phase 7: Convergence
+
+- [x] T040 Reject unknown query parameters on the GET evidence routes (`/api/v1/entities`, `/relationships`, `/snapshots`, `/sources`) with 422 `REQUEST_INVALID` in `src/score_docs_assistant/api/search_routes.py`, tested in `tests/contract/test_search_api.py`, per FR-016 (partial)
+- [x] T041 Make the HTTP 422 message for an invalid `kinds` value list the allowed kinds in `src/score_docs_assistant/api/search_routes.py`, tested in `tests/contract/test_search_api.py`, per spec Edge Cases (partial)
