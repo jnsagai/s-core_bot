@@ -169,10 +169,10 @@ first and confirm they fail before implementing.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T059 Run full local gate `uv run ruff format --check . && uv run ruff check . && uv run mypy src && uv run pytest && uv run python scripts/check_licenses.py`; fix all failures (constitution VII)
-- [ ] T060 Execute quickstart.md scenarios A–F on the workstation; record commands, redacted outputs, timings (SC-001, SC-002), environment, and any "not run" items with reasons in `specs/001-foundation/verification.md`
-- [ ] T061 [P] Update `docs/TRACEABILITY.md` rows LOC-001, LOC-003, LOC-004, LOC-005, LOC-006, LOC-007, OPS-004, OPS-005, SEC-004, SRC-012 with task IDs, implementation paths, test files, evidence link, and status (constitution IX)
-- [ ] T062 [P] Update `docs/BACKLOG.md` F001 state and `docs/ASSUMPTIONS.md` (record the T057 dependency license check outcome under A-005) and `docs/toolchain.md` with final pins
+- [x] T059 Run full local gate `uv run ruff format --check . && uv run ruff check . && uv run mypy src && uv run pytest && uv run python scripts/check_licenses.py`; fix all failures (constitution VII)
+- [x] T060 Execute quickstart.md scenarios A–F on the workstation; record commands, redacted outputs, timings (SC-001, SC-002), environment, and any "not run" items with reasons in `specs/001-foundation/verification.md`
+- [x] T061 [P] Update `docs/TRACEABILITY.md` rows LOC-001, LOC-003, LOC-004, LOC-005, LOC-006, LOC-007, OPS-004, OPS-005, SEC-004, SRC-012 with task IDs, implementation paths, test files, evidence link, and status (constitution IX)
+- [x] T062 [P] Update `docs/BACKLOG.md` F001 state and `docs/ASSUMPTIONS.md` (record the T057 dependency license check outcome under A-005) and `docs/toolchain.md` with final pins
 - [ ] T063 Run `/speckit-converge` and complete any appended tasks before declaring F001 done
 
 ---

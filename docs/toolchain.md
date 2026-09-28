@@ -59,3 +59,23 @@ Low free disk is a known risk for model acquisition and snapshot staging; `docto
 All 42 locked packages resolved and installed offline-reproducibly via `uv.lock`; versions match the
 minimums recorded in `specs/001-foundation/research.md` R2 exactly (uv resolved to the latest
 version satisfying each `>=` bound at lock time).
+
+Real license check (`scripts/check_licenses.py`, 2026-09-28): all 39 packages the synced venv
+actually installs (2 more, `s-core-docs-assistant` itself and `prettytable`/`shellingham`/`rich`/
+`wcwidth`/`ast-serialize`/`librt`/`packaging`/`iniconfig`/`pluggy`/`pygments`/`markdown-it-py`/
+`mdurl`/`mypy-extensions`/`typing-extensions`/`typing-inspection`/`coverage`/`pathspec`/`idna`/
+`certifi`/`httpcore`/`annotated-types`/`annotated-doc`, brought in transitively or as dev-group
+deps not listed in the table above) report MIT, BSD-2/3-Clause, Apache-2.0, MPL-2.0, ISC, or
+PSF-2.0 — all on the allowlist. Zero entries needed in `config/license-exceptions.yaml`. Full list
+in `THIRD_PARTY_NOTICES.md`.
+
+## CI action pins (`.github/workflows/ci.yml`, resolved 2026-09-28)
+
+| Action | Release tag | Commit SHA |
+| --- | --- | --- |
+| `actions/checkout` | v7.0.1 | `3d3c42e5aac5ba805825da76410c181273ba90b1` |
+| `astral-sh/setup-uv` | v10.2.0 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` |
+
+Resolved via the GitHub API (`.../releases/latest` then `.../git/ref/tags/<tag>`) from this
+workstation. Not yet exercised in a real GitHub Actions run (branch not pushed); re-verify these
+pins are still current before the next CI-affecting change if much time has passed.

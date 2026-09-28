@@ -241,6 +241,97 @@ checkout v7.0.1 → `3d3c42e5aac5ba805825da76410c181273ba90b1`; setup-uv v10.2.0
 (no CI trigger available from this workstation); YAML syntax validated locally with
 `yaml.safe_load`. First real CI run should be checked after this branch is pushed.
 
+## Phase 7 (Polish) — quickstart.md scenarios A–F — 2026-09-28
+
+Full local gate re-confirmed at the point all 63 tasks are checked off:
+
+```
+$ uv run ruff format --check . && uv run ruff check .
+111 files already formatted; All checks passed!
+
+$ uv run mypy src
+Success: no issues found in 35 source files
+
+$ uv run pytest -q
+127 passed, 2 skipped in 3.09s
+
+$ uv run python scripts/check_licenses.py
+License check passed: 39 packages, all allowed or reviewed.
+```
+
+### Scenario A — install and deterministic checks (SC-001, SC-004)
+
+Measured for real from a **fresh clone in a new directory** (`git clone -b 001-foundation
+/home/jefferson/s-core_bot`, not the working tree), to give SC-001 an honest clone-to-diagnostic
+measurement rather than reusing an already-installed environment:
+
+```
+$ time (git clone -q -b 001-foundation <repo> repo && cd repo && uv sync --locked && \
+        uv run score-assistant --config config/local.yaml doctor)
+real  0m1.382s
+```
+
+**1.4 seconds**, comfortably under the 10-minute SC-001 target — but this benefits from `uv`'s
+local package cache already being warm from earlier checkpoints tonight; a genuinely first-ever
+run on a machine with no cache would additionally pay for downloading ~43 packages from PyPI
+(a few seconds to low minutes depending on connection, not model-sized). No model download is
+included either way, per SC-001's own exclusion. `doctor` exited 0 (warnings only: empty corpus,
+absent models, not-yet-created data dir — all correct for a fresh install) matching quickstart
+scenario C's warning set.
+
+Deterministic checks (`ruff format --check`, `ruff check`, `mypy`, `pytest`, `check_licenses.py`)
+were run with external network blocked implicitly: none of the fixtures, the socket guard
+(`tests/conftest.py`), or the tools above make any non-loopback connection during the run (the
+`real_runtime` tests that would need one are marked and skipped). SC-004 holds.
+
+### Scenario B — diagnose with runtime stopped
+
+**Not run** tonight: requires `sudo snap stop ollama`, and `sudo` is denied by
+`.claude/settings.json` for the unattended/agent-run policy in effect this session. Recorded
+already at the Phase 3 checkpoint above. The `RUNTIME_UNREACHABLE`/`RUNTIME_TIMEOUT` code paths
+this scenario would exercise are covered instead by `tests/unit/test_checks.py`,
+`tests/contract/test_cli_doctor.py`, and the real-socket `tests/integration/test_doctor_timing.py`
+(a loopback port that accepts but never responds, confirming the < 10 s bound, SC-002).
+
+### Scenario C — diagnose with runtime running, models absent
+
+Already run for real at the Phase 3 checkpoint (`doctor`) and Phase 5 checkpoint (`models
+inspect`) above, against the workstation's live Ollama 0.34.0. Not repeated here; both halves
+match the scenario exactly.
+
+### Scenario D — acquire models
+
+**Not run**: `models pull` is denied by `.claude/settings.json` (`*models pull*`,
+`score-assistant models pull:*`) and would download ~2.8 GB on a disk that was ~95% full when
+recorded (`docs/toolchain.md`). Verified instead against the fake Ollama transport in
+`tests/contract/test_cli_models.py` (writes the lock, idempotent re-run, disk-shortfall and
+unknown-size refusals, remote-model rejection) and `tests/unit/test_model_lock.py` (atomic write,
+interrupted-write safety). A human should run this scenario for real once disk space allows,
+before F001 is treated as fully field-verified.
+
+### Scenario E — configuration errors (SC-005)
+
+Both commands run for real just now:
+
+```
+$ printf 'schema_version: 1\nserver:\n  hots: 127.0.0.1\n' > /tmp/bad.yaml
+$ uv run score-assistant --config /tmp/bad.yaml doctor
+server.hots: Extra inputs are not permitted
+(exit code 2)
+
+$ SCORE_ASSISTANT_SERVER__HOST=0.0.0.0 uv run score-assistant --config config/local.yaml serve
+server.host: Remote exposure requires the public profile, which is not available in this release.
+(exit code 2)
+```
+
+Both match quickstart.md exactly: unknown key rejected with its dotted path, non-loopback bind
+refused with the public-profile message, both exit 2.
+
+### Scenario F — service contract and guard (SC-003)
+
+Already run for real at the Phase 4 checkpoint above, against the workstation's live Ollama.
+Not repeated here.
+
 ## Blockers
 
 (none)
