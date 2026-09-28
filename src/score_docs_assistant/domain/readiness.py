@@ -23,6 +23,7 @@ class ReasonCode(StrEnum):
     EMBEDDING_MODEL_MISSING = "embedding_model_missing"
     MODEL_IDENTITY_MISMATCH = "model_identity_mismatch"
     NOT_IMPLEMENTED = "not_implemented"
+    SEMANTIC_UNAVAILABLE = "semantic_unavailable"
 
 
 class CapabilityState(BaseModel):

@@ -105,3 +105,77 @@ def lookup_command(
                 arrow = "->" if item.direction == "out" else "<-"
                 other = item.target_id if item.direction == "out" else item.from_key
                 typer.echo(f"    {arrow} {item.via}: {other} ({item.resolution})")
+
+
+@cli_app.command("search")
+@handle_common_errors
+@handle_search_errors
+def search_command(
+    ctx: typer.Context,
+    query: Annotated[str, typer.Argument(help="Question or keywords.")],
+    snapshot: Annotated[
+        str | None, typer.Option("--snapshot", help="Snapshot ID (default: active).")
+    ] = None,
+    source: Annotated[
+        list[str] | None, typer.Option("--source", help="Only this source (repeatable).")
+    ] = None,
+    kind: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--kind",
+            help="Only this content kind (repeatable): prose, need, table, code, literal, diagram.",
+        ),
+    ] = None,
+    limit: Annotated[
+        int | None, typer.Option("--limit", help="Number of results (max 20).")
+    ] = None,
+    lexical: Annotated[
+        bool, typer.Option("--lexical", help="Keyword and exact matching only.")
+    ] = False,
+    json_output: Annotated[bool, typer.Option("--json", help="Print JSON.")] = False,
+) -> None:
+    """Searches one snapshot offline; may use the local embedding runtime (no downloads, no
+    generation)."""
+    import json
+
+    from pydantic import ValidationError
+
+    from score_docs_assistant.domain.retrieval import SearchRequest
+
+    config = _config(ctx)
+    service = build_service(config, embeddings=not lexical)
+    try:
+        request = SearchRequest(
+            query=query,
+            snapshot_id=snapshot,
+            limit=limit,
+            sources=source or [],
+            kinds=kind or [],  # type: ignore[arg-type]
+        )
+    except ValidationError as exc:
+        raise SearchError("QUERY_INVALID", "; ".join(e["msg"] for e in exc.errors())) from None
+    response = service.search(request, force_lexical=lexical)
+    if json_output:
+        typer.echo(json.dumps(response.model_dump(mode="json"), sort_keys=True))
+        return
+    if response.degraded is not None and response.degraded.reason != "lexical_requested":
+        typer.echo(
+            f"warning: semantic search unavailable ({response.degraded.reason}): "
+            "keyword results only",
+            err=True,
+        )
+        for hint in response.degraded.guidance:
+            typer.echo(f"  guidance: {hint}", err=True)
+    typer.echo(
+        f"snapshot {response.snapshot_id}  mode {response.mode}  {len(response.results)} results"
+    )
+    if response.status == "no_results":
+        typer.echo("no results")
+    for result in response.results:
+        section = " > ".join(result.heading_path)
+        typer.echo(
+            f"{result.rank:>2}. [{' '.join(result.matched_by)}] {result.source_id}  "
+            f"{result.path}{_lines(result.line_start, result.line_end)}  ({result.kind})  {section}"
+        )
+        for line in result.excerpt.splitlines()[:4]:
+            typer.echo(f"    {line[:160]}")

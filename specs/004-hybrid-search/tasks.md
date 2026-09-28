@@ -71,25 +71,25 @@ reasons; no cross-snapshot content.
 
 ### Tests
 
-- [ ] T016 [P] [US2] Write `tests/unit/test_lexical.py`: filters in the ranking statement (a source whose best match is weaker still yields up to 30 candidates when filtered to it); kind filter; operator-only queries return no error; ID column weighting ranks an ID match above prose mentions (FR-007, FR-008)
-- [ ] T017 [P] [US2] Write `tests/unit/test_semantic.py`: top-k by cosine with dictated query vectors; filter mask applied before selection (filtered-out best rows never returned, k filled from allowed rows); stable ties by row (FR-008, research R3)
-- [ ] T018 [P] [US2] Write `tests/unit/test_fusion.py`: RRF values; exact hits first in query order; tie-break by (document_key, ordinal); dedup `(source_id, content_hash)` within a source but not across sources; per-document cap; limit; `matched_by` union; exact hits have `ranking_value` null (FR-009, FR-010, research R4)
-- [ ] T019 [P] [US2] Write `tests/unit/test_status_cache.py`: TTL reuse, expiry, invalidation after failed query embedding, per-snapshot keys (FR-014, clarification Q3)
-- [ ] T020 [US2] Write `tests/integration/test_search_service.py::test_search_*`: hybrid default; an ID in a question ranks first; degraded reasons for lexical-only snapshot, identity mismatch (with reindex guidance), runtime unreachable, embed failure mid-request, too-long query; `--lexical` forcing; no generation model needed; repeated requests identical (SC-006); validated and retired snapshots searchable, failed/deleted → `SNAPSHOT_NOT_FOUND`; no active → `NO_ACTIVE_SNAPSHOT`; unknown filter value → `FILTER_INVALID` listing allowed values; excerpt ≤ 1 200 and never the embedding input (FR-006–FR-015)
-- [ ] T021 [US2] Write `tests/integration/test_isolation.py`: two snapshots with disjoint text; searching A never returns B's chunks/entities/excerpts; activation of B while a request on A is paused inside the service (hook) still yields only A; results carry A's snapshot ID (FR-013, SC-002, AT-03, AT-12)
-- [ ] T022 [US2] Write `tests/contract/test_search_api.py`: all six routes happy paths; 422 for unknown fields, empty/too-long query, bad filter, invalid snapshot/chunk ID format; 404 unknown snapshot/chunk/entity; 409 no active snapshot; 429 when the semaphore is exhausted (threads); `Origin: https://evil.example` → 403; access log line has no query text; no response schema contains `score`, `confidence` or `probability`; readiness search available with `semantic_unavailable` when degraded and chat still `not_implemented` (FR-011, FR-015, FR-016, FR-018, SC-007)
-- [ ] T023 [US2] Extend `tests/contract/test_cli_search.py` with `search` cases: help line, text and `--json` output, `--source/--kind/--limit/--lexical`, degraded warning line, exit codes (FR-017)
+- [x] T016 [P] [US2] Write `tests/unit/test_lexical.py`: filters in the ranking statement (a source whose best match is weaker still yields up to 30 candidates when filtered to it); kind filter; operator-only queries return no error; ID column weighting ranks an ID match above prose mentions (FR-007, FR-008)
+- [x] T017 [P] [US2] Write `tests/unit/test_semantic.py`: top-k by cosine with dictated query vectors; filter mask applied before selection (filtered-out best rows never returned, k filled from allowed rows); stable ties by row (FR-008, research R3)
+- [x] T018 [P] [US2] Write `tests/unit/test_fusion.py`: RRF values; exact hits first in query order; tie-break by (document_key, ordinal); dedup `(source_id, content_hash)` within a source but not across sources; per-document cap; limit; `matched_by` union; exact hits have `ranking_value` null (FR-009, FR-010, research R4)
+- [x] T019 [P] [US2] Write `tests/unit/test_status_cache.py`: TTL reuse, expiry, invalidation after failed query embedding, per-snapshot keys (FR-014, clarification Q3)
+- [x] T020 [US2] Write `tests/integration/test_search_service.py::test_search_*`: hybrid default; an ID in a question ranks first; degraded reasons for lexical-only snapshot, identity mismatch (with reindex guidance), runtime unreachable, embed failure mid-request, too-long query; `--lexical` forcing; no generation model needed; repeated requests identical (SC-006); validated and retired snapshots searchable, failed/deleted → `SNAPSHOT_NOT_FOUND`; no active → `NO_ACTIVE_SNAPSHOT`; unknown filter value → `FILTER_INVALID` listing allowed values; excerpt ≤ 1 200 and never the embedding input (FR-006–FR-015)
+- [x] T021 [US2] Write `tests/integration/test_isolation.py`: two snapshots with disjoint text; searching A never returns B's chunks/entities/excerpts; activation of B while a request on A is paused inside the service (hook) still yields only A; results carry A's snapshot ID (FR-013, SC-002, AT-03, AT-12)
+- [x] T022 [US2] Write `tests/contract/test_search_api.py`: all six routes happy paths; 422 for unknown fields, empty/too-long query, bad filter, invalid snapshot/chunk ID format; 404 unknown snapshot/chunk/entity; 409 no active snapshot; 429 when the semaphore is exhausted (threads); `Origin: https://evil.example` → 403; access log line has no query text; no response schema contains `score`, `confidence` or `probability`; readiness search available with `semantic_unavailable` when degraded and chat still `not_implemented` (FR-011, FR-015, FR-016, FR-018, SC-007)
+- [x] T023 [US2] Extend `tests/contract/test_cli_search.py` with `search` cases: help line, text and `--json` output, `--source/--kind/--limit/--lexical`, degraded warning line, exit codes (FR-017)
 
 ### Implementation
 
-- [ ] T024 [P] [US2] Implement `retrieval/lexical.py` — makes T016 pass
-- [ ] T025 [P] [US2] Implement `retrieval/semantic.py` (per-snapshot filter arrays from the corpus, masked top-k over the memmap) — makes T017 pass
-- [ ] T026 [P] [US2] Implement `retrieval/fusion.py` — makes T018 pass
-- [ ] T027 [P] [US2] Implement `retrieval/status.py` — makes T019 pass
-- [ ] T028 [US2] Implement `SearchService.search()`, `.snapshots()`, `.sources()`, `.citation()`, per-snapshot LRU caches, concurrency gate and deadline handling in `retrieval/service.py` — makes T020, T021 pass
-- [ ] T029 [US2] Implement `api/search_routes.py`, register it in `api/app.py` with a `SearchService`, wire `cli/serve.py`; update `readiness.py` and `domain/readiness.py` (`SEMANTIC_UNAVAILABLE`, search available when compatible) — makes T022 pass
-- [ ] T030 [US2] Implement `search` in `cli/search.py` — makes T023 pass
-- [ ] T031 [US2] Add a `real_runtime` test in `tests/integration/test_real_runtime.py`: hybrid search over the fixture snapshot built with real embeddings returns `mode: hybrid` and semantic matches (FR-012)
+- [x] T024 [P] [US2] Implement `retrieval/lexical.py` — makes T016 pass
+- [x] T025 [P] [US2] Implement `retrieval/semantic.py` (per-snapshot filter arrays from the corpus, masked top-k over the memmap) — makes T017 pass
+- [x] T026 [P] [US2] Implement `retrieval/fusion.py` — makes T018 pass
+- [x] T027 [P] [US2] Implement `retrieval/status.py` — makes T019 pass
+- [x] T028 [US2] Implement `SearchService.search()`, `.snapshots()`, `.sources()`, `.citation()`, per-snapshot LRU caches, concurrency gate and deadline handling in `retrieval/service.py` — makes T020, T021 pass
+- [x] T029 [US2] Implement `api/search_routes.py`, register it in `api/app.py` with a `SearchService`, wire `cli/serve.py`; update `readiness.py` and `domain/readiness.py` (`SEMANTIC_UNAVAILABLE`, search available when compatible) — makes T022 pass
+- [x] T030 [US2] Implement `search` in `cli/search.py` — makes T023 pass
+- [x] T031 [US2] Add a `real_runtime` test in `tests/integration/test_real_runtime.py`: hybrid search over the fixture snapshot built with real embeddings returns `mode: hybrid` and semantic matches (FR-012)
 
 **Checkpoint**: gate green; quickstart C, D on the real snapshot recorded.
 
