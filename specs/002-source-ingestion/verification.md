@@ -155,6 +155,45 @@ wall ≈ 7 s
 - **Offline guarantee (quickstart D), proven for real**: inspect run inside a network namespace
   with no interfaces (`unshare -rn`) → exit 0, same results.
 
+## Phase 6 (Polish) — 2026-09-28
+
+Final local gate (T055): ruff format/check clean, mypy clean (62 source files),
+`348 passed, 3 skipped` (2 `real_runtime`, 1 `real_network` — not run by default),
+license check 41 packages allowed or reviewed.
+
+- **T056 opt-in real-network test**: skipped by default ("contacts GitHub … not run"); with
+  `SCORE_ASSISTANT_REAL_NETWORK=1` it performed a real sync of `score-process` from GitHub —
+  `1 passed in 1.96s`. The socket guard is lifted only for tests carrying that marker.
+  Caveat recorded honestly: the in-process socket guard cannot observe network use by the `git`
+  subprocess; the default suite is offline because every git test uses `file://` fixtures and the
+  offline commands (`validate`, `inspect`) are proven by tests that forbid subprocesses entirely.
+- **T057 quickstart A–E on the workstation**: A (gate above); B real sync (Phase 3); C real inspect
+  and D offline inspect in a network namespace (Phases 4–5); E failure safety, real:
+
+  ```
+  $ sed 's#eclipse-score/score.git#eclipse-score/does-not-exist-xyz.git#' config/sources.yaml > /tmp/broken.yaml
+  $ uv run score-assistant sources sync --config /tmp/broken.yaml
+  score-process: resolved main -> 66321fe…; extracted 314 files; score-process-needs: downloaded …
+  Sync failed; previous lock left unchanged.            exit=1
+  $ cmp data/source-lock.json /tmp/lock.before          → LOCK-UNCHANGED
+  $ ls data/staging | wc -l                             → 0
+  ```
+
+  SC-003 tally: every hostile-fixture test (traversal/absolute/NUL/backslash paths, symlinked
+  parents and leaves, symlink and gitlink tree entries, oversize file, include escape/absolute/
+  missing/unselected/URL/standard/cycle/depth, non-HTTPS/credential/port/off-allowlist URLs,
+  off-allowlist and non-HTTPS redirects, hooks + attribute filters + LFS pointer, malicious global
+  gitconfig with an executable `packObjectsHook`) passes: 0 files outside the source root,
+  0 requests to non-allowlisted hosts, 0 executions of repository or user-config content.
+- **T058/T059 docs**: traceability rows for SRC-001–008, SRC-010–012, SEC-005 filled with real
+  paths/tests/evidence; backlog, assumptions (A-013 fixed pending owner confirmation of the
+  docutils exception; A-016 MyST; A-017), toolchain, README and CLAUDE.md updated.
+  **Doc defect found in F001:** README and CLAUDE.md documented `doctor --config …` and
+  `serve --config …`, which fail with "No such option: --config" (the global option goes before
+  the subcommand). Corrected, and every documented command was re-run: `doctor` 0,
+  `sources validate` 0, `sources inspect` 0, `serve` started (stopped by timeout, port 8080 free
+  afterwards).
+
 ## Blockers
 
 (none)

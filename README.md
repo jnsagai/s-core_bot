@@ -6,17 +6,22 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
 
 ## Status
 
-F001 (Foundation and Local Runtime Contract) is in progress: project skeleton, validated
-configuration, an Ollama runtime client, hardware/corpus probes, the `score-assistant` CLI
-(`doctor`, `models inspect`, `models pull`, `serve`), and a loopback-only HTTP service exposing
-liveness, readiness, and capabilities. There is no ingestion, search, or chat yet — those arrive in
-later features (see `docs/BACKLOG.md`).
+- **F001 (done)** — validated configuration, Ollama runtime client, hardware/corpus probes,
+  `score-assistant doctor | models inspect | models pull | serve`, and a loopback-only HTTP service
+  exposing liveness, readiness, and capabilities.
+- **F002 (implemented, verification in progress)** — approved-source registry
+  (`config/sources.yaml`), `sources validate | sync | inspect`: pinned acquisition of the S-CORE
+  documentation repositories without executing any repository content, and offline normalization
+  of RST, Markdown (incl. MyST directives) and Sphinx-Needs requirement records with exact source
+  locations, relationships and licensing.
+
+There is no search or chat yet — those arrive in later features (see `docs/BACKLOG.md`).
 
 ## Scope
 
 - Runs entirely on your own machine: no paid API, API key, vendor login, or cloud inference.
-- Network access is used only for explicit preparation steps (`uv sync`, `models pull`); the
-  `serve` path makes no external calls.
+- Network access is used only for explicit preparation steps (`uv sync`, `models pull`,
+  `sources sync`); `serve` and `sources inspect` make no external calls.
 - Binds to `127.0.0.1` by default; a public-facing profile is a separate, not-yet-available mode.
 
 See `docs/PROJECT_SPEC.md` for the full product baseline and `.specify/memory/constitution.md` for
@@ -25,7 +30,7 @@ the non-negotiable project principles.
 ## Prerequisites
 
 - Linux x86-64
-- `git`
+- `git` ≥ 2.34 (also used by `sources sync`)
 - [`uv`](https://docs.astral.sh/uv/) ≥ 0.12 (manages the Python 3.12 environment)
 - Optional, for runtime-dependent commands: [Ollama](https://ollama.com) running on
   `127.0.0.1:11434`
@@ -38,8 +43,16 @@ uv run ruff format --check . && uv run ruff check .
 uv run mypy src
 uv run pytest                          # deterministic tests; no network, no models
 uv run python scripts/check_licenses.py
-uv run score-assistant doctor --config config/local.yaml
+uv run score-assistant --config config/local.yaml doctor
+
+# Documentation sources (sync uses the network; validate and inspect are offline)
+uv run score-assistant sources validate --config config/sources.yaml
+uv run score-assistant --config config/local.yaml sources sync --config config/sources.yaml
+uv run score-assistant --config config/local.yaml sources inspect --lock data/source-lock.json
 ```
+
+The global `--config` (before the subcommand) selects the app configuration; `sources … --config`
+selects the source registry.
 
 `doctor` reports local readiness (runtime reachable, models present, disk/memory, corpus state)
 with stable status codes and exit codes `0` (ok), `1` (operational failure), or `2`

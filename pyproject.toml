@@ -57,6 +57,7 @@ mypy_path = "src"
 testpaths = ["tests"]
 markers = [
     "real_runtime: requires a real Ollama runtime; skipped unless SCORE_ASSISTANT_REAL_RUNTIME=1",
+    "real_network: contacts GitHub; skipped unless SCORE_ASSISTANT_REAL_NETWORK=1",
 ]
 # This workstation sources /opt/ros/iron/setup.bash, which puts ROS's Python 3.10 site-packages
 # on PYTHONPATH; pytest's setuptools entry-point scan then finds ROS's pytest11 plugins (built for

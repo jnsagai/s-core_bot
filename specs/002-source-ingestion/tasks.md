@@ -146,11 +146,11 @@ synthetic fixtures carry a `SYNTHETIC — not S-CORE guidance` comment.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T055 Run the full local gate `uv run ruff format --check . && uv run ruff check . && uv run mypy src && uv run pytest && uv run python scripts/check_licenses.py`; fix all failures (constitution VII)
-- [ ] T056 [P] Register the `real_network` marker in `pyproject.toml` and make the socket guard in `tests/conftest.py` allow non-loopback connections only for tests carrying that marker when `SCORE_ASSISTANT_REAL_NETWORK=1`; write `tests/integration/test_real_network_sync.py` (skipped otherwise): validate + sync of `score-process` from GitHub, assert 40-hex revision and non-empty file list (FR-003)
-- [ ] T057 Execute quickstart.md scenarios A–E on the workstation (real GitHub and GitHub Pages); record resolved SHAs, file/entity/link counts, diagnostics summary, timings (SC-002, SC-005, SC-006, SC-007), a tally of hostile-fixture tests passed (SC-003), determinism result (SC-004) and any "not run" items with reasons in `specs/002-source-ingestion/verification.md`
-- [ ] T058 [P] Update `docs/TRACEABILITY.md`: one row each for SRC-001–SRC-008, SRC-010–SRC-012 and SEC-005 with F002 FR IDs, task IDs, implementation paths, tests and evidence; note SRC-009 remains F003 (constitution IX)
-- [ ] T059 [P] Update `docs/BACKLOG.md` (F002 state), `docs/ASSUMPTIONS.md` (docutils license review; exports unverified by construction; git ≥ 2.34 prerequisite for sync), `docs/toolchain.md` (docutils, markdown-it-py, git), `README.md` and `CLAUDE.md` command lists (`sources validate|sync|inspect`)
+- [x] T055 Run the full local gate `uv run ruff format --check . && uv run ruff check . && uv run mypy src && uv run pytest && uv run python scripts/check_licenses.py`; fix all failures (constitution VII)
+- [x] T056 [P] Register the `real_network` marker in `pyproject.toml` and make the socket guard in `tests/conftest.py` allow non-loopback connections only for tests carrying that marker when `SCORE_ASSISTANT_REAL_NETWORK=1`; write `tests/integration/test_real_network_sync.py` (skipped otherwise): validate + sync of `score-process` from GitHub, assert 40-hex revision and non-empty file list (FR-003)
+- [x] T057 Execute quickstart.md scenarios A–E on the workstation (real GitHub and GitHub Pages); record resolved SHAs, file/entity/link counts, diagnostics summary, timings (SC-002, SC-005, SC-006, SC-007), a tally of hostile-fixture tests passed (SC-003), determinism result (SC-004) and any "not run" items with reasons in `specs/002-source-ingestion/verification.md`
+- [x] T058 [P] Update `docs/TRACEABILITY.md`: one row each for SRC-001–SRC-008, SRC-010–SRC-012 and SEC-005 with F002 FR IDs, task IDs, implementation paths, tests and evidence; note SRC-009 remains F003 (constitution IX)
+- [x] T059 [P] Update `docs/BACKLOG.md` (F002 state), `docs/ASSUMPTIONS.md` (docutils license review; exports unverified by construction; git ≥ 2.34 prerequisite for sync), `docs/toolchain.md` (docutils, markdown-it-py, git), `README.md` and `CLAUDE.md` command lists (`sources validate|sync|inspect`)
 - [ ] T060 Run `/speckit-converge` and complete any appended tasks before declaring F002 done
 
 ---
