@@ -16,8 +16,8 @@ uv run pytest            # fixture snapshots + fake embedding provider
 ## B. Exact lookup and relationships (offline)
 
 ```bash
-uv run score-assistant --config $C lookup feat_req__baselibs__json --relationships
-uv run score-assistant --config $C lookup FEAT_REQ-BASELIBS-JSON          # alias match, labelled
+uv run score-assistant --config $C lookup feat_req__com__interfaces --relationships
+uv run score-assistant --config $C lookup FEAT_REQ-COM-INTERFACES           # alias match, labelled
 uv run score-assistant --config $C eval exact-ids                          # every ID first: exit 0
 ```
 
@@ -28,7 +28,7 @@ Expected: the pinned `score-platform:` entity first, then its `score-platform-ne
 
 ```bash
 uv run score-assistant --config $C search "How do I build the documentation locally?"
-uv run score-assistant --config $C search "feat_req__baselibs__json dependencies" --json | jq '.results[0].matched_by'
+uv run score-assistant --config $C search "feat_req__com__interfaces dependencies" --json | jq '.results[0].matched_by'
 uv run score-assistant --config $C search "safety analysis" --source score-process --kind prose
 uv run score-assistant --config $C search "bazel" --lexical
 ```
@@ -43,7 +43,7 @@ uv run score-assistant --config $C serve &
 curl -s -H 'Host: 127.0.0.1:8080' localhost:8080/health/ready | jq .capabilities.search
 curl -s -H 'Host: 127.0.0.1:8080' -H 'Content-Type: application/json' \
   -d '{"query":"code review guideline","limit":5}' localhost:8080/api/v1/search | jq '.mode,.results[].path'
-curl -s -H 'Host: 127.0.0.1:8080' 'localhost:8080/api/v1/entities?id=feat_req__baselibs__json' | jq '.entities[].key'
+curl -s -H 'Host: 127.0.0.1:8080' 'localhost:8080/api/v1/entities?id=feat_req__com__interfaces' | jq '.entities[].key'
 curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: 127.0.0.1:8080' -H 'Origin: https://evil.example' \
   -H 'Content-Type: application/json' -d '{"query":"x"}' localhost:8080/api/v1/search   # 403
 ```

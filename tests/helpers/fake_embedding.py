@@ -41,6 +41,10 @@ class FakeEmbeddingProvider:
     calls: list[list[str]] = field(default_factory=list)
     identity_calls: int = 0
     truncate_flags: list[bool] = field(default_factory=list)
+    # Query text → vector override, so tests can dictate semantic ranking.
+    query_vectors: dict[str, list[float]] = field(default_factory=dict)
+    query_mode: str = "ok"  # ok | unreachable | too_long
+    query_calls: list[str] = field(default_factory=list)
 
     def identity(self) -> EmbeddingIdentity:
         self.identity_calls += 1
@@ -78,3 +82,13 @@ class FakeEmbeddingProvider:
     @property
     def embedded_count(self) -> int:
         return sum(len(c) for c in self.calls)
+
+    def embed_query(self, query: str) -> list[float]:
+        self.query_calls.append(query)
+        if self.mode == "unreachable" or self.query_mode == "unreachable":
+            raise SnapshotError("EMBEDDING_UNAVAILABLE", "fake runtime unreachable")
+        if self.query_mode == "too_long":
+            raise SnapshotError("EMBEDDING_INPUT_TOO_LONG", "query too long")
+        if query in self.query_vectors:
+            return list(self.query_vectors[query])
+        return fake_vector("search_query: " + query, self.dimension)

@@ -58,7 +58,7 @@ F001–F003 precedent at the project owner's request ("be fully autonomous"); se
 
 ### User Story 1 - Look up an exact requirement ID and navigate its relationships (Priority: P1)
 
-A developer or safety engineer types a known identifier such as `feat_req__baselibs__json` or
+A developer or safety engineer types a known identifier such as `feat_req__com__interfaces` or
 `MLE.3.BP1`. They get that exact record first, with its title, type, status, source, revision,
 file and line location, a readable excerpt, and the relationships the source actually states
 (outgoing links with their resolution, plus records that link to it). When the same ID exists in
@@ -228,7 +228,7 @@ files are reported clearly.
 **Search (RET-001, RET-002, RET-004, RET-008)**
 
 - **FR-006**: Search MUST combine three paths over one snapshot: exact-ID matches for query tokens
-  (whitespace-separated, trailing `.,;:!?)` stripped) that exist in the snapshot's entity table
+  (whitespace-separated, trailing `.,;:!?)]"'` and leading `(["'` stripped) that exist in the snapshot's entity table
   verbatim or by FR-002 alias, keyword retrieval over chunk text, heading path and IDs, and semantic
   retrieval over the snapshot's vectors when semantic use is enabled.
 - **FR-007**: Keyword queries MUST be built safely from the user's words: every term is treated as

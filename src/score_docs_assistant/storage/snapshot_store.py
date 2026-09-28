@@ -13,6 +13,7 @@ from pathlib import Path
 
 from score_docs_assistant.domain.errors import SnapshotError
 from score_docs_assistant.domain.snapshots import CorpusSnapshot, SnapshotManifest
+from score_docs_assistant.retrieval.query import valid_snapshot_id
 from score_docs_assistant.storage.catalog import Catalog
 from score_docs_assistant.storage.corpus_db import open_corpus_readonly
 from score_docs_assistant.storage.manifest import (
@@ -95,6 +96,9 @@ class FileSnapshotStore:
             return catalog.snapshots(include_deleted=include_deleted)
 
     def pin(self, snapshot_id: str) -> FileSnapshotHandle:
+        # IDs may come from requests (F004); validate before any path is built from them.
+        if not valid_snapshot_id(snapshot_id):
+            raise SnapshotError("SNAPSHOT_NOT_FOUND", "invalid snapshot ID")
         pin = Pin(self._data, snapshot_id)
         try:
             with self._catalog() as catalog:

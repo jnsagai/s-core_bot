@@ -115,6 +115,8 @@ class SourceSpec:
     required: bool = True
     kind: str = "git"
     status: str = "ok"
+    associated_source: str | None = None
+    docs_root: str | None = None
 
 
 def default_sources() -> list[SourceSpec]:
@@ -162,16 +164,27 @@ class SnapshotEnv:
                     status=spec.status,  # type: ignore[arg-type]
                     failure=None if spec.status == "ok" else "fixture failure",
                     required=spec.required,
-                    repository=f"https://github.com/example/{spec.source_id}",
-                    ref="main",
+                    repository=(
+                        f"https://github.com/example/{spec.source_id}"
+                        if spec.kind == "git"
+                        else None
+                    ),
+                    url=(
+                        f"https://example.github.io/{spec.source_id}/needs.json"
+                        if spec.kind == "needs-export"
+                        else None
+                    ),
+                    ref="main" if spec.kind == "git" else None,
                     authority="fixture",
                     repository_license="Apache-2.0",
-                    parser_profile="s-core",
+                    parser_profile="s-core" if spec.kind == "git" else None,
+                    associated_source=spec.associated_source,
+                    docs_root=spec.docs_root,
                     revision=spec.revision if spec.status == "ok" else None,
-                    revision_status="pinned",
+                    revision_status="pinned" if spec.kind == "git" else "unverified",
                     fetched_at=datetime(2026, 9, 28, tzinfo=UTC),
-                    selector_sha256="0" * 64,
-                    excluded_by_selector=0,
+                    selector_sha256="0" * 64 if spec.kind == "git" else None,
+                    excluded_by_selector=0 if spec.kind == "git" else None,
                     files=files,
                 )
             )

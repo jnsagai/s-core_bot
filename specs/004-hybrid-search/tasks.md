@@ -24,8 +24,8 @@ as "not run" when skipped. Synthetic fixtures carry `SYNTHETIC — not S-CORE gu
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Create `src/score_docs_assistant/retrieval/__init__.py` and empty modules `query.py`, `exact.py`, `lexical.py`, `semantic.py`, `fusion.py`, `status.py`, `service.py`, `evaluation.py` (docstring only), plus `src/score_docs_assistant/domain/retrieval.py`, `api/search_routes.py`, `cli/search.py`, `cli/evaluate.py`
-- [ ] T002 [P] Create `eval/` with a `README.md` stating that case files are development measurements until reviewed (F008), per master spec §13.2
+- [x] T001 [P] Create `src/score_docs_assistant/retrieval/__init__.py` and empty modules `query.py`, `exact.py`, `lexical.py`, `semantic.py`, `fusion.py`, `status.py`, `service.py`, `evaluation.py` (docstring only), plus `src/score_docs_assistant/domain/retrieval.py`, `api/search_routes.py`, `cli/search.py`, `cli/evaluate.py`
+- [x] T002 [P] Create `eval/` with a `README.md` stating that case files are development measurements until reviewed (F008), per master spec §13.2
 
 ---
 
@@ -33,17 +33,17 @@ as "not run" when skipped. Synthetic fixtures carry `SYNTHETIC — not S-CORE gu
 
 ### Tests
 
-- [ ] T003 [P] Write `tests/unit/test_retrieval_config.py`: new `RetrievalConfig` fields and defaults (data-model), `max_limit ≥ evidence_chunks`, bounds on `max_per_document`, `excerpt_characters` (200..10000), `max_concurrent_searches` (1..64), `semantic_status_ttl_seconds` (0..3600); `config/local.yaml` still loads
-- [ ] T004 [P] Write `tests/unit/test_query.py`: whitespace tokenization; ID tokens strip trailing `.,;:!?)`; `alias()` rule (casefold, `[-._\s]+` → `_`, trim); FTS expression quotes every token and doubles `"`; tokens without letters/digits dropped; 64-term cap with flag; operator words (`AND`, `NEAR(`, `*`, `-x`, `col:val`) stay literal; excerpt cut at whitespace ≤ limit with `truncated` flag (FR-002, FR-007, research R2, R9)
-- [ ] T005 [P] Write `tests/unit/test_identifiers.py`: snapshot-ID and chunk-ID patterns accept real IDs and reject `../x`, `a/b`, empty, overlong, uppercase hex; `FileSnapshotStore.pin()` rejects an invalid ID **before** creating any file under `data/pins/` (checklist CHK006)
-- [ ] T006 [P] Extend `tests/helpers/snapshot_env.py` with `search_sources()`: alpha (RST: dotted ID `MLE.3.BP1` in a `std_req`, `feat_req__alpha__short` linking to `feat_req__alpha__long` and to an unknown ID, three chunks' worth of prose in one document for the per-document cap, a table, code), beta (same need ID `std_req__dup__one` as alpha, a paragraph identical to one in alpha), and an export source `alpha-needs` duplicating alpha's IDs; extend `tests/helpers/fake_embedding.py` with `embed_query()` and a `query_vectors` override map so tests can dictate semantic ranking; create `tests/helpers/search.py` building a validated + active fixture snapshot and a `SearchService`
+- [x] T003 [P] Write `tests/unit/test_retrieval_config.py`: new `RetrievalConfig` fields and defaults (data-model), `max_limit ≥ evidence_chunks`, bounds on `max_per_document`, `excerpt_characters` (200..10000), `max_concurrent_searches` (1..64), `semantic_status_ttl_seconds` (0..3600); `config/local.yaml` still loads
+- [x] T004 [P] Write `tests/unit/test_query.py`: whitespace tokenization; ID tokens strip trailing `.,;:!?)`; `alias()` rule (casefold, `[-._\s]+` → `_`, trim); FTS expression quotes every token and doubles `"`; tokens without letters/digits dropped; 64-term cap with flag; operator words (`AND`, `NEAR(`, `*`, `-x`, `col:val`) stay literal; excerpt cut at whitespace ≤ limit with `truncated` flag (FR-002, FR-007, research R2, R9)
+- [x] T005 [P] Write `tests/unit/test_identifiers.py`: snapshot-ID and chunk-ID patterns accept real IDs and reject `../x`, `a/b`, empty, overlong, uppercase hex; `FileSnapshotStore.pin()` rejects an invalid ID **before** creating any file under `data/pins/` (checklist CHK006)
+- [x] T006 [P] Extend `tests/helpers/snapshot_env.py` with `search_sources()`: alpha (RST: dotted ID `MLE.3.BP1` in a `std_req`, `feat_req__alpha__short` linking to `feat_req__alpha__long` and to an unknown ID, three chunks' worth of prose in one document for the per-document cap, a table, code), beta (same need ID `std_req__dup__one` as alpha, a paragraph identical to one in alpha), and an export source `alpha-needs` duplicating alpha's IDs; extend `tests/helpers/fake_embedding.py` with `embed_query()` and a `query_vectors` override map so tests can dictate semantic ranking; create `tests/helpers/search.py` building a validated + active fixture snapshot and a `SearchService`
 
 ### Implementation
 
-- [ ] T007 Add the new `RetrievalConfig` fields in `src/score_docs_assistant/config/schema.py` — makes T003 pass
-- [ ] T008 [P] Implement `retrieval/query.py` (tokenize, id_tokens, alias, fts_expression, excerpt, identifier patterns) — makes T004 pass
-- [ ] T009 [P] Add `SearchError` to `domain/errors.py` and the records of data-model.md to `domain/retrieval.py`; add ID validation to `storage/snapshot_store.py` `pin()` before the pin file is created — makes T005 pass
-- [ ] T010 Add `embed_query()` to the `EmbeddingProvider` protocol (`models/runtime.py`) and `OllamaEmbeddingProvider` (`search_query: ` prefix, `truncate: false`, too-long → `EMBEDDING_INPUT_TOO_LONG`), with a unit test in `tests/unit/test_ollama_embed.py` (FR-012, research R3)
+- [x] T007 Add the new `RetrievalConfig` fields in `src/score_docs_assistant/config/schema.py` — makes T003 pass
+- [x] T008 [P] Implement `retrieval/query.py` (tokenize, id_tokens, alias, fts_expression, excerpt, identifier patterns) — makes T004 pass
+- [x] T009 [P] Add `SearchError` to `domain/errors.py` and the records of data-model.md to `domain/retrieval.py`; add ID validation to `storage/snapshot_store.py` `pin()` before the pin file is created — makes T005 pass
+- [x] T010 Add `embed_query()` to the `EmbeddingProvider` protocol (`models/runtime.py`) and `OllamaEmbeddingProvider` (`search_query: ` prefix, `truncate: false`, too-long → `EMBEDDING_INPUT_TOO_LONG`), with a unit test in `tests/unit/test_ollama_embed.py` (FR-012, research R3)
 
 **Checkpoint**: unit tests, mypy, ruff green.
 
@@ -54,11 +54,11 @@ as "not run" when skipped. Synthetic fixtures carry `SYNTHETIC — not S-CORE gu
 **Independent Test**: every fixture ID is found first; alias/duplicate/export/no-match behave as
 specified; relationships equal stored rows.
 
-- [ ] T011 [P] [US1] Write `tests/unit/test_exact.py`: verbatim hit labelled `exact` with FR-004 fields and excerpt; `MLE.3.BP1` verbatim; `mle-3-bp1` → `alias` showing original; duplicate `std_req__dup__one` → both, ordered by source; git vs export copy → pinned first, export `unverified` with no excerpt; `alpha:ID` restricts; unknown `zzz:ID` prefix → no match; unknown ID → `no_match`; no fuzzy results (FR-001–FR-004, research R1)
-- [ ] T012 [P] [US1] Write `tests/unit/test_relationships.py`: outgoing links with via/target/qualifier/resolution/resolved keys exactly as stored (including the unresolved link); incoming links of `feat_req__alpha__long` include `feat_req__alpha__short`; totals and `limit`/`offset` bounds (≤ 200); unknown key → `ENTITY_NOT_FOUND` (FR-005)
-- [ ] T013 [US1] Implement `retrieval/exact.py` (per-snapshot entity + alias index, lookup ordering, entity excerpt from first chunk, relationships out/in with pagination) — makes T011, T012 pass
-- [ ] T014 [US1] Implement `SearchService.lookup()` and `.relationships()` in `retrieval/service.py` (resolve + pin snapshot per call, queryable states, errors) with `tests/integration/test_search_service.py::test_lookup_*` (FR-013)
-- [ ] T015 [US1] Implement `lookup` in `cli/search.py` and register it; write `tests/contract/test_cli_search.py::test_lookup_*` (help line, text/JSON, `--relationships`, exit codes 0/1/2) (FR-017)
+- [x] T011 [P] [US1] Write `tests/unit/test_exact.py`: verbatim hit labelled `exact` with FR-004 fields and excerpt; `MLE.3.BP1` verbatim; `mle-3-bp1` → `alias` showing original; duplicate `std_req__dup__one` → both, ordered by source; git vs export copy → pinned first, export `unverified` with no excerpt; `alpha:ID` restricts; unknown `zzz:ID` prefix → no match; unknown ID → `no_match`; no fuzzy results (FR-001–FR-004, research R1)
+- [x] T012 [P] [US1] Write `tests/unit/test_relationships.py`: outgoing links with via/target/qualifier/resolution/resolved keys exactly as stored (including the unresolved link); incoming links of `feat_req__alpha__long` include `feat_req__alpha__short`; totals and `limit`/`offset` bounds (≤ 200); unknown key → `ENTITY_NOT_FOUND` (FR-005)
+- [x] T013 [US1] Implement `retrieval/exact.py` (per-snapshot entity + alias index, lookup ordering, entity excerpt from first chunk, relationships out/in with pagination) — makes T011, T012 pass
+- [x] T014 [US1] Implement `SearchService.lookup()` and `.relationships()` in `retrieval/service.py` (resolve + pin snapshot per call, queryable states, errors) with `tests/integration/test_search_service.py::test_lookup_*` (FR-013)
+- [x] T015 [US1] Implement `lookup` in `cli/search.py` and register it; write `tests/contract/test_cli_search.py::test_lookup_*` (help line, text/JSON, `--relationships`, exit codes 0/1/2) (FR-017)
 
 **Checkpoint**: gate green; real `lookup feat_req__baselibs__json --relationships` recorded.
 

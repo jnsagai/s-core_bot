@@ -1,0 +1,59 @@
+"""`lookup` and `search` CLI contract (FR-017). Mocked provider."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+from typer.testing import CliRunner
+
+from score_docs_assistant.cli.main import cli_app
+from tests.helpers.search import SearchFixture, make_search_fixture
+
+runner = CliRunner()
+
+
+@pytest.fixture(scope="module")
+def fx(tmp_path_factory: pytest.TempPathFactory) -> SearchFixture:
+    return make_search_fixture(tmp_path_factory.mktemp("cli-search"))
+
+
+def _invoke(fx: SearchFixture, *args: str):  # type: ignore[no-untyped-def]
+    config = fx.data.parent / "app.yaml"
+    config.write_text(f"schema_version: 1\ndata_dir: {fx.data}\n")
+    return runner.invoke(cli_app, ["--config", str(config), *args])
+
+
+def test_lookup_help() -> None:
+    result = runner.invoke(cli_app, ["lookup", "--help"])
+    assert "Looks up a requirement ID exactly in one snapshot. Offline." in " ".join(
+        result.output.split()
+    )
+
+
+def test_lookup_text_and_relationships(fx: SearchFixture) -> None:
+    result = _invoke(fx, "lookup", "feat_req__alpha__short", "--relationships")
+    assert result.exit_code == 0, result.output
+    assert "[exact] alpha:feat_req__alpha__short" in result.stdout
+    assert "(unverified)" in result.stdout  # export copy listed after the git record
+    assert "-> satisfies: feat_req__missing (unresolved)" in result.stdout
+
+
+def test_lookup_json(fx: SearchFixture) -> None:
+    result = _invoke(fx, "lookup", "mle-3-bp1", "--json")
+    payload = json.loads(result.stdout)
+    assert payload["entities"][0]["match"] == "alias"
+    assert payload["snapshot_id"] == fx.snapshot_id
+
+
+def test_lookup_no_match_exit_0(fx: SearchFixture) -> None:
+    result = _invoke(fx, "lookup", "nope__nope")
+    assert result.exit_code == 0 and 'no exact match for "nope__nope"' in result.stdout
+
+
+def test_lookup_errors(fx: SearchFixture, tmp_path: Path) -> None:
+    assert _invoke(fx, "lookup", "x", "--source", "nope").exit_code == 2
+    result = _invoke(fx, "lookup", "x", "--snapshot", "20990101T000000Z-00000000")
+    assert result.exit_code == 1 and "SNAPSHOT_NOT_FOUND" in result.stderr
+    assert _invoke(fx, "lookup").exit_code == 2

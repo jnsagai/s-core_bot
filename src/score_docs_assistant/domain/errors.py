@@ -83,3 +83,33 @@ class SnapshotError(Exception):
         self.code = code
         self.message = message
         super().__init__(f"{code}: {message}")
+
+
+class SearchError(Exception):
+    """F004 request failure with a stable code, HTTP status and retry hint (data-model.md)."""
+
+    STATUS = {
+        "QUERY_INVALID": 422,
+        "FILTER_INVALID": 422,
+        "SNAPSHOT_NOT_FOUND": 404,
+        "CHUNK_NOT_FOUND": 404,
+        "ENTITY_NOT_FOUND": 404,
+        "NO_ACTIVE_SNAPSHOT": 409,
+        "SNAPSHOT_INCOMPATIBLE": 409,
+        "SEARCH_BUSY": 429,
+        "DEADLINE_EXCEEDED": 504,
+    }
+    RETRYABLE = frozenset({"SEARCH_BUSY", "DEADLINE_EXCEEDED"})
+
+    def __init__(self, code: str, message: str) -> None:
+        if code not in self.STATUS:
+            raise ValueError(f"unknown SearchError code {code!r}")
+        self.code = code
+        self.message = message
+        self.http_status = self.STATUS[code]
+        self.retryable = code in self.RETRYABLE
+        super().__init__(f"{code}: {message}")
+
+    @property
+    def usage_error(self) -> bool:
+        return self.http_status == 422

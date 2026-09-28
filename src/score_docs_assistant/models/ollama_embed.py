@@ -23,6 +23,9 @@ from score_docs_assistant.domain.snapshots import (
 from .runtime import normalize_tag
 
 _TOO_LONG = "exceeds the context length"
+# nomic-embed-text task prefix for queries; pairs with the document prefix in ChunkerConfig
+# (specs/004-hybrid-search/research.md R3).
+QUERY_PREFIX = "search_query: "
 
 
 class OllamaEmbeddingProvider:
@@ -132,3 +135,7 @@ class OllamaEmbeddingProvider:
                 "EMBEDDING_INVALID_VECTOR", "/api/embed returned a wrong number of vectors"
             )
         return [[float(v) for v in vector] for vector in vectors]
+
+    def embed_query(self, query: str) -> list[float]:
+        [vector] = self.embed([QUERY_PREFIX + query])
+        return vector

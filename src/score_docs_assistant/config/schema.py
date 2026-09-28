@@ -110,6 +110,17 @@ class RetrievalConfig(BaseModel):
     semantic_candidates: int = Field(default=30, ge=1)
     evidence_chunks: int = Field(default=8, ge=1)
     fusion_constant: int = Field(default=60, ge=1)
+    max_limit: int = Field(default=20, ge=1, le=100)
+    max_per_document: int = Field(default=3, ge=1)
+    excerpt_characters: int = Field(default=1200, ge=200, le=10_000)
+    max_concurrent_searches: int = Field(default=4, ge=1, le=64)
+    semantic_status_ttl_seconds: int = Field(default=30, ge=0, le=3600)
+
+    @model_validator(mode="after")
+    def _limit_covers_default(self) -> RetrievalConfig:
+        if self.max_limit < self.evidence_chunks:
+            raise ValueError("max_limit must be at least evidence_chunks")
+        return self
 
 
 class LimitsConfig(BaseModel):
