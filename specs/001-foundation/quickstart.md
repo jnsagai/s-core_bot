@@ -31,6 +31,24 @@ time uv run score-assistant --config config/local.yaml doctor; echo "exit=$?"
 Expected: `runtime.reachable` FAILURE `RUNTIME_UNREACHABLE` with next action; memory/disk/GPU
 still reported; `corpus.state` WARNING `CORPUS_ABSENT`; `exit=1`; wall time < 10 s.
 
+Restart before continuing:
+
+```bash
+sudo snap start ollama
+```
+
+`snap start` returns as soon as the service unit activates, not once Ollama is actually accepting
+connections — a fixed short `sleep` after it can still show `runtime.reachable` FAILURE with
+`RUNTIME_TIMEOUT` even though the service is "Started.". Poll instead of sleeping a fixed amount:
+
+```bash
+for i in $(seq 1 30); do
+  curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:11434/api/version && break
+  sleep 1
+done
+uv run score-assistant --config config/local.yaml doctor    # should be all [OK] again
+```
+
 ## C. Diagnose with runtime running, models absent (US1 AS2, US3 AS1)
 
 ```bash

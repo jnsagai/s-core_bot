@@ -6,7 +6,7 @@ verified → done (or blocked/deferred). A feature is `done` only when its defin
 
 | Feature | Directory | Depends on | Milestone | State | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| F001 Foundation and local runtime contract | `specs/001-foundation/` | — | M0 | **verified** (all 63 tasks implemented and verified — 127 tests passed, 2 skipped by design; `/speckit-converge` reports 0 findings; real CI run and real `models pull` confirmed by project owner 2026-09-28; stopping Ollama for real remains the one open scenario, see verification.md "Known gaps") | `specs/001-foundation/verification.md` |
+| F001 Foundation and local runtime contract | `specs/001-foundation/` | — | M0 | **done** (all 63 tasks implemented and verified — 127 tests passed, 2 skipped by design; `/speckit-converge` reports 0 findings; real CI run, real `models pull`, and real stop/restart of Ollama all confirmed by project owner 2026-09-28; no open scenarios) | `specs/001-foundation/verification.md` |
 | F002 Source registry and safe normalization | `specs/002-source-ingestion/` | F001 | M1 | planned | — |
 | F003 Immutable snapshots and local embedding index | `specs/003-snapshot-index/` | F001, F002 | M1 | planned | — |
 | F004 Evidence search and exact-ID navigation | `specs/004-hybrid-search/` | F003 | M1 | planned | — |

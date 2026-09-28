@@ -417,14 +417,66 @@ library page (2026-09-27) — real acquisition is consistent with the earlier do
 F001 — no ingestion exists yet. This closes T054/FR-022/FR-023's real-hardware verification;
 `models pull` had previously only been exercised against the fake Ollama transport.
 
+## Scenario B — stop/restart Ollama for real — 2026-09-28 (run by project owner)
+
+```
+$ sudo snap stop ollama
+Stopped.
+$ uv run score-assistant --config config/local.yaml doctor; echo "exit=$?"
+[FAILURE] runtime.reachable: No runtime answered at http://127.0.0.1:11434: [Errno 111] Connection refused
+  → Start Ollama (e.g. `sudo snap start ollama`) and re-run doctor.
+[SKIPPED] model.generation: Runtime must be reachable to check installed models.
+[SKIPPED] model.embedding: Runtime must be reachable to check installed models.
+[SKIPPED] model.lock: Runtime must be reachable to check the model lock.
+[WARNING] corpus.state: No document corpus is installed yet.
+exit=1
+```
+
+Real connection-refused (stronger evidence than the fake-timeout integration test), correct
+`exit=1`, and the three model checks correctly `[SKIPPED]` (not silently omitted or falsely `ok`)
+per contracts/cli.md's dependent-checks rule — the first real confirmation of that behavior.
+
+### First restart attempt: real timing finding
+
+```
+$ sudo snap start ollama
+Started.
+$ sleep 2 && uv run score-assistant --config config/local.yaml doctor
+[FAILURE] runtime.reachable: No runtime answered at http://127.0.0.1:11434 within the configured timeout.
+```
+
+`snap start` returning "Started." does not mean Ollama is yet accepting connections — 2 seconds
+was not enough. This is a real operational fact about the runtime, not a defect in `doctor` (the
+timeout behavior itself is exactly as designed: FR-006 requires a bounded wait, not an indefinite
+one). `quickstart.md` scenario B updated to poll instead of using a fixed short sleep, so a future
+reader doesn't hit the same false failure.
+
+### Restart, polled correctly — full recovery confirmed
+
+```
+$ for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:11434/api/version && break; sleep 1; done
+200
+$ uv run score-assistant --config config/local.yaml doctor
+[OK] runtime.reachable: Ollama 0.34.0 reachable at http://127.0.0.1:11434.
+[OK] model.generation: qwen3:4b-instruct is installed.
+[OK] model.embedding: nomic-embed-text:latest is installed.
+[OK] model.lock: Installed models match the lock.
+[WARNING] corpus.state: No document corpus is installed yet.
+
+$ snap services ollama
+Service          Startup  Current  Notes
+ollama.listener  enabled  active   -
+```
+
+Full recovery: every check that was `[OK]` before stopping the service is `[OK]` again afterward,
+with no restart of `score-assistant` itself required (a fresh `doctor` invocation each time, as
+designed — F001 has no long-lived readiness cache in the CLI). This closes the last open F001
+verification gap.
+
 ## Known gaps for a human to close before treating F001 as field-verified
 
-- **Scenario B** (stop Ollama, confirm `RUNTIME_UNREACHABLE` + exit 1, restart) — still not run
-  for real; requires `sudo`, which this session's policy denies. The code path is covered by
-  `tests/integration/test_doctor_timing.py` (a loopback port that accepts but never responds) and
-  `tests/unit/test_checks.py`, but not against a genuinely stopped Ollama service.
 - **`docker`/GPU acceleration path is untested** — LOC-007's GPU qualification and F009's container
-  packaging are out of F001's scope by design (see spec.md Out of Scope).
+  packaging are out of F001's scope by design (see spec.md Out of Scope). Not a gap in F001 itself.
 
 ## Blockers
 
