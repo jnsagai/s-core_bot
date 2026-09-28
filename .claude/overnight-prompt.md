@@ -59,6 +59,7 @@ Use `feat` for new functionality, `test` for test-only commits, `docs` for trace
 updates, `chore` for tooling. One commit per checkpoint is fine; smaller commits within a phase are
 also fine if a natural boundary appears (e.g. tests-red before implementation-green). Never use
 `--amend` or `--force`, never rewrite history, never touch a commit made before tonight.
+Push the feature branch after each checkpoint commit (see Hard rules).
 
 ## Verification discipline (constitution VII — non-negotiable)
 
@@ -78,10 +79,14 @@ also fine if a natural boundary appears (e.g. tests-red before implementation-gr
 
 ## Hard rules
 
-- No `sudo`, no `git push`, no `git reset --hard`/`git clean`, no model downloads
-  (`models pull`, `ollama pull`), no starting/stopping the Ollama service. These are blocked by
+- No `sudo`, no `git reset --hard`/`git clean`, no model downloads (`models pull`,
+  `ollama pull`), no starting/stopping the Ollama service. These are blocked by
   `.claude/settings.json`; do not look for a workaround if one is blocked — that block is
   intentional, not a bug to fix.
+- Pushing is allowed only for the current feature branch, after a checkpoint commit whose local
+  gate passed (`git push -u origin <feature-branch>`). Never force-push, never delete remote
+  branches, never push to `main` (all blocked by `.claude/settings.json`). After pushing, check the
+  CI run with `gh run list` / `gh run view --log-failed` and fix real failures.
 - No network access except to `http://127.0.0.1:*` (the local runtime and the service you start
   for integration tests). If a task seems to need anything else, stop that task, note it, move on.
 - Follow `CLAUDE.md` and `.specify/memory/constitution.md` for everything not covered above.
