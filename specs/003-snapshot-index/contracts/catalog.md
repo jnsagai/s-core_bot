@@ -25,7 +25,11 @@ CREATE TABLE build_jobs (job_id TEXT PRIMARY KEY,
 Invariants: `active_pointer.snapshot_id` equals the single `state='active'` row (or both are
 absent). Every mutation runs in `BEGIN IMMEDIATE … COMMIT`. `user_version > 1` → every command
 refuses with `SCHEMA_UNSUPPORTED` before reading tables. The catalog is created on first write
-(`index build`, `bundle import`). Read-only commands never create it.
+(`index build`, `bundle import`). Read-only commands never create it. An existing catalog that
+fails to open or fails `PRAGMA quick_check` is never recreated or repaired automatically:
+commands exit 1 naming the file, and snapshots on disk are untouched (recovery is an operator
+action, documented in the quickstart). Catalog connections use the same hardening pragmas as
+corpus files (research R4).
 
 ### Transactions
 

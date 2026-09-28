@@ -49,7 +49,7 @@ Uname/gname are empty. No directory entries.
 | name relative, POSIX, no `..`/`.`/empty segment, no backslash/NUL, under `snapshot/` | `unsafe_path` |
 | no duplicate names; member set = manifest `files` + manifest itself | `entry_mismatch` |
 | member count ≤ `bundles.max_entries` (scanning stops at max + 1) | `too_many_entries` |
-| Σ sizes ≤ `bundles.max_total_bytes`, and = `total_size` | `too_large` / `size_mismatch` |
+| Σ sizes ≤ `bundles.max_total_bytes` (scanning aborts as soon as the running sum exceeds it, bounding decompression work), and = `total_size` | `too_large` / `size_mismatch` |
 | free disk on `data_dir` ≥ `total_size` + `bundles.disk_margin_bytes` | `disk_insufficient` |
 
 Pass 2 (extraction into `data/staging/import-<job>/`): each file is written with
@@ -58,3 +58,8 @@ an error. After extraction, the SHA-256 of every file must equal the bundle mani
 `snapshot/manifest.json` must hash to `manifest_sha256`, and the full snapshot validator
 (research R9) must pass. Then the snapshot is registered `validated`. Any failure removes staging
 and registers nothing.
+
+Existing snapshot ID: if the catalog already has that ID (not `deleted`) with the same
+`manifest_sha256`, import is a no-op success ("already present"). With a different
+`manifest_sha256`, it is rejected (`id_conflict`). A `deleted` row with the same ID is revived as
+`validated` after full verification.

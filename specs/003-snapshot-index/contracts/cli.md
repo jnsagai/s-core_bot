@@ -48,6 +48,8 @@ a non-blocking exclusive lock attempt on the pin file fails. Exit 0.
 
 ## `snapshots activate ID`
 
+Takes the ingest lock (a build or import in progress → exit 1 `BUILD_BUSY`; retry afterwards).
+
 Offline except the identity query (runtime digest check for semantic snapshots; unreachable →
 `unverified` warning, activation proceeds). Re-verifies checksums and schema (mismatch → exit 1
 `CHECKSUM_MISMATCH` naming the file; active unchanged). Only `validated`/`retired` targets are

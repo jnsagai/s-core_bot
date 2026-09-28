@@ -141,7 +141,10 @@ followed by `VACUUM` and close before hashing. FTS5 external-content table over 
 (`text`, `heading_path`, `need_ids`) with `tokenize = "unicode61 remove_diacritics 2
 tokenchars '_-.'"`, so IDs like `feat_req__baselibs__json` and `MLE.3.BP1` stay single tokens.
 It is followed by `INSERT INTO chunks_fts(chunks_fts) VALUES('integrity-check')` during
-validation. Readers open `file:…?mode=ro&immutable=1` URIs (files never change once published,
+validation. Every connection to a corpus or catalog file applies SQLite's untrusted-database
+hardening: `PRAGMA trusted_schema = OFF`, `PRAGMA cell_size_check = ON`, and
+`setconfig(SQLITE_DBCONFIG_DEFENSIVE, True)` (Python 3.12 API). A corpus can arrive from a
+bundle, so it is treated as untrusted until validated. Readers open `file:…?mode=ro&immutable=1` URIs (files never change once published,
 and immutable skips locking). `enable_load_extension` is never called. Full schema in
 [contracts/snapshot-files.md](contracts/snapshot-files.md).
 
@@ -183,7 +186,10 @@ verified vectors.
 transactions. Build sequence:
 
 1. Acquire `data/locks/ingest.lock` with `flock(LOCK_EX | LOCK_NB)`; if it is busy, exit 1 with
-   "another build is running".
+   "another build is running". Require free disk on `data_dir` ≥ `diagnostics.disk_margin_bytes`
+   (existing F001 setting, default 2 GiB) plus the size of the newest retained snapshot, if any.
+   Otherwise exit 1 with `DISK_INSUFFICIENT` before staging anything. A disk-full error later is
+   still possible and is handled as a stage failure.
 2. Recovery: every `build_jobs` row still `running` whose PID holds no lock (we hold the lock,
    so none can) → `failed` (`interrupted`); its snapshot row `building` → `failed`; remove
    `data/staging/build-*` and any `data/snapshots/<id>/` whose catalog row is `failed`.
@@ -242,7 +248,8 @@ checks (failures → exit 1) and a `semantic` status:
   `PRAGMA integrity_check` returns `ok`; FTS `integrity-check`; counts equal the manifest; for
   semantic snapshots, file size = rows × dim × 4, all values finite, every row within 1e-3 of
   unit norm, `row_chunk_ids` equal the chunk IDs in corpus order, and `rows` equals the chunk
-  count.
+  count. `sqlite_master` must equal the expected corpus schema exactly (the same object names,
+  types and normalized SQL), so an imported corpus cannot carry extra triggers, views or tables.
 - Semantic: `absent` (lexical-only) | `enabled` | `disabled` (identity differs from the model
   lock entry for the configured embedding model, or from the runtime's reported digest/dimension;
   the message carries reindex guidance) | `unverified` (lock matches but the runtime is
@@ -296,7 +303,20 @@ ones. Then compute referenced revisions = the union of each retained snapshot ma
 `source_revisions` and the current `source-lock.json`. Delete
 `data/sources/<id>/<rev>/` directories not referenced, and `data/cache/git/<id>.git` for source
 IDs that are neither in the current lock nor in any retained snapshot. `validated`, never
-activated snapshots count toward retention like retired ones (newest kept).
+activated snapshots count toward retention like retired ones (newest kept). Order per snapshot:
+take the exclusive pin lock → remove the directory → mark the row `deleted` → remove the pin
+file. After a crash mid-deletion the row is still `retired`, but its files are incomplete.
+Activating it fails checksum verification, and the next retention run finishes the deletion
+(missing files tolerated).
+
+## R13. Threat boundary for local files
+
+Snapshot files are 0444 and verified at validation, activation and rollback. They are **not**
+re-hashed on every reader open (the cost is proportional to snapshot size on each request).
+This protects against accidental modification and interrupted writes, not against a malicious
+process running as the same OS user, which could equally alter the application itself. That is
+consistent with the local single-user threat model (master spec §12.1). Bundles and anything
+under `data/staging/import-*` are fully untrusted until validated (R10).
 
 ## Resolved unknowns
 

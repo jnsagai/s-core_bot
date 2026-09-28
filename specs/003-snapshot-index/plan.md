@@ -180,14 +180,14 @@ read access.
 | FR-008, SC-001 | integration: second build → 0 provider calls; identity field change → full re-embed; real timings in verification.md |
 | FR-009 | integration: provider unreachable → exit 1; `--lexical-only` → `semantic: absent`, no vectors, FTS works |
 | FR-010 | unit: manifest fields/order/checksums; license_review populated from F002 records |
-| FR-011, SC-004 | integration: failure injected at each stage + real SIGKILL subprocess at each stage → active pointer/catalog/active files unchanged; next build recovers staging and marks `failed`; concurrent build → `BUILD_BUSY` |
+| FR-011, SC-004 | integration: failure injected at each stage + real SIGKILL subprocess at each stage → active pointer/catalog/active files unchanged; next build recovers staging and marks `failed`; concurrent build/activation → `BUILD_BUSY`; injected low free space → `DISK_INSUFFICIENT` before staging |
 | FR-012 | integration: required source failed/missing → exit 1 before chunking; optional export failed → limitation in manifest |
 | FR-013 | integration: activate/rollback transitions, history, double rollback, no-op re-activate, checksum tamper refusal, lexical-over-semantic warning, `failed` not activatable |
 | FR-014, SC-008 | integration: subprocess pin → retention skips; SIGKILL → retention deletes; pinned handle reads A after activating B (metadata, FTS, vectors) |
-| FR-015 | integration: retention count, unreferenced source revisions and git caches deleted, referenced kept |
-| FR-016, SC-005 | unit: each integrity check fails on a crafted defect; digest/dimension/preprocessing mismatch → `disabled`; runtime unreachable → `unverified`; exit codes; no embed calls (spy) |
+| FR-015 | integration: retention count, unreferenced source revisions and git caches deleted, referenced kept; crash mid-deletion → next retention completes, activation of the partial snapshot refused |
+| FR-016, SC-005 | unit: each integrity check fails on a crafted defect (incl. extra trigger/view/table in `corpus.sqlite`, unlisted file); hardening pragmas asserted on every connection; digest/dimension/preprocessing mismatch → `disabled`; runtime unreachable → `unverified`; exit codes; no embed calls (spy) |
 | FR-017 | unit: newer `user_version`/`schema_version` in catalog, corpus, manifest, bundle → refused before other reads |
-| FR-018–FR-020, SC-006 | integration: export → import into fresh data dir → identical hashes/IDs; hostile bundles (tamper, `..`, absolute, symlink, hardlink, device, duplicate, over-count, over-size, disk check via injected free-space function) → rejected, nothing registered; license acknowledgement flow |
+| FR-018–FR-020, SC-006 | integration: export → import into fresh data dir → identical hashes/IDs; hostile bundles (tamper, `..`, absolute, symlink, hardlink, device, duplicate, over-count, over-size, disk check via injected free-space function) → rejected, nothing registered; license acknowledgement flow; same-ID re-import no-op / conflicting ID rejected |
 | FR-021 | contract: probe states absent/incompatible/compatible; readiness search `not_implemented`, chat `not_implemented`; doctor guidance text |
 | FR-022 | contract: help texts; socket guard + provider spy prove only loopback embedding in build and only identity queries in validate/activate; `bundle`/`snapshots list` open no sockets |
 | SC-007 | integration: lock v1 → lock v2 with deleted and renamed files → new snapshot paths correct, old snapshot unchanged |
