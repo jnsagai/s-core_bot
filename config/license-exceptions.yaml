@@ -7,7 +7,7 @@ schema_version: 1
 exceptions:
   - name: docutils
     license: "BSD License; GNU General Public License (GPL); Public Domain"
-    reviewed_by: "agent review (Claude Opus 5.5), 2026-09-28 — pending project-owner confirmation (docs/ASSUMPTIONS.md A-013)"
+    reviewed_by: "agent review (Claude Opus 5.5), 2026-09-28; accepted by the project owner (jnsagai) 2026-09-28 on the basis of that review (docs/ASSUMPTIONS.md A-013)"
     reason: >-
       Read docutils 0.23 COPYING.rst from the installed wheel. The only GPL-3.0 item is
       tools/editors/emacs/rst.el, which is not shipped in the wheel; docutils/utils/math/math2html.py

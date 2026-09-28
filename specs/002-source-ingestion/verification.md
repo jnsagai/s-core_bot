@@ -220,12 +220,11 @@ $ uv run mypy src                                        → Success: no issues 
 $ uv run pytest -q                                       → 350 passed, 3 skipped (opt-in: 2 real_runtime, 1 real_network)
 ```
 
-## Open item for the project owner
+## Project-owner decision — 2026-09-28
 
-- **Confirm (or reject) the docutils license exception** in `config/license-exceptions.yaml`.
-  It is an *agent* review (research R3: the only GPL-3.0 file, `tools/editors/emacs/rst.el`, is
-  not in the installed wheel), not a human approval. Until confirmed, F002 is recorded as
-  *verified*, not *done*.
+The docutils license exception (agent review, research R3) was **accepted by the project owner**,
+who asked the agent to record it; `config/license-exceptions.yaml` and `docs/ASSUMPTIONS.md` A-013
+now say so. This was the last open F002 item.
 
 ## Blockers
 
