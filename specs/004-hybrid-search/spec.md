@@ -25,6 +25,35 @@ search level), AT-04, AT-08 (query time), AT-12 (search level).
 embedding identity, manifest), `SnapshotStore` pins, the validator's semantic status, and the
 catalog. F004 never builds or modifies snapshots.
 
+## Clarifications
+
+### Session 2026-09-28
+
+Resolved autonomously by the agent (agent review, not an approval) from `docs/PROJECT_SPEC.md` and
+F001–F003 precedent at the project owner's request ("be fully autonomous"); see
+`docs/ASSUMPTIONS.md` A-024. The owner may override any answer.
+
+- Q: Which snapshot states can be searched? → A: `active`, `validated` and `retired` (CLI and API);
+  never `building`, `failed` or `deleted`. Without a snapshot ID, the active snapshot is used.
+  Basis: master spec §6.5 ("a staging snapshot may be queried for evaluation by an operator"),
+  UJ-05 evaluate-before-activate.
+- Q: Which query tokens count as IDs for exact matching inside a free-text search? → A: every
+  whitespace-separated token, with trailing sentence punctuation (`.,;:!?)`) stripped, that exists
+  in the snapshot's entity table verbatim or through the FR-002 alias. There is no pattern-based
+  guessing; all exact hits rank first, in query order. Basis: RET-003, §7.1 "exact unique-ID lookup
+  bypasses ambiguity".
+- Q: How often is a snapshot's semantic status re-checked while serving? → A: it is cached per
+  snapshot for at most 30 seconds and re-checked immediately after any failed query embedding;
+  each response reports the status it used. Basis: RET-007, AT-08; avoids a runtime round trip per
+  query.
+- Q: How long may an excerpt in a search result be? → A: at most 1 200 characters, cut at a word
+  boundary and marked `truncated: true`; the full stored text is available from the citation
+  endpoint. Basis: RET-004 "readable excerpts", RET-008 bounded results.
+- Q: How many search/lookup requests may run at once? → A: at most 4 concurrently (configurable);
+  further requests are rejected immediately with HTTP 429 (`retryable: true`), and the CLI is
+  unaffected. Basis: constitution Technology & Security Constraints ("concurrency … bounded in
+  every profile"), master spec §10.1 status codes.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Look up an exact requirement ID and navigate its relationships (Priority: P1)
@@ -153,7 +182,8 @@ files are reported clearly.
   listing allowed values, not an empty success.
 - No active snapshot and no snapshot given → clear "no active snapshot" error (CLI exit 1, HTTP 409
   with guidance to build/activate).
-- Snapshot ID unknown, deleted or failed → 404 / exit 1.
+- Snapshot ID unknown, deleted, failed or building → 404 / exit 1.
+- More than the allowed concurrent searches → HTTP 429 with `retryable: true`; nothing queued.
 - Snapshot pinned by a request is retired or deleted-by-retention attempt during the request → the
   request completes on its pinned snapshot (F003 pins).
 - Query matches nothing → empty result list with status `no_results`, not an error.
@@ -194,8 +224,9 @@ files are reported clearly.
 
 **Search (RET-001, RET-002, RET-004, RET-008)**
 
-- **FR-006**: Search MUST combine three paths over one snapshot: exact-ID matches for ID-like
-  tokens in the query, keyword retrieval over chunk text, heading path and IDs, and semantic
+- **FR-006**: Search MUST combine three paths over one snapshot: exact-ID matches for query tokens
+  (whitespace-separated, trailing `.,;:!?)` stripped) that exist in the snapshot's entity table
+  verbatim or by FR-002 alias, keyword retrieval over chunk text, heading path and IDs, and semantic
   retrieval over the snapshot's vectors when semantic use is enabled.
 - **FR-007**: Keyword queries MUST be built safely from the user's words: every term is treated as
   literal text, full-text syntax in the query is never executed, and punctuation-bearing IDs stay
@@ -211,8 +242,8 @@ files are reported clearly.
   (default 3). Distinct sources with identical text MUST remain distinct results.
 - **FR-011**: Each result MUST contain the chunk ID, snapshot ID, source ID, revision, revision
   status, path, origin path, heading path, line span, content kind, entity keys, a readable
-  plain-text excerpt (the stored display text, bounded in length, never the synthetic embedding
-  prefix), the matched-by labels (`exact`, `alias`, `keyword`, `semantic`) and the rank. Any numeric
+  plain-text excerpt (the stored display text, at most 1 200 characters cut at a word boundary and
+  flagged `truncated`, never the synthetic embedding prefix), the matched-by labels (`exact`, `alias`, `keyword`, `semantic`) and the rank. Any numeric
   value MUST be labelled a relative ranking value, and no field may call it a probability,
   confidence or correctness.
 - **FR-012**: The query embedding for semantic retrieval MUST come only from the configured local
@@ -222,16 +253,17 @@ files are reported clearly.
 **Snapshot binding and degraded modes (RET-005, RET-007, LOC-006, OPS-002)**
 
 - **FR-013**: Every search, lookup, relationship and evidence request MUST be bound to exactly one
-  snapshot: the one named in the request, or the active snapshot resolved once at request start. It
+  snapshot in state `active`, `validated` or `retired`: the one named in the request, or the active
+  snapshot resolved once at request start. It
   MUST hold that snapshot's pin for its whole duration, and MUST return the snapshot ID in the
   response. Content from any other snapshot MUST NOT appear.
 - **FR-014**: Semantic retrieval MUST be used only when the snapshot's semantic status is `enabled`
   (vectors present and embedding identity matching the model lock and the installed runtime model).
   Otherwise search MUST run in keyword mode and report `degraded: lexical` with a reason code
   (`snapshot_lexical_only`, `embedding_identity_mismatch` with reindex guidance,
-  `embedding_runtime_unavailable`, `query_too_long_for_embedding`). Semantic status MUST be
-  re-checked at least when the snapshot changes or the runtime's installed model changes, not only
-  at startup.
+  `embedding_runtime_unavailable`, `query_too_long_for_embedding`). Semantic status MAY be cached
+  per snapshot for at most 30 seconds and MUST be re-checked immediately after a failed query
+  embedding; each response reports the status it used.
 - **FR-015**: Search and lookup MUST NOT depend on the generation model. Their availability MUST be
   reported independently of chat availability, and readiness MUST mark search available (possibly
   degraded) when a compatible active snapshot exists, replacing F003's `not_implemented` reason for
@@ -253,7 +285,8 @@ files are reported clearly.
   downloads anything; the only network use is the loopback embedding runtime for query embeddings.
 - **FR-018**: Search and lookup requests MUST obey the configured request deadline and question
   length limit, MUST NOT log query text or result bodies, and MUST go through F001's Host/Origin
-  protection. Search is a costly request and MUST be protected against cross-origin calls like
+  protection. At most 4 search/lookup requests (configurable) run concurrently in the server;
+  further ones are rejected at once with HTTP 429 (`retryable: true`). Search is a costly request and MUST be protected against cross-origin calls like
   other costly endpoints.
 
 **Evaluation (§13.3, §13.4)**
