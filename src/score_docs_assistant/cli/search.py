@@ -2,46 +2,18 @@
 
 from __future__ import annotations
 
-import functools
-from collections.abc import Callable
 from typing import Annotated, Any
 
 import typer
 
-from score_docs_assistant.cli import runtime_factory
 from score_docs_assistant.cli.main import cli_app, handle_common_errors
-from score_docs_assistant.config.loader import load_config
-from score_docs_assistant.config.schema import AppConfig
-from score_docs_assistant.domain.errors import SearchError, SnapshotError
+from score_docs_assistant.cli.search_support import (
+    _config,
+    build_service,
+    handle_search_errors,
+)
+from score_docs_assistant.domain.errors import SearchError
 from score_docs_assistant.retrieval.service import SearchService
-
-
-def _config(ctx: typer.Context) -> AppConfig:
-    return load_config(config_path=(ctx.obj or {}).get("config_path")).config
-
-
-def build_service(config: AppConfig, *, embeddings: bool = True) -> SearchService:
-    provider = None
-    if embeddings:
-        try:
-            provider = runtime_factory.build_embedding_provider(config)
-        except SnapshotError:
-            provider = None
-    return SearchService(config=config, provider=provider)
-
-
-def handle_search_errors[F: Callable[..., Any]](func: F) -> F:
-    """SearchError → exit 2 for usage/validation problems, exit 1 otherwise."""
-
-    @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        try:
-            return func(*args, **kwargs)
-        except SearchError as exc:
-            typer.echo(f"{exc.code}: {exc.message}", err=True)
-            raise typer.Exit(code=2 if exc.usage_error else 1) from None
-
-    return wrapper  # type: ignore[return-value]
 
 
 def _lines(start: int | None, end: int | None) -> str:

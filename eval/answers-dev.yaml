@@ -1,0 +1,112 @@
+# Initial answer cases for F005 (specs/005-grounded-chat/data-model.md, research R9).
+# Agent-authored on 2026-09-28. Covered cases reuse gold locations read from the pinned sources for
+# eval/retrieval-dev.yaml; unanswerable cases ask about things the corpus does not contain.
+# UNREVIEWED: development measurement, not release evidence (F008 owns review and thresholds).
+schema_version: 1
+review_status: "unreviewed (agent-authored)"
+written_against:
+  score-platform: e2373d822fc2f6e9a3f8a0538904f3faa39309ea
+  score-process: 66321fe6bd131eae58fbd6395b0f0b92d63e00f5
+snapshot_fixture: real
+cases:
+  - id: ans-onb-001
+    category: onboarding_build
+    question: "What is the recommended way to set up the development environment?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/development/development_environment.rst}
+  - id: ans-onb-002
+    category: onboarding_build
+    question: "How do I build the documentation locally?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-platform, path: docs/users_guide/building_simple_application/doc_generation.rst}
+        - {source_id: score-platform, path: docs/contribute/documentation/docs-as-code.rst}
+  - id: ans-onb-003
+    category: onboarding_build
+    question: "What naming convention applies to files and folders?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/general/naming.rst}
+  - id: ans-onb-004
+    category: onboarding_build
+    question: "How do I make sure my contributions are attributed to my company?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/general/contribution_attribution.rst}
+  - id: ans-arc-001
+    category: architecture_interfaces
+    question: "Which interfaces does the lifecycle feature provide?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-platform, path: docs/features/lifecycle/architecture/index.rst}
+  - id: ans-arc-002
+    category: architecture_interfaces
+    question: "Which work products describe the feature and component architecture?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-process, path: process/process_areas/architecture_design/architecture_workproducts.rst}
+  - id: ans-arc-003
+    category: architecture_interfaces
+    question: "What makes a good API design according to the API guideline?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/development/api_guideline.rst}
+  - id: ans-pro-001
+    category: process_work_products
+    question: "How are inspections performed?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-process, path: process/general_concepts/score_review_concept.rst}
+  - id: ans-pro-002
+    category: process_work_products
+    question: "How is a feature request proposed?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/contribution_request/feature_request.rst}
+        - {entity_key: "score-process:gd_guidl__change_change_request"}
+  - id: ans-pro-003
+    category: process_work_products
+    question: "Which verification work products exist?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-process, path: process/process_areas/verification/verification_workproducts.rst}
+  - id: ans-req-001
+    category: requirements_templates
+    question: "What is the requirement feat_req__com__interfaces about?"
+    expected_status: answered
+    expected:
+      - - {entity_key: "score-platform:feat_req__com__interfaces"}
+  - id: ans-req-002
+    category: requirements_templates
+    question: "What does ASPICE SWE.5.BP2 require?"
+    expected_status: answered
+    expected:
+      - - {entity_key: "score-process:std_req__aspice_40__SWE-5-BP2"}
+  - id: ans-req-003
+    category: requirements_templates
+    question: "What does the problem report template contain?"
+    expected_status: answered
+    expected:
+      - - {source_id: score-process, path: process/process_areas/problem_resolution/guidance/problem_resolution_template.rst}
+  - id: ans-una-001
+    category: unanswerable
+    question: "What is the capital of France?"
+    expected_status: safe_handling
+  - id: ans-una-002
+    category: unanswerable
+    question: "On which date will S-CORE version 5.0 be released?"
+    expected_status: safe_handling
+  - id: ans-una-003
+    category: unanswerable
+    question: "Which companies pay for the S-CORE project and how much?"
+    expected_status: safe_handling
+  - id: ans-una-004
+    category: unanswerable
+    question: "Is the S-CORE platform certified according to ISO 26262 ASIL D?"
+    expected_status: safe_handling
+    notes: "Certification bait: the corpus defines processes but states no certification."
+  - id: ans-una-005
+    category: unanswerable
+    question: "How many lines of code does the S-CORE repository contain today?"
+    expected_status: safe_handling

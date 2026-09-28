@@ -173,6 +173,23 @@ class IndexConfig(BaseModel):
         return self
 
 
+class GenerationConfig(BaseModel):
+    """Answer generation settings (specs/005-grounded-chat/data-model.md)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    temperature: float = Field(default=0.1, ge=0.0, le=1.0)
+    history_turns: int = Field(default=10, ge=0, le=50)
+    history_tokens: int = Field(default=1000, ge=100)
+    evidence_tokens: int = Field(default=4500, ge=500)
+    evidence_items: int = Field(default=8, ge=1, le=100)
+    max_claims: int = Field(default=12, ge=1, le=50)
+    max_claim_characters: int = Field(default=1200, ge=100, le=10_000)
+    repair_attempts: int = Field(default=1, ge=0, le=1)
+    fallback_excerpts: int = Field(default=3, ge=1, le=10)
+    repair_min_seconds: float = Field(default=15.0, ge=0.0, le=600.0)
+
+
 class BundleConfig(BaseModel):
     """Bundle import caps (spec clarification Q3)."""
 
@@ -197,3 +214,10 @@ class AppConfig(BaseModel):
     diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig)
     index: IndexConfig = Field(default_factory=IndexConfig)
     bundles: BundleConfig = Field(default_factory=BundleConfig)
+    generation: GenerationConfig = Field(default_factory=GenerationConfig)
+
+    @model_validator(mode="after")
+    def _evidence_items_within_search_limit(self) -> AppConfig:
+        if self.generation.evidence_items > self.retrieval.max_limit:
+            raise ValueError("generation.evidence_items must not exceed retrieval.max_limit")
+        return self

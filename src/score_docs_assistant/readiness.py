@@ -102,13 +102,12 @@ class ReadinessService:
         if corpus_state == CorpusState.COMPATIBLE:
             # F004: search works on any compatible active snapshot, degraded to keyword-only when
             # semantic search is unusable (still available, with a visible reason; LOC-006).
-            # Answers arrive in F005, so chat stays not_implemented (docs/ASSUMPTIONS.md A-022).
+            # F005: chat is available when the generation model checks above passed.
             degraded = self._semantic_probe is not None and self._semantic_probe() is False
             search_state = CapabilityState(
                 available=True,
                 reasons=[ReasonCode.SEMANTIC_UNAVAILABLE] if degraded else [],
             )
-            chat_reasons.append(ReasonCode.NOT_IMPLEMENTED)
         chat_state = _state(chat_reasons)
         compare_state = _state([ReasonCode.NOT_IMPLEMENTED])
 

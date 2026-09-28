@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
+from dataclasses import dataclass
 from typing import Any, Protocol
 
+from score_docs_assistant.domain.answers import GenerationIdentity
 from score_docs_assistant.domain.models import InstalledModel, RuntimeInfo
 from score_docs_assistant.domain.snapshots import EmbeddingIdentity
 
@@ -22,8 +24,30 @@ class ModelRuntime(Protocol):
     def pull(self, tag: str) -> Iterator[dict[str, Any]]: ...
 
 
+@dataclass(frozen=True)
+class GenerationResult:
+    text: str
+    truncated: bool  # output hit the length limit or the raw-size cap
+    prompt_tokens: int | None = None
+    output_tokens: int | None = None
+
+
 class GenerationProvider(Protocol):
-    """Chat/completion provider interface. Implemented starting in F005."""
+    """Local structured generation (F005). Implementations send no tools, stream internally so a
+    cancelled task closes the runtime connection, and raise `GenerationError`
+    ("GENERATION_UNAVAILABLE") when the runtime or model cannot be used."""
+
+    async def identity(self) -> GenerationIdentity: ...
+
+    async def generate(
+        self,
+        messages: Sequence[dict[str, str]],
+        *,
+        schema: dict[str, Any],
+        temperature: float,
+        context_tokens: int,
+        output_tokens: int,
+    ) -> GenerationResult: ...
 
 
 class EmbeddingProvider(Protocol):
