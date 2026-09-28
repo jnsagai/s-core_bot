@@ -139,6 +139,39 @@ class DiagnosticsConfig(BaseModel):
     disk_margin_bytes: int = Field(default=2_147_483_648, ge=0)
 
 
+class IndexConfig(BaseModel):
+    """Chunking, embedding and retention settings (specs/003-snapshot-index/data-model.md)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    chunk_min_tokens: int = Field(default=350, ge=100)
+    chunk_max_tokens: int = Field(default=700, ge=100)
+    chunk_overlap_tokens: int = Field(default=75, ge=50, le=100)
+    embedding_max_input_tokens: int = Field(default=1800, ge=300)
+    embedding_batch_size: int = Field(default=32, ge=1, le=256)
+    embedding_timeout_seconds: int = Field(default=120, ge=1, le=600)
+    retention_count: int = Field(default=2, ge=2)
+
+    @model_validator(mode="after")
+    def _budgets_consistent(self) -> IndexConfig:
+        if self.chunk_min_tokens > self.chunk_max_tokens:
+            raise ValueError("chunk_min_tokens must not exceed chunk_max_tokens")
+        # Leave room for the synthetic embedding prefix (research R3.10).
+        if self.chunk_max_tokens > self.embedding_max_input_tokens - 200:
+            raise ValueError("chunk_max_tokens must be at most embedding_max_input_tokens - 200")
+        return self
+
+
+class BundleConfig(BaseModel):
+    """Bundle import caps (spec clarification Q3)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_total_bytes: int = Field(default=2 * 1024**3, ge=1)
+    max_entries: int = Field(default=10_000, ge=1)
+    disk_margin_bytes: int = Field(default=1024**3, ge=0)
+
+
 class AppConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -151,3 +184,5 @@ class AppConfig(BaseModel):
     limits: LimitsConfig = Field(default_factory=LimitsConfig)
     privacy: PrivacyConfig = Field(default_factory=PrivacyConfig)
     diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig)
+    index: IndexConfig = Field(default_factory=IndexConfig)
+    bundles: BundleConfig = Field(default_factory=BundleConfig)

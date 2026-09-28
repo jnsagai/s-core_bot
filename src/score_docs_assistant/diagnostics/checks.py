@@ -347,13 +347,26 @@ def check_corpus_state(probe: CorpusProbe) -> CheckResult:
             id="corpus.state",
             status="warning",
             code="CORPUS_ABSENT",
-            message="No document corpus is installed yet.",
-            next_action="Corpus ingestion is not implemented in F001; see F002+.",
+            message="No active document corpus snapshot.",
+            next_action=(
+                "Run `score-assistant sources sync`, then `score-assistant index build --activate`."
+            ),
+        )
+    if state == CorpusState.COMPATIBLE:
+        return CheckResult(
+            id="corpus.state",
+            status="ok",
+            code="CORPUS_COMPATIBLE",
+            message="An active, compatible corpus snapshot is installed.",
+            next_action=None,
         )
     return CheckResult(
         id="corpus.state",
         status="failure",
         code="CORPUS_INCOMPATIBLE",
         message="An existing corpus catalog is not compatible with this version.",
-        next_action="Reinstall or re-ingest the corpus once ingestion is available.",
+        next_action=(
+            "Run `score-assistant snapshots list`; rebuild with `index build --activate` or "
+            "roll back with `snapshots rollback`."
+        ),
     )

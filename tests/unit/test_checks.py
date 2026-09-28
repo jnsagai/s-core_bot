@@ -211,6 +211,12 @@ def test_corpus_absent_and_incompatible() -> None:
     assert absent.code == "CORPUS_ABSENT"
     assert absent.next_action
 
+    assert "index build --activate" in (absent.next_action or "")
+
+    compatible = checks.check_corpus_state(_Probe(CorpusState.COMPATIBLE))
+    assert compatible.status == "ok"
+    assert compatible.code == "CORPUS_COMPATIBLE"
+
     incompatible = checks.check_corpus_state(_Probe(CorpusState.INCOMPATIBLE))
     assert incompatible.status == "failure"
     assert incompatible.code == "CORPUS_INCOMPATIBLE"

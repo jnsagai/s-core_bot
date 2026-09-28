@@ -23,6 +23,7 @@ records attribution; it is not a substitute for reading each package's own licen
 - **mdurl** 0.1.2 — MIT License
 - **mypy** 2.3.1 — MIT
 - **mypy_extensions** 1.1.0 — MIT
+- **numpy** 2.5.3 — BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0
 - **packaging** 26.3 — Apache-2.0 OR BSD-2-Clause
 - **pathspec** 1.1.1 — Mozilla Public License 2.0 (MPL 2.0)
 - **pluggy** 1.6.0 — MIT License
