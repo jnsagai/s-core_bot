@@ -78,11 +78,16 @@ must be tracked, for a marginal gain.
 
 **Decision** (chunker version `1`):
 
-1. Walk each document's top-level blocks in order, carrying `heading_path`. Skip
-   `dynamic_view`, `raw_excluded`, `section` (the title lives in `heading_path` and the
-   embedding prefix) and empty-text blocks.
-2. `need` block (has `entity_key`): its text plus its children's texts joined by blank lines
-   form one chunk of kind `need`. If it exceeds `max_tokens` (700), it is split at child-block
+1. F002 blocks form a **tree** (sections contain their content; lists, admonitions, block
+   quotes and generic directives contain children). Flatten it depth-first in document order
+   into *units*, using each block's own `heading_path`. `section` titles are not units (they
+   live in `heading_path` and the embedding prefix). `dynamic_view` and `raw_excluded` contribute
+   nothing. Container blocks contribute their own non-empty text, if any, and then their children.
+   Every nested `need` becomes its own unit, even when it sits inside another need or a list.
+2. `need` block (has `entity_key`): the unit text is its title, then its options rendered as
+   they appear in source (`:key: value`, one per line), then its non-need descendants' texts,
+   joined by blank lines. Options carry status, safety and links, which retrieval needs. The unit
+   forms one chunk of kind `need`. If it exceeds `max_tokens` (700), it is split at child-block
    boundaries, then at sentence boundaries, into ordered continuation chunks. Every
    continuation carries the entity key and `continuation = i/n`.
 3. `table`: kind `table`. Rows are accumulated up to `max_tokens`, and every piece repeats the
@@ -97,13 +102,16 @@ must be tracked, for a marginal gain.
    `min_tokens` (350) stays a small chunk (never merged across sections).
 6. A single prose block over `max_tokens` is split at sentence boundaries
    (`(?<=[.!?])\s+(?=[A-Z0-9"'(\[])`) into windows ≤ `max_tokens`, with the trailing whole
-   sentences of the previous window (target 75, bounded 50–100 estimated tokens) repeated as
-   overlap. A single sentence over `max_tokens` falls back to whitespace boundaries.
+   sentences of the previous window repeated as overlap: as many whole trailing sentences as
+   fit in 100 estimated tokens, which is ≥ 50 unless the last sentence alone exceeds 100, in
+   which case there is no overlap rather than a partial sentence. A single sentence over `max_tokens` falls back to whitespace boundaries.
 7. Oversize fallback: a single unsplittable unit (one code line, one table row, one
    whitespace-free token run) larger than `max_tokens` is allowed as its own chunk if its
    embedding input fits the 1 800 cap. Otherwise the build fails with `CHUNK_UNSPLITTABLE`,
    naming the source, path and line. Nothing is ever truncated.
-8. Line span: `min(line_start)`–`max(line_end)` of contributing blocks (null if none known);
+8. Line span: `min(line_start)`–`max(line_end)` of contributing blocks (null if none known).
+   Pieces of a split block keep the whole block's span (best available: code/table line offsets
+   inside a directive are not exact after normalization);
    `origin_path` from the first block (chunks never mix origin paths — an origin change closes
    the chunk).
 9. Display text = the contributing normalized texts joined by `\n\n` (tables: rows rendered
@@ -140,8 +148,11 @@ version), `journal_mode=DELETE` (a single file after close, no `-wal` sidecar to
 followed by `VACUUM` and close before hashing. FTS5 external-content table over `chunks`
 (`text`, `heading_path`, `need_ids`) with `tokenize = "unicode61 remove_diacritics 2
 tokenchars '_-.'"`, so IDs like `feat_req__baselibs__json` and `MLE.3.BP1` stay single tokens.
-It is followed by `INSERT INTO chunks_fts(chunks_fts) VALUES('integrity-check')` during
-validation. Every connection to a corpus or catalog file applies SQLite's untrusted-database
+During validation it is followed by `INSERT INTO chunks_fts(chunks_fts, rank)
+VALUES('integrity-check', 1)`, where `rank = 1` also compares the index against the external
+content table. SQLite refuses this on a read-only connection (verified), so the validator runs
+it, together with `PRAGMA integrity_check` and the schema comparison, on a private temporary
+copy under `data/staging/`. The published file is never opened writable. Every connection to a corpus or catalog file applies SQLite's untrusted-database
 hardening: `PRAGMA trusted_schema = OFF`, `PRAGMA cell_size_check = ON`, and
 `setconfig(SQLITE_DBCONFIG_DEFENSIVE, True)` (Python 3.12 API). A corpus can arrive from a
 bundle, so it is treated as untrusted until validated. Readers open `file:…?mode=ro&immutable=1` URIs (files never change once published,

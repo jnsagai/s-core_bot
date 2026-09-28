@@ -34,9 +34,10 @@ corpora' `chunks` tables (all columns except `rowid`) shows identical rows (SC-0
 
 ```bash
 for id in $(jq -r .snapshot_id /tmp/b1.json /tmp/b2.json); do
-  sqlite3 "file:data/snapshots/$id/corpus.sqlite?mode=ro" \
-    "select chunk_id,content_hash,embedding_input_hash from chunks order by rowid" | sha256sum
-done   # two equal hashes
+  uv run python -c "import sqlite3,sys,hashlib; c=sqlite3.connect(f'file:{sys.argv[1]}?mode=ro',uri=True); \
+print(hashlib.sha256(repr(c.execute('select chunk_id,content_hash,embedding_input_hash,text from chunks order by rowid').fetchall()).encode()).hexdigest())" \
+    "data/snapshots/$id/corpus.sqlite"
+done   # two equal hashes (the sqlite3 CLI is not required)
 ```
 
 A successful real build proves that every embedding input fit the runtime bound
