@@ -22,6 +22,46 @@ AT-13, AT-16.
 **Input from F002**: the source lock and `NormalizationService` output (documents, blocks,
 entities with resolved links, coverage report). F003 never re-acquires sources.
 
+## Clarifications
+
+### Session 2026-09-28
+
+Resolved autonomously by the agent (agent review, not an approval) from `docs/PROJECT_SPEC.md`
+and F001/F002 precedent at the project owner's request ("be fully autonomous"); see
+`docs/ASSUMPTIONS.md` A-018. The owner may override any answer.
+
+- Q: How is a reader's pin made visible to other processes (e.g. `serve` reading while the CLI
+  runs retention), and what happens to the pin if the reader crashes? → A: A pin is held by the
+  reading process and is visible to every other process on the machine; it is released
+  automatically when that process exits for any reason, including a crash or kill, so no pin can
+  outlive its process. Retention checks for pins without waiting and skips a pinned snapshot.
+  Basis: OPS-002 "crash recoverable, and pinned for the lifetime of a request"; §9.2 single
+  ingestion writer plus concurrent read-only readers.
+- Q: What does validation compare a snapshot's embedding identity against, and what happens when
+  the embedding runtime is unreachable? → A: Against the model lock entry for the configured
+  embedding model (offline, always), and additionally against the digest reported by the local
+  runtime when it is reachable. Validation never sends embedding requests. Runtime unreachable →
+  semantic status `unverified` (warning) while all lexical checks still run. Exit codes follow
+  F001: `0` no integrity failures (semantic `disabled`/`unverified` are warnings), `1` any
+  integrity failure, `2` configuration/usage error. Basis: AT-08, LOC-006, §8 model lock, F001
+  exit-code convention.
+- Q: What limits apply to bundle import? → A: Configurable caps with defaults: total extracted size
+  2 GiB, 10 000 entries, and a free-disk check requiring the declared total plus a 1 GiB margin
+  before anything is extracted. Oversized, over-count or insufficient-disk bundles are refused
+  before extraction. Basis: §6.3 "larger files require a deliberate configuration update, not
+  silent truncation"; ~14 GiB free on the reference workstation (docs/toolchain.md).
+- Q: What exactly does rollback target, and is a snapshot re-checked when it is (re)activated?
+  → A: The catalog keeps an activation history; rollback activates the snapshot that was active
+  immediately before the current one, if it is still retained and `retired` (a second rollback
+  therefore returns to the first). Every activation, including rollback, re-verifies the target's
+  file checksums and schema first and refuses on mismatch. Basis: OPS-002; RET-007 ("validate
+  before use").
+- Q: Does a successful build activate its snapshot automatically? → A: No. A build ends at
+  `validated`; `index build --activate` opts into activating it after validation in the same
+  invocation. Activating a lexical-only snapshot while a semantic one is active is allowed but
+  prints a warning that semantic search will be lost. Basis: UJ-05 (operator-controlled update),
+  §6.5 staging → validation → activation.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Build a validated, self-describing snapshot from the source lock (Priority: P1)
@@ -149,7 +189,16 @@ documents that require license review is not exported without an explicit acknow
 - Embedding runtime returns a vector of unexpected dimension or a non-finite value → build fails.
 - Disk full while writing → build fails in staging; active untouched.
 - Activating the already-active snapshot → no change, success.
-- Rollback with no previous snapshot → clear error, exit 1.
+- Rollback with no previous snapshot, or with a previous snapshot already removed by retention →
+  clear error, exit 1.
+- A snapshot's files were modified after validation → activation or rollback to it is refused with
+  the mismatching file named; the active snapshot is unchanged.
+- A reader process is killed while holding a pin → the pin disappears with the process; the next
+  retention run may remove that snapshot.
+- Embedding runtime unreachable during `index validate` → lexical checks complete; semantic status
+  `unverified`; exit 0 unless an integrity check failed.
+- Bundle whose declared size exceeds the cap or the free disk space → refused before extraction.
+- Activating a lexical-only snapshot while a semantic snapshot is active → allowed with a warning.
 - A second build started while one is running → refused (single ingestion writer lock).
 - Bundle from a newer schema version → refused at inspect and import.
 
@@ -208,18 +257,29 @@ documents that require license review is not exported without an explicit acknow
   next build. Only one build may run at a time.
 - **FR-012**: Activation MUST require: every required lock source `ok`, zero integrity failures, and
   a coverage report; optional-source failures are recorded as coverage limitations.
-- **FR-013** (OPS-002): Activation and rollback MUST each be a single atomic catalog transaction;
-  activating the active snapshot is a no-op; rollback re-activates the previous snapshot.
+- **FR-013** (OPS-002): Activation and rollback MUST each be a single atomic catalog transaction,
+  preceded by re-verification of the target's file checksums and schema (refused on mismatch);
+  activating the active snapshot is a no-op. The catalog MUST keep an activation history; rollback
+  activates the snapshot that was active immediately before the current one if it is still
+  retained, so a second rollback returns to the first. A build never activates its snapshot
+  unless the operator passes `--activate`; activating a lexical-only snapshot while a semantic one
+  is active MUST print a warning.
 - **FR-014** (OPS-002): A reader MUST be able to pin a snapshot for its lifetime; a pinned reader
   keeps reading that snapshot's metadata, corpus and vectors across activations; retention MUST
-  never delete a pinned snapshot.
+  never delete a pinned snapshot. Pins MUST be visible across processes and MUST be released
+  automatically when the holding process exits, including by crash or kill; retention checks pins
+  without blocking and skips pinned snapshots.
 - **FR-015**: After an activation, retention MUST keep the active and previous snapshots (count
   configurable, minimum 2), delete older unpinned retired snapshots, and delete acquired source
   revisions and git caches no retained snapshot or current lock references.
 - **FR-016** (RET-007): Validation MUST recompute file checksums, verify schema version, full-text
   index integrity, vector file shape (rows × dimension × 4 bytes), finite unit-norm vectors, and
-  compare the embedding identity with the currently installed embedding model; a mismatch disables
-  semantic use of that snapshot with reindex guidance instead of being silently accepted.
+  compare the embedding identity with the model lock entry for the configured embedding model and,
+  when the local runtime is reachable, with its reported digest; a mismatch disables semantic use
+  of that snapshot with reindex guidance instead of being silently accepted, and an unreachable
+  runtime reports semantic status `unverified`. Validation never sends embedding requests. Exit
+  codes: `0` no integrity failures (semantic `disabled`/`unverified` are warnings), `1` any
+  integrity failure, `2` configuration/usage error.
 - **FR-017**: A catalog, corpus or bundle whose schema version is newer than supported MUST be
   refused with a clear message and never partially read.
 
@@ -232,8 +292,10 @@ documents that require license review is not exported without an explicit acknow
 - **FR-019**: Inspect MUST show a bundle's identity, schema, counts, embedding identity and license
   notes without importing it.
 - **FR-020**: Import MUST extract only regular files within the target directory (no absolute paths,
-  `..`, links or device entries; size caps), verify every hash and the schema before registering,
-  and register the snapshot as `validated` — never active.
+  `..`, links or device entries), enforce configurable caps (defaults: 2 GiB total extracted size,
+  10 000 entries) and a free-disk check (declared total + 1 GiB margin) before extracting anything,
+  verify every hash and the schema before registering, and register the snapshot as `validated` —
+  never active.
 
 **Integration and commands**
 
@@ -243,7 +305,8 @@ documents that require license review is not exported without an explicit acknow
 - **FR-022** (LOC-003): The CLI MUST provide `index build`, `index validate`, `snapshots list`,
   `snapshots activate`, `snapshots rollback`, `bundle export`, `bundle inspect` and `bundle import`
   (master spec §10.2), with exit codes `0`/`1`/`2`. None of them downloads anything; the only
-  network use is the loopback embedding runtime during `index build` and `index validate`.
+  network use is the loopback embedding runtime: embedding requests during `index build`, and a
+  model-identity query (no embedding requests) during `index validate` and activation.
 
 ### Key Entities
 
@@ -252,8 +315,9 @@ documents that require license review is not exported without an explicit acknow
 - **SnapshotManifest**, **EmbeddingManifest**: per FR-007, FR-010.
 - **EmbeddingIdentity**: provider, model tag, model digest, dimension, preprocessing revision,
   normalization.
-- **Catalog**: snapshot rows, active pointer, build jobs.
-- **Pin**: a reader's hold on one snapshot.
+- **Catalog**: snapshot rows, active pointer, activation history, build jobs.
+- **Pin**: a reader process's hold on one snapshot, visible across processes and released when
+  the process exits.
 - **Bundle / BundleManifest**: exported snapshot plus hashes and license acknowledgement.
 
 ## Success Criteria *(mandatory)*
@@ -276,7 +340,7 @@ documents that require license review is not exported without an explicit acknow
 - **SC-007**: Files deleted or renamed between two locks are absent from (or renamed in) the new
   snapshot and still present in the old one.
 - **SC-008**: A reader pinned during an activation observes only its original snapshot and blocks
-  deletion of it (100 % of test cases).
+  deletion of it (100 % of test cases); a killed reader's pin no longer blocks deletion (100 %).
 
 ## Assumptions
 
