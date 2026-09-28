@@ -1,0 +1,33 @@
+Upstream test fixtures — provenance and attribution
+===================================================
+
+The files under `score/` and `process_description/` are verbatim, unmodified copies of files from
+the Eclipse S-CORE project, used only as test fixtures for this project's parser
+(specs/002-source-ingestion tasks T008, T039). They are real S-CORE documentation, not guidance
+written by this project.
+
+Copyright (c) Contributors to the Eclipse Foundation.
+Licensed under the Apache License, Version 2.0 — see score/LICENSE and process_description/LICENSE
+(identical texts) and the Eclipse NOTICE files copied alongside them. Every copied documentation
+file carries `SPDX-License-Identifier: Apache-2.0` in its own header. No CC-BY-SA-licensed
+upstream file is included.
+
+Sources (copied 2026-09-28):
+
+- https://github.com/eclipse-score/score @ e2373d822fc2f6e9a3f8a0538904f3faa39309ea
+- https://github.com/eclipse-score/process_description @ 66321fe6bd131eae58fbd6395b0f0b92d63e00f5
+
+| Fixture path (repo-relative, unchanged) | SHA-256 (prefix) | Construct exercised |
+| --- | --- | --- |
+| `score/docs/features/ai_platform/gen_ai/requirements/index.rst` | `8f22860c002d` | feat_req with version-qualified links |
+| `score/docs/modules/feo/feo/docs/detailed_design/component_detailed_design.rst` | `83977cd20cf0` | need template inside code-block rst; tab indentation |
+| `score/docs/score_tools/tools_compiler/index.rst` | `57ca6eb925f5` | needtable (dynamic, not evaluated) |
+| `score/docs/features/frameworks/feo/safety_planning/index.rst` | `305c4719d2e1` | :ndf: dynamic-function role |
+| `score/docs/contribute/ci/index.rst` | `d231e1648f3d` | toctree |
+| `score/docs/introduction/index.rst` | `1fc5efd4d94a` | raw:: html (excluded) |
+| `score/docs/platform_management_plan/index.rst` | `a1dfec96898b` | real doc__platform_mgt_plan need |
+| `score/docs/design_decisions/infrastructure/DR-006-infra.md` | `6ad1ffdb17a9` | Markdown design decision record |
+| `process_description/process/standards/aspice_40/man/man.5.rst` | `5fb825b96013` | std_req with nested note |
+| `process_description/process/process_areas/release_management/guidance/index.rst` | `c99eeb077a67` | needextend with filter expression |
+| `process_description/process/process_areas/documentation_management/guidance/documentation_checklist.rst` | `6e4e8c0b9187` | list-table |
+| `process_description/process/process_areas/platform_management/guidance/platform_management_template.rst` | `c55ecd2c577a` | quoted pseudo-directive (no entity); 9-line :complies: value |

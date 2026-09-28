@@ -90,3 +90,43 @@ def test_render_notices_includes_every_package_name_and_license() -> None:
     assert "MIT License" in text
     assert "httpx" in text
     assert "0.28.1" in text
+
+
+# F002 FR-025 / research R3: copyleft identifiers override permissive keywords.
+
+
+def test_mixed_permissive_and_copyleft_string_fails_without_exception() -> None:
+    # The exact string pip-licenses reports for docutils 0.23.
+    inventory = [pkg("docutils", "BSD License; GNU General Public License (GPL); Public Domain")]
+    violations = evaluate(inventory, exceptions={})
+    assert [v.package for v in violations] == ["docutils"]
+    assert "copyleft" in violations[0].reason
+
+
+def test_mixed_string_passes_with_reviewed_exception() -> None:
+    inventory = [pkg("docutils", "BSD License; GNU General Public License (GPL); Public Domain")]
+    exceptions = {"docutils": "Reviewed: only GPL file (tools/editors/emacs/rst.el) not in wheel."}
+    assert evaluate(inventory, exceptions=exceptions) == []
+
+
+def test_dual_permissive_or_expression_still_passes() -> None:
+    assert evaluate([pkg("packaging", "Apache-2.0 OR BSD-2-Clause")], exceptions={}) == []
+
+
+def test_copyleft_variants_each_fail_even_alongside_permissive() -> None:
+    for license_str in (
+        "MIT; LGPL-3.0-or-later",
+        "BSD License; GNU Lesser General Public License v3 (LGPLv3)",
+        "Apache-2.0 AND AGPL-3.0-only",
+        "MIT, CC-BY-SA-4.0",
+        "BSD; Creative Commons Attribution-ShareAlike 4.0",
+        "Apache-2.0; European Union Public Licence 1.2 (EUPL 1.2)",
+        "MIT; Server Side Public License (SSPL)",
+    ):
+        violations = evaluate([pkg("x", license_str)], exceptions={})
+        assert len(violations) == 1, license_str
+
+
+def test_plain_word_containing_gpl_letters_is_not_misread() -> None:
+    # "MIT License" must not trip on unrelated substrings; guards against over-broad matching.
+    assert evaluate([pkg("a", "MIT License"), pkg("b", "ISC License (ISCL)")], exceptions={}) == []

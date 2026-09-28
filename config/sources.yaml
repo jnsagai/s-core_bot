@@ -1,0 +1,52 @@
+# Approved documentation sources (SRC-001). Human-edited; `sources sync` resolves each `ref` to a
+# commit and writes data/source-lock.json. See specs/002-source-ingestion/contracts/registry.md.
+schema_version: 1
+allowed_hosts: [github.com, eclipse-score.github.io]
+redistribution_allowed_licenses: [Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, CC0-1.0, CC-BY-4.0]
+limits:
+  max_text_file_bytes: 10485760      # 10 MiB
+  max_export_bytes: 104857600        # 100 MiB
+  max_sync_bytes: 1073741824         # 1 GiB
+  connect_timeout_seconds: 10
+  read_timeout_seconds: 60
+sources:
+  - source_id: score-platform
+    kind: git
+    repository: https://github.com/eclipse-score/score.git
+    ref: main
+    include: ["docs/**/*.rst", "docs/**/*.md", "README.md", "CONTRIBUTION.md"]
+    exclude: []
+    authority: official-project
+    repository_license: Apache-2.0
+    license_policy: inspect-file-and-repository-notices
+    required: true
+    parser_profile: s-core
+  - source_id: score-process
+    kind: git
+    repository: https://github.com/eclipse-score/process_description.git
+    ref: main
+    include: ["process/**/*.rst", "process/**/*.md", "README.md"]
+    exclude: []
+    authority: official-project
+    repository_license: Apache-2.0
+    license_policy: inspect-file-and-repository-notices
+    required: true
+    parser_profile: s-core
+  - source_id: score-platform-needs
+    kind: needs-export
+    url: https://eclipse-score.github.io/score/main/needs.json
+    associated_source: score-platform
+    docs_root: docs
+    authority: official-project-build-artifact
+    repository_license: Apache-2.0
+    license_policy: inspect-file-and-repository-notices
+    required: false
+  - source_id: score-process-needs
+    kind: needs-export
+    url: https://eclipse-score.github.io/process_description/main/needs.json
+    associated_source: score-process
+    docs_root: process
+    authority: official-project-build-artifact
+    repository_license: Apache-2.0
+    license_policy: inspect-file-and-repository-notices
+    required: false

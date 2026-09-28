@@ -44,20 +44,29 @@ def _guarded_connect_ex(self: socket.socket, address: Any) -> Any:
 
 
 @pytest.fixture(autouse=True)
-def _network_guard(monkeypatch: pytest.MonkeyPatch) -> None:
+def _network_guard(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    # The guard is lifted only for tests explicitly marked `real_network` *and* opted in.
+    opted_in = os.environ.get("SCORE_ASSISTANT_REAL_NETWORK") == "1"
+    if opted_in and request.node.get_closest_marker("real_network") is not None:
+        return
     monkeypatch.setattr(socket.socket, "connect", _guarded_connect)
     monkeypatch.setattr(socket.socket, "connect_ex", _guarded_connect_ex)
 
 
+_OPT_IN = {
+    "real_runtime": ("SCORE_ASSISTANT_REAL_RUNTIME", "requires a real Ollama runtime"),
+    "real_network": ("SCORE_ASSISTANT_REAL_NETWORK", "contacts GitHub"),
+}
+
+
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    if os.environ.get("SCORE_ASSISTANT_REAL_RUNTIME") == "1":
-        return
-    skip_real = pytest.mark.skip(
-        reason="requires a real Ollama runtime (SCORE_ASSISTANT_REAL_RUNTIME=1); not run"
-    )
-    for item in items:
-        if "real_runtime" in item.keywords:
-            item.add_marker(skip_real)
+    for marker, (variable, why) in _OPT_IN.items():
+        if os.environ.get(variable) == "1":
+            continue
+        skip = pytest.mark.skip(reason=f"{why} ({variable}=1); not run")
+        for item in items:
+            if marker in item.keywords:
+                item.add_marker(skip)
 
 
 @pytest.fixture

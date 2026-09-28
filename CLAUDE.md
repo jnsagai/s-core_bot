@@ -33,15 +33,20 @@ project — not endorsed by Eclipse or S-CORE maintainers.
 - Do not add Kubernetes, managed vector DBs, agent frameworks, or Fabro.
 - Stop before public deployment, purchases, upstream submissions, or external publication.
 
-## Commands (valid once F001 is implemented)
+## Commands
 
 ```bash
 uv sync                          # install locked Python deps (Python 3.12)
 uv run pytest                    # deterministic tests (no network, no models)
 uv run ruff check . && uv run ruff format --check .
 uv run mypy src
-uv run score-assistant doctor    # runtime/config/model diagnostics
-uv run score-assistant serve --config config/local.yaml
+uv run python scripts/check_licenses.py
+uv run score-assistant --config config/local.yaml doctor           # global --config goes first
+uv run score-assistant --config config/local.yaml serve
+uv run score-assistant sources validate --config config/sources.yaml     # offline
+uv run score-assistant sources sync --config config/sources.yaml         # NETWORK
+uv run score-assistant sources inspect --lock data/source-lock.json      # offline
+# Opt-in tests: SCORE_ASSISTANT_REAL_RUNTIME=1 (Ollama), SCORE_ASSISTANT_REAL_NETWORK=1 (GitHub)
 ```
 
 ## Conventions

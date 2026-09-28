@@ -77,5 +77,15 @@ in `THIRD_PARTY_NOTICES.md`.
 | `astral-sh/setup-uv` | v10.2.0 | `c18668ad3cf93ea998bef934396af7bb5c839dc7` |
 
 Resolved via the GitHub API (`.../releases/latest` then `.../git/ref/tags/<tag>`) from this
-workstation. Not yet exercised in a real GitHub Actions run (branch not pushed); re-verify these
-pins are still current before the next CI-affecting change if much time has passed.
+workstation. Exercised in real GitHub Actions (run 36391821731, green, 2026-09-28); re-verify
+these pins are still current before the next CI-affecting change if much time has passed.
+
+## F002 dependency additions (`uv.lock`, recorded 2026-09-28)
+
+| Package | Version | License | Purpose |
+| --- | --- | --- | --- |
+| docutils | 0.23 | Public Domain / BSD-2/3-Clause / PSF (GPL-3.0 only for `tools/editors/emacs/rst.el`, not in the wheel — reviewed exception, F002 research R3) | Hardened RST parsing |
+| markdown-it-py | 4.2.0 | MIT (promoted from transitive to direct) | Markdown parsing |
+| types-docutils (dev) | 0.23.0.20260923 | Apache-2.0 | Type stubs for `mypy --strict` |
+
+`sources sync` additionally requires `git` ≥ 2.34 on PATH (workstation: 2.34.1).

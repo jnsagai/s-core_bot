@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -56,6 +57,20 @@ class LicenseViolation:
     reason: str
 
 
+# A copyleft identifier anywhere in the string overrides any permissive keyword: pip-licenses joins
+# a package's license classifiers with "; ", so "BSD License; GNU General Public License (GPL)"
+# (docutils) names a mixed licence, not an either/or choice. Such packages pass only through a
+# reviewed exception (F002 FR-025, research R3; docs/ASSUMPTIONS.md A-013).
+COPYLEFT_PATTERN = re.compile(
+    r"\b(?:A|L)?GPL|GENERAL PUBLIC LICEN[CS]E|\bEUPL\b|EUROPEAN UNION PUBLIC LICEN[CS]E|\bSSPL\b"
+    r"|SERVER SIDE PUBLIC LICENSE|\bCC-BY-SA\b|SHARE-?ALIKE"
+)
+
+
+def is_copyleft(license_str: str) -> bool:
+    return COPYLEFT_PATTERN.search(license_str.upper()) is not None
+
+
 def is_allowed(license_str: str) -> bool:
     upper = license_str.upper()
     return any(keyword in upper for keyword in ALLOWED_LICENSE_KEYWORDS)
@@ -64,9 +79,20 @@ def is_allowed(license_str: str) -> bool:
 def evaluate(inventory: list[PackageLicense], exceptions: dict[str, str]) -> list[LicenseViolation]:
     violations: list[LicenseViolation] = []
     for pkg in inventory:
-        if is_allowed(pkg.license):
-            continue
         if pkg.name in exceptions:
+            continue
+        if is_copyleft(pkg.license):
+            violations.append(
+                LicenseViolation(
+                    package=pkg.name,
+                    reason=(
+                        f"{pkg.name} {pkg.version}: license {pkg.license!r} names a copyleft "
+                        f"license and needs a reviewed exception in {DEFAULT_EXCEPTIONS_PATH.name}."
+                    ),
+                )
+            )
+            continue
+        if is_allowed(pkg.license):
             continue
         violations.append(
             LicenseViolation(
