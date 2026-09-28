@@ -113,3 +113,31 @@ class SearchError(Exception):
     @property
     def usage_error(self) -> bool:
         return self.http_status == 422
+
+
+class GenerationError(Exception):
+    """F005 chat failure with a stable code, HTTP status and retry hint (data-model.md)."""
+
+    STATUS = {
+        "GENERATION_UNAVAILABLE": 503,
+        "CHAT_BUSY": 429,
+        "DEADLINE_EXCEEDED": 504,
+        "ANSWER_INVALID": 502,
+        "UNSUPPORTED_LANGUAGE": 422,
+        "REQUEST_INVALID": 422,
+    }
+    RETRYABLE = frozenset({"CHAT_BUSY", "DEADLINE_EXCEEDED", "GENERATION_UNAVAILABLE"})
+
+    def __init__(self, code: str, message: str, *, reason: str | None = None) -> None:
+        if code not in self.STATUS:
+            raise ValueError(f"unknown GenerationError code {code!r}")
+        self.code = code
+        self.message = message
+        self.reason = reason
+        self.http_status = self.STATUS[code]
+        self.retryable = code in self.RETRYABLE
+        super().__init__(f"{code}: {message}")
+
+    @property
+    def usage_error(self) -> bool:
+        return self.http_status == 422
