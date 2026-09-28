@@ -49,6 +49,9 @@ export interface RequestOptions {
   body?: unknown;
   signal?: AbortSignal;
   accept?: string;
+  /** Extra statuses to treat as success beyond 2xx (e.g. `/health/ready`'s 503-when-not-ready,
+   * which is still a well-formed body, not an F001 error envelope). */
+  okStatuses?: number[];
 }
 
 /** Issues a same-origin request and returns the raw `Response` (callers decide how to read the
@@ -69,7 +72,7 @@ export async function apiFetch(path: ApiPath, options: RequestOptions = {}): Pro
     body,
     signal: options.signal,
   });
-  if (!response.ok) {
+  if (!response.ok && !options.okStatuses?.includes(response.status)) {
     throw new ApiError(response.status, await parseErrorPayload(response));
   }
   return response;
