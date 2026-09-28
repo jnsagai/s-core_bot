@@ -9,7 +9,7 @@ persisted, except evaluation reports (JSON files under `data/reports/`).
 | Field | Type | Rules |
 | --- | --- | --- |
 | `query` | str | 1 ≤ stripped length ≤ `limits.question_characters` (4 000) |
-| `snapshot_id` | str \| None | None → active snapshot; state must be active/validated/retired |
+| `snapshot_id` | str \| None | None → active snapshot; must match `^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$`; state must be active/validated/retired |
 | `limit` | int | 1 ≤ limit ≤ `retrieval.max_limit` (20); default `retrieval.evidence_chunks` (8) |
 | `sources` | list[str] | each must be a source ID in the snapshot manifest; empty = all |
 | `kinds` | list[ChunkKind] | subset of `prose, need, table, code, literal, diagram`; empty = all |

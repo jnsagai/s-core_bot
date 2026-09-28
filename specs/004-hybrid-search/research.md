@@ -35,6 +35,9 @@ hits weigh more). Filters are applied **in the same SQL statement** via a join o
 chunks_fts MATCH ? AND c.source_id IN (…) AND c.kind IN (…) ORDER BY bm25 … LIMIT 30`), so ranking
 runs only over the filtered set (RET-002). A query with no usable tokens returns no keyword
 candidates (not an error).
+At most the first 64 distinct tokens become terms (a 4 000-character query could otherwise produce
+hundreds of OR terms). The response notes `query_terms_truncated` when the cap applies. The query
+itself is never truncated for exact matching.
 
 **Measured**: p95 14 ms over 50 real queries (OR-of-terms, limit 30).
 
@@ -106,7 +109,12 @@ Queryable states: `active`, `validated`, `retired` (clarification Q1).
 | `GET /api/v1/sources?snapshot_id=…` | sources of one snapshot |
 | `GET /api/v1/citations/{snapshot_id}/{chunk_id}` | one chunk's stored text + provenance |
 
-Request models use `extra="forbid"`, bounded strings (query ≤ `limits.question_characters`) and a
+**Identifier validation (checklist CHK006)**: `snapshot_id` must match
+`^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}$` and `chunk_id` must be 64 lowercase hex characters. Both are
+checked at the API/CLI edge **and** in `FileSnapshotStore.pin()` before any filesystem path is
+built. F003's pin created `data/pins/<id>.pin` before the catalog check, which is safe for F003's
+catalog-derived IDs but would allow a path like `../../x` from a request. Entity `id`/`key`
+parameters are limited to 256 characters. Request models use `extra="forbid"`, bounded strings (query ≤ `limits.question_characters`) and a
 filter allowlist validated against the pinned snapshot (unknown value → 422 listing allowed values).
 Concurrency: a `threading.BoundedSemaphore(max_concurrent_searches)` acquired non-blocking in a
 dependency → 429 `SEARCH_BUSY` (`retryable: true`). Deadline: the query-embedding timeout is
