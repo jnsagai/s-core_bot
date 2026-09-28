@@ -111,6 +111,7 @@ src/score_docs_assistant/
 │   ├── runtime.py              # EmbeddingProvider protocol filled in (identity(), embed())
 │   └── ollama_embed.py         # OllamaEmbeddingProvider: /api/embed truncate:false, /api/show, /api/tags
 ├── storage/
+│   ├── sqlite_util.py          # open_hardened(): untrusted-DB pragmas, read-only URIs (R4)
 │   ├── corpus_db.py            # write corpus.sqlite (schema, FTS), read-only open
 │   ├── vectors.py              # write/read embeddings.f32 (+ shape/finite/norm checks)
 │   ├── manifest.py             # manifest build/read, file hashing, schema gate
