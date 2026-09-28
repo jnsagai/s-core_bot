@@ -344,15 +344,38 @@ of `src/` for stubs and suppressed lint/type errors.
 **Result: ✅ Converged — zero findings (0 missing, 0 partial, 0 contradicts, 0 unrequested).**
 `tasks.md` left unmodified; no Convergence phase appended. All 12 constitution principles hold.
 
+## First real CI run — 2026-09-28 (pushed by project owner)
+
+First push to GitHub Actions (`gh run 36387111807` / `36387049902`, triggered by push and by the
+opened PR) **failed**: `tests/contract/test_cli_models.py::test_pull_help_first_line_states_
+network_use` — a genuine environment difference, not a flake. Typer's default `--help` rendering
+uses Rich (transitively installed), and Rich force-enables ANSI escape codes when `CI`/
+`GITHUB_ACTIONS` env vars are present, even with no attached TTY; a local shell has neither var
+set, so the same test passed locally and only failed in Actions.
+
+Reproduced locally first (`CI=true GITHUB_ACTIONS=true uv run pytest tests/contract/
+test_cli_models.py::test_pull_help_first_line_states_network_use` → same failure, same diff),
+confirming the cause before changing anything. Fixed at the source: `cli/main.py` now constructs
+`typer.Typer(..., rich_markup_mode=None)`, forcing plain Click-style help everywhere rather than
+depending on environment-sensitive auto-detection (docs/ASSUMPTIONS.md A-011).
+
+```
+$ CI=true GITHUB_ACTIONS=true uv run pytest -q
+127 passed, 2 skipped in 3.00s
+
+$ uv run pytest -q          # unset, normal shell
+127 passed, 2 skipped in 3.02s
+```
+
+Both environments now produce identical results. Ruff/mypy re-confirmed clean after the change.
+Next push should be checked for a green run.
+
 ## Known gaps for a human to close before treating F001 as field-verified
 
 - **Scenario B** (stop Ollama) and **Scenario D** (real `models pull`) were never run for real
   this session — both require actions this session's policy denies (`sudo`, a real model
   download). Their code paths are covered by tests against fakes; recommend running both for real
   once convenient.
-- **CI has never actually executed in GitHub Actions** — `.github/workflows/ci.yml` is validated
-  only as syntactically-correct YAML and by running the same commands locally. Push the branch and
-  check the first real run.
 - **`docker`/GPU acceleration path is untested** — LOC-007's GPU qualification and F009's container
   packaging are out of F001's scope by design (see spec.md Out of Scope).
 

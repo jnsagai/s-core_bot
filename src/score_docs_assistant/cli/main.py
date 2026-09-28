@@ -16,7 +16,13 @@ import typer
 from score_docs_assistant import __version__
 from score_docs_assistant.domain.errors import ConfigError
 
-cli_app = typer.Typer(add_completion=False, no_args_is_help=True)
+# rich_markup_mode=None forces plain, undecorated Click-style help text everywhere, instead of
+# Typer's default Rich-based rendering. Rich's own styling detection (the default when `rich` is
+# transitively installed) force-enables ANSI codes when CI/GITHUB_ACTIONS env vars are set, even
+# with no real TTY attached — which made `--help` output differ between a local run and GitHub
+# Actions and broke a test asserting on plain help text (docs/ASSUMPTIONS.md A-011). Plain help
+# also matches contracts/cli.md, which never specifies colored output.
+cli_app = typer.Typer(add_completion=False, no_args_is_help=True, rich_markup_mode=None)
 
 
 def handle_common_errors[F: Callable[..., Any]](func: F) -> F:
