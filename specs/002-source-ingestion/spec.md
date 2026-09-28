@@ -36,7 +36,8 @@ override any answer.
   derived from observed usage (41 need types, 22 link options); unconfigured directives that look
   like needs get `POSSIBLE_UNCONFIGURED_NEED` instead of guessing. Basis: SRC-005 "configured need
   directives", SRC-006, ADR-005.
-- Q: The same need ID appears in two repositories (observed: `doc__platform_mgt_plan`). Which
+- Q: The same need ID could appear in two repositories (a naive grep suggested
+  `doc__platform_mgt_plan`; corrected in research R1 — the current pair shares no IDs). Which
   wins? → A: Neither; keys are `<source_id>:<need_id>` and cross-source references resolve only
   when unambiguous, otherwise reported `ambiguous`. Basis: §9.1 "requirement IDs alone are not
   globally unique", RET-003.
@@ -130,7 +131,7 @@ every unknown construct has a diagnostic.
 6. **Given** an `include` whose target escapes the source root, does not exist, is not selected,
    exceeds the nesting depth, or forms a cycle, **When** inspected, **Then** the include is not
    followed and an unresolved-include diagnostic appears in the coverage report.
-7. **Given** a need ID defined in two sources (observed upstream: `doc__platform_mgt_plan`),
+7. **Given** a need ID defined in two sources (synthetic fixture; master spec §9.1),
    **When** inspected, **Then** two distinct entities exist, keyed `<source_id>:<need_id>`, and a
    link targeting that ID from a third source is reported `ambiguous` with both candidates.
 8. **Given** the same lock inspected twice, **When** outputs are compared, **Then** normalized
@@ -178,6 +179,10 @@ check namespace, revision status, preserved fields, and the consistency statisti
   A UTF-8 BOM is removed.
 - Directive nested inside a need body (observed: `.. note::` inside `std_req`) → nested block kept
   as part of the entity's content.
+- Text that only looks like a directive (observed: `' .. document::` with a leading apostrophe,
+  followed by `:id: doc__platform_mgt_plan`) → ordinary paragraph; no entity.
+- Link option values continued over several indented lines (observed: `:complies:` over 9 lines)
+  → all items parsed.
 - Need with no `:id:` → entity not created; `NEED_WITHOUT_ID` diagnostic.
 - Same need ID twice within one source → both occurrences kept, `DUPLICATE_ID_IN_SOURCE` warning;
   neither silently wins.

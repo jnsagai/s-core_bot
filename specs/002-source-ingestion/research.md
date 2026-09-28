@@ -47,7 +47,8 @@ IDs use `__` separators, mixed case and hyphens (`std_req__aspice_40__MAN-5-BP1`
 are comma-separated IDs with an optional **bracket qualifier** (`[version==1]`). Directives nest
 inside need bodies (`.. note::` inside `std_req`). Some content is **tab-indented**.
 
-**Link-valued options** (values consisting only of need-ID-shaped items): `derived_from` 384,
+**Link-valued options** (values consisting only of need-ID-shaped items; values may continue over several
+indented lines, e.g. `:complies:` spanning 9 lines in `platform_management_template.rst`): `derived_from` 384,
 `satisfied_by` 384, `complies` 282, `realizes` 203, `satisfies` 174, `links` 156, `included_by`
 118, `responsible` 79, `approved_by` 79, `input` 75, `supported_by` 60, `contains` 60, `output` 49,
 `has` 37, `belongs_to` 30, `fulfils` 30, `includes` 11, `uses` 11, `implements` 10, `violates` 3,
@@ -57,8 +58,13 @@ inside need bodies (`.. note::` inside `std_req`). Some content is **tab-indente
 
 - 2214 `:id:` lines but 2197 distinct values: the duplicates are template examples such as
   `dd_sta__<Feature>__<Title>` **inside `.. code-block:: rst`** — must not become entities.
-- `doc__platform_mgt_plan` and `doc__verification_plan` are defined in **both** repositories —
-  bare IDs are not globally unique.
+- ~~`doc__platform_mgt_plan` and `doc__verification_plan` are defined in both repositories~~ —
+  **corrected 2026-09-28 during T008**: that was an artifact of the naive grep. In
+  `process_description` the first appears after a leading apostrophe (`' .. document::`), which
+  makes it an ordinary paragraph, and the second is template text; the published exports share
+  **zero** IDs (score 918, process_description 1250). A further trap for naive parsers, and a
+  golden test case. Namespaced keys remain required by master spec §9.1 (more repositories will
+  be added); cross-source ambiguity is tested with synthetic fixtures.
 - `needextend` arguments are Python-like filter expressions
   (`c.this_doc() and is_external == False and "feo/docs/requirements" in docname`) — evaluating
   them would violate SRC-006.

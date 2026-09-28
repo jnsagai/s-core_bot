@@ -34,12 +34,14 @@ file's parsed content.
 
 ## Lock side (`sources/lock.py`)
 
-**SourceLock**: `schema_version: 1`, `generated_at`, `registry_sha256`, `sources: list[LockedSource]`
+**SourceLock**: `schema_version: 1`, `generated_at`, `registry_sha256`,
+`redistribution_allowed_licenses`, `sources: list[LockedSource]`
 (sorted by `source_id`). Written atomically. See [contracts/lock.md](contracts/lock.md).
 
 **LockedSource**: `source_id`, `kind`, `status: ok|failed`, `failure: str|None`, `revision`
 (git: 40-hex SHA; export: SHA-256 of bytes), `ref` (git), `url`/`repository`, `fetched_at`,
-`selector_sha256` (git), `files: list[LockedFile]`, `notice_files: list[LockedFile]`,
+`selector_sha256` (git), `authority`, `repository_license`, `parser_profile` (git),
+`associated_source` + `docs_root` (export), `files: list[LockedFile]`, `notice_files: list[LockedFile]`,
 `revision_status: pinned|unverified`, `release_mapping: None`, `skipped: list[SkippedEntry]`.
 
 **LockedFile**: `path` (POSIX, relative), `sha256`, `size`. **SkippedEntry**: `path`, `reason`

@@ -11,6 +11,7 @@ records attribution; it is not a substitute for reading each package's own licen
 - **certifi** 2026.7.22 — Mozilla Public License 2.0 (MPL 2.0)
 - **click** 8.5.0 — BSD-3-Clause
 - **coverage** 7.16.2 — Apache-2.0
+- **docutils** 0.23 — BSD License; GNU General Public License (GPL); Public Domain
 - **fastapi** 0.141.1 — MIT
 - **h11** 0.16.0 — MIT License
 - **httpcore** 1.0.9 — BSD-3-Clause
@@ -38,6 +39,7 @@ records attribution; it is not a substitute for reading each package's own licen
 - **shellingham** 1.5.4 — ISC License (ISCL)
 - **starlette** 1.7.0 — BSD-3-Clause
 - **typer** 0.27.2 — MIT
+- **types-docutils** 0.23.0.20260923 — Apache-2.0
 - **types-psutil** 7.2.2.20260906 — Apache-2.0
 - **types-PyYAML** 6.0.12.20260906 — Apache-2.0
 - **typing-inspection** 0.4.4 — MIT

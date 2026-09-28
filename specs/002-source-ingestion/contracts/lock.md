@@ -8,6 +8,7 @@ Unknown fields rejected on read. Consumed by `sources inspect` and (F003) `index
   "schema_version": 1,
   "generated_at": "2026-09-28T09:00:00Z",
   "registry_sha256": "<sha256 of config/sources.yaml bytes>",
+  "redistribution_allowed_licenses": ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0", "CC-BY-4.0"],
   "sources": [
     {
       "source_id": "score-platform",
@@ -16,6 +17,9 @@ Unknown fields rejected on read. Consumed by `sources inspect` and (F003) `index
       "failure": null,
       "repository": "https://github.com/eclipse-score/score.git",
       "ref": "main",
+      "authority": "official-project",
+      "repository_license": "Apache-2.0",
+      "parser_profile": "s-core",
       "revision": "e2373d822fc2f6e9a3f8a0538904f3faa39309ea",
       "revision_status": "pinned",
       "release_mapping": null,
@@ -33,6 +37,9 @@ Unknown fields rejected on read. Consumed by `sources inspect` and (F003) `index
       "failure": null,
       "url": "https://eclipse-score.github.io/score/main/needs.json",
       "associated_source": "score-platform",
+      "docs_root": "docs",
+      "authority": "official-project-build-artifact",
+      "repository_license": "Apache-2.0",
       "revision": "<sha256 of downloaded bytes>",
       "revision_status": "unverified",
       "release_mapping": null,
@@ -44,6 +51,11 @@ Unknown fields rejected on read. Consumed by `sources inspect` and (F003) `index
   ]
 }
 ```
+
+The lock is **self-contained for source facts**: inspect never re-reads `config/sources.yaml`
+(which may have changed since sync). Parser profiles are *processing configuration*, loaded by
+inspect from `--profiles-dir` (default `config/parser-profiles/`) by the recorded name; their
+content is covered by `processing_hash` in the report (SRC-010).
 
 On-disk layout implied by a lock entry: `data/sources/<source_id>/<revision>/<path>` for every
 `files` and `notice_files` entry. Inspect treats any missing file or hash mismatch as

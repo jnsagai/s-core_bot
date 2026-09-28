@@ -41,8 +41,8 @@ uv run score-assistant sources inspect --lock data/source-lock.json --output /tm
 cmp /tmp/norm1/documents.jsonl /tmp/norm2/documents.jsonl && cmp /tmp/norm1/entities.jsonl /tmp/norm2/entities.jsonl && echo IDENTICAL
 ```
 
-Check: every source satisfies `selected == included + partial + failed` (SC-002); `ambiguous`
-includes `doc__platform_mgt_plan`; zero entities with `need_id` containing `<` (template examples
+Check: every source satisfies `selected == included + partial + failed` (SC-002); record the `ambiguous`
+count (expected 0 for today's two sources — research R1 correction); zero entities with `need_id` containing `<` (template examples
 in code blocks, SC-007); `requires_review` lists the CC-BY-SA-4.0 files in `score-process`;
 export entities all `unverified` (SC-006); `IDENTICAL` printed (SC-004); wall time < 2 min.
 

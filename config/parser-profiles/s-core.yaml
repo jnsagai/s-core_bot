@@ -1,0 +1,23 @@
+# Parser profile for Eclipse S-CORE documentation (Sphinx + Sphinx-Needs).
+#
+# Upstream defines need types and link options in its Sphinx `conf.py` / metamodel, which this
+# project must never import or execute (SRC-006, ADR-005). These lists were instead derived from
+# observed usage in eclipse-score/score@e2373d8 and eclipse-score/process_description@66321fe
+# (specs/002-source-ingestion/research.md R1): every need type below carried `:id:` on 100 % of
+# its occurrences. Changing this file changes `profile_hash` and therefore every document key.
+profile_version: 1
+need_types: [std_req, feat_req, document, gd_req, std_wp, stkh_req, workflow, aou_req, workproduct,
+             logic_arc_int_op, gd_temp, logic_arc_int, gd_guidl, comp_req, doc_concept, role, feat,
+             doc_getstrt, comp, assertion, gd_chklst, doc_tool, dec_rec, real_arc_int, tenet,
+             comp_arc_sta, comp_saf_dfa, comp_saf_fmea, mod, feat_arc_sta, feat_saf_fmea,
+             feat_saf_dfa, dd_sta, dd_dyn, mod_view_sta, gd_method, plat_saf_dfa, feat_arc_dyn,
+             comp_arc_dyn, tsf, tool_req]
+link_options: [derived_from, satisfied_by, complies, realizes, satisfies, links, included_by,
+               responsible, approved_by, input, supported_by, contains, output, has, belongs_to,
+               fulfils, includes, uses, implements, violates, mitigated_by, consists_of]
+reference_roles: [need]
+dynamic_directives: [needextend, needtable, needpie, needarch, needuml, needflow, needlist,
+                     needfilter, needgantt, needsequence, needbar, needservice, needimport, needreport]
+dynamic_roles: [ndf]
+literal_directives: {code-block: null, sourcecode: null, uml: plantuml, mermaid: mermaid, graphviz: dot}
+excluded_directives: [raw]

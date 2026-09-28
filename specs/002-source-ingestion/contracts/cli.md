@@ -27,9 +27,10 @@ Progress lines on stderr (`<source_id>: resolved main -> <sha>`, `… extracted 
 
 Ctrl-C: staging removed, previous lock untouched, exit 130.
 
-## `sources inspect --lock PATH [--json] [--output DIR]`
+## `sources inspect --lock PATH [--profiles-dir DIR] [--json] [--output DIR]`
 
-Offline (no network, no git). Verifies every acquired file hash against the lock, normalizes all
+Offline (no network, no git). Reads source facts only from the lock; loads parser profiles from
+`--profiles-dir` (default `config/parser-profiles`; unknown profile name → exit 2). Verifies every acquired file hash against the lock, normalizes all
 `ok` sources, resolves relationships, builds the coverage report, and writes it to
 `data/reports/coverage-<lock-sha256-prefix>.json`. Human summary on stdout, e.g. (numbers illustrative, not measured):
 
