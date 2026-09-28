@@ -51,7 +51,6 @@
       "Bash(rm -rf:*)",
       "Bash(score-assistant models pull:*)",
       "Bash(*models pull*)",
-      "Bash(*models*pull*)",
       "Bash(*snap stop*)",
       "Bash(*snap start*)",
       "Bash(*systemctl*)",

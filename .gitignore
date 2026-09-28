@@ -27,3 +27,4 @@ frontend/dist/
 .env
 .env.*
 !.env.example
+overnight.log
