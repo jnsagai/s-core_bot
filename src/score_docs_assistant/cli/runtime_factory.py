@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from score_docs_assistant.config.schema import AppConfig
 from score_docs_assistant.models.ollama import OllamaRuntime
-from score_docs_assistant.models.runtime import EmbeddingProvider, ModelRuntime
+from score_docs_assistant.models.runtime import EmbeddingProvider, GenerationProvider, ModelRuntime
 
 
 def build_runtime(config: AppConfig) -> ModelRuntime:
@@ -26,5 +26,17 @@ def build_embedding_provider(config: AppConfig) -> EmbeddingProvider:
         config.runtime.embedding_model,
         config=chunker_config(config),
         timeout_seconds=config.index.embedding_timeout_seconds,
+        connect_timeout_seconds=config.diagnostics.runtime_connect_timeout_seconds,
+    )
+
+
+def build_generation_provider(config: AppConfig) -> GenerationProvider:
+    """Seam for tests: the loopback Ollama generation provider (F005)."""
+    from score_docs_assistant.models.ollama_chat import OllamaGenerationProvider
+
+    return OllamaGenerationProvider(
+        config.runtime.base_url,
+        config.runtime.generation_model,
+        timeout_seconds=float(config.limits.request_deadline_seconds),
         connect_timeout_seconds=config.diagnostics.runtime_connect_timeout_seconds,
     )

@@ -207,7 +207,12 @@ def make_env(tmp_path: Path, sources: list[SourceSpec] | None = None) -> Snapsho
     return env
 
 
-def write_model_lock(data: Path, digest: str, tag: str = "nomic-embed-text:latest") -> None:
+def write_model_lock(
+    data: Path,
+    digest: str,
+    tag: str = "nomic-embed-text:latest",
+    generation_digest: str | None = None,
+) -> None:
     (data / "model-lock.json").write_text(
         json.dumps(
             {
@@ -221,7 +226,20 @@ def write_model_lock(data: Path, digest: str, tag: str = "nomic-embed-text:lates
                         "digest": digest,
                         "size_bytes": 1,
                         "acquired_at": "2026-09-28T00:00:00Z",
-                    }
+                    },
+                    *(
+                        [
+                            {
+                                "role": "generation",
+                                "tag": "qwen3:4b-instruct",
+                                "digest": generation_digest,
+                                "size_bytes": 1,
+                                "acquired_at": "2026-09-28T00:00:00Z",
+                            }
+                        ]
+                        if generation_digest
+                        else []
+                    ),
                 ],
             }
         )
