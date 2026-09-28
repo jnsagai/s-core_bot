@@ -25,6 +25,33 @@ AT-12 (answer level), AT-14.
 degraded-mode reasons) and the evidence endpoints. F005 adds generation on top and never changes
 retrieval or snapshots.
 
+## Clarifications
+
+### Session 2026-09-28
+
+Resolved autonomously by the agent (agent review, not an approval) from `docs/PROJECT_SPEC.md` and
+F001–F004 precedent at the project owner's request ("be fully autonomous"); see
+`docs/ASSUMPTIONS.md` A-029. The owner may override any answer.
+
+- Q: When the model output fails validation twice, typed failure or extractive fallback? → A:
+  extractive fallback whenever at least one evidence item exists (status `partial`, origin
+  `extractive_fallback`, verbatim excerpts, warning). A typed `answer_invalid` error only when no
+  fallback can be built. Basis: §5.2 step 9, §7.3; the fallback is honest and still useful.
+- Q: How does a client choose streaming? → A: `Accept: text/event-stream` gets SSE; any other
+  Accept gets one JSON body. Basis: §10.1 "fetch-readable server-sent-event framing over POST".
+- Q: What query is used for retrieval on a follow-up? → A: the new question plus the most recent
+  prior *user* turn (never assistant text), bounded by the question character limit. Basis:
+  ANS-007; assistant text is model output and must not steer evidence selection.
+- Q: What bounds history, and how is its snapshot binding known? → A: at most 10 turns and the
+  existing `limits.history_characters` (12 000). Assistant turns carry the `snapshot_id` they were
+  answered from; an assistant turn without it, or with a different one, is excluded together with
+  the user turn it answered, and the new-evidence-context warning is given. Basis: ANS-007
+  (fail-safe when binding is unknown).
+- Q: What does the quoted-string consistency check cover? → A: text inside double quotes or
+  backticks of at least 12 characters must appear verbatim (after whitespace normalization) in at
+  least one excerpt cited by that claim. Shorter quotes are not checked. Basis: §7.3; avoids false
+  failures on short tokens like `"id"`.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Ask a documentation question and get a cited answer (Priority: P1)
@@ -245,12 +272,12 @@ real model the report is produced and recorded; human-review fields stay "not ru
 - **FR-007**: Validation MUST check: schema conformance; maximum sizes (claim count, claim length);
   every cited evidence ID was supplied for this request; every cited chunk belongs to the pinned
   snapshot; the status/claim rules of FR-003; quoted strings in claim text (text in double quotes
-  or backticks longer than a small minimum) appear verbatim in at least one cited excerpt; and no
+  or backticks of at least 12 characters, whitespace-normalized) appear verbatim in at least one cited excerpt; and no
   URLs or hidden-thought markers.
 - **FR-008**: On validation failure, at most one repair request MAY be made within the original
   deadline, sending the validation errors. If the repaired output also fails, or the deadline does
-  not allow a repair, the system MUST return either a typed failure or an extractive fallback. An
-  extractive fallback contains only stored excerpts of the top evidence as `documented` claims
+  not allow a repair, the system MUST return an extractive fallback when at least one evidence item
+  exists, otherwise a typed `answer_invalid` failure. An extractive fallback contains only stored excerpts of the top evidence as `documented` claims
   whose text is the verbatim excerpt, status `partial`, origin `extractive_fallback`, and a warning
   that the model output failed validation. The unchecked draft is never returned.
 - **FR-009**: When retrieval returns no evidence, the system MUST return `insufficient_evidence`
@@ -293,8 +320,10 @@ real model the report is produced and recorded; human-review fields stay "not ru
 
 **Conversation (ANS-007)**
 
-- **FR-016**: Chat requests MAY include bounded history (at most the configured number of turns and
-  characters; roles `user` and `assistant` only). History is untrusted context. It may inform the
+- **FR-016**: Chat requests MAY include bounded history (at most 10 turns and
+  `limits.history_characters`; roles `user` and `assistant` only; assistant turns carry the
+  `snapshot_id` they were answered from). The retrieval query is the new question plus the most
+  recent prior user turn; assistant text never feeds retrieval. History is untrusted context. It may inform the
   retrieval query and the prompt, but it is never evidence and is never cited.
 - **FR-017**: Each request carries its snapshot ID (explicit or resolved active). When the request's
   snapshot differs from the snapshot recorded on prior assistant turns in the history, the prior
@@ -314,7 +343,8 @@ real model the report is produced and recorded; human-review fields stay "not ru
 - **FR-021**: `POST /api/v1/chat` MUST return the validated envelope as JSON, or, when the client
   asks for a stream, server-sent events over the POST response: `progress` (stage: `queued`,
   `searching`, `generating`, `validating`, with queue position when queued), exactly one `answer`
-  or `error`, then `done`, with increasing event IDs. Unchecked claim text is never streamed.
+  or `error`, then `done`, with increasing event IDs. Clients select streaming with
+  `Accept: text/event-stream`. Unchecked claim text is never streamed.
 - **FR-022**: Chat requests MUST pass F001's Host/Origin/cross-site protection, reject unknown
   fields (URLs, model names, system prompts, runtime options), and never log question, history or
   answer text.
