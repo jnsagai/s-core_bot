@@ -370,12 +370,47 @@ $ uv run pytest -q          # unset, normal shell
 Both environments now produce identical results. Ruff/mypy re-confirmed clean after the change.
 Next push should be checked for a green run.
 
+## Scenario D — real `models pull` — 2026-09-28 (run by project owner)
+
+```
+$ uv run score-assistant --config config/local.yaml models pull --profile local-small
+$ cat data/model-lock.json
+{
+  "schema_version": 1, "profile": "local-small",
+  "runtime": {"provider": "ollama", "version": "0.34.0"},
+  "models": [
+    {"role": "generation", "tag": "qwen3:4b-instruct",
+     "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+     "size_bytes": 2497293803, "acquired_at": "2026-09-28T06:36:49.423445Z"},
+    {"role": "embedding", "tag": "nomic-embed-text:latest",
+     "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+     "size_bytes": 274302450, "acquired_at": "2026-09-28T06:36:49.423465Z"}
+  ]
+}
+
+$ uv run score-assistant --config config/local.yaml doctor
+[OK] config.valid  [OK] disk.data  [OK] disk.models  [OK] data_dir.writable
+[OK] runtime.reachable: Ollama 0.34.0 reachable
+[OK] model.generation: qwen3:4b-instruct is installed.
+[OK] model.embedding: nomic-embed-text:latest is installed.
+[OK] model.lock: Installed models match the lock.
+[WARNING] corpus.state: No document corpus is installed yet. (expected — F002+ scope)
+```
+
+Both digests verified as well-formed 64-character SHA-256 hex. The generation model's digest
+(`0edcdef34593...`) matches the prefix already recorded in `research.md` R6 from the Ollama
+library page (2026-09-27) — real acquisition is consistent with the earlier documented candidate.
+`data_dir.writable` flipped from the earlier `[WARNING]` (directory didn't exist) to `[OK]`
+(created by the pull), as expected. Only `corpus.state` remains a warning, which is correct for
+F001 — no ingestion exists yet. This closes T054/FR-022/FR-023's real-hardware verification;
+`models pull` had previously only been exercised against the fake Ollama transport.
+
 ## Known gaps for a human to close before treating F001 as field-verified
 
-- **Scenario B** (stop Ollama) and **Scenario D** (real `models pull`) were never run for real
-  this session — both require actions this session's policy denies (`sudo`, a real model
-  download). Their code paths are covered by tests against fakes; recommend running both for real
-  once convenient.
+- **Scenario B** (stop Ollama, confirm `RUNTIME_UNREACHABLE` + exit 1, restart) — still not run
+  for real; requires `sudo`, which this session's policy denies. The code path is covered by
+  `tests/integration/test_doctor_timing.py` (a loopback port that accepts but never responds) and
+  `tests/unit/test_checks.py`, but not against a genuinely stopped Ollama service.
 - **`docker`/GPU acceleration path is untested** — LOC-007's GPU qualification and F009's container
   packaging are out of F001's scope by design (see spec.md Out of Scope).
 
