@@ -15,7 +15,7 @@ import typer
 from pydantic import BaseModel
 
 from score_docs_assistant.cli.main import cli_app, handle_common_errors
-from score_docs_assistant.cli.search import _config, build_service, handle_search_errors
+from score_docs_assistant.cli.search_support import _config, build_service, handle_search_errors
 from score_docs_assistant.config.schema import AppConfig
 from score_docs_assistant.retrieval.evaluation import (
     evaluate_retrieval,

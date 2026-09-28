@@ -14,7 +14,7 @@ from score_docs_assistant.api.app import create_app
 from score_docs_assistant.cli.config_paths import profiles_path_for
 from score_docs_assistant.cli.main import cli_app, handle_common_errors
 from score_docs_assistant.cli.runtime_factory import build_runtime
-from score_docs_assistant.cli.search import build_service as build_search_service
+from score_docs_assistant.cli.search_support import build_service as build_search_service
 from score_docs_assistant.config.loader import load_config
 from score_docs_assistant.domain.errors import ConfigError, ProfileNotFound
 from score_docs_assistant.models.profiles import get_profile, load_profiles
