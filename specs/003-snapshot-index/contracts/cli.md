@@ -18,7 +18,8 @@ jobs → verify lock (required source not `ok` or missing on disk → exit 1
 `REQUIRED_SOURCE_FAILED`, before chunking) → normalize → chunk → write corpus → embed (reuse
 first) → write manifests/reports → validate → publish as `validated` → optionally activate.
 
-- Embedding runtime unreachable, model missing, or its digest ≠ model lock: without
+- Embedding runtime unreachable, model missing, no embedding entry in the model lock, or its
+  digest ≠ model lock: without
   `--lexical-only` → exit 1 `EMBEDDING_UNAVAILABLE` (message suggests `--lexical-only` or `models
   pull`). With the flag, the build proceeds with `semantic: absent`.
 - Stderr progress: `stage normalizing`, `chunks 12345 (prose 8001, need 2168, …)`,

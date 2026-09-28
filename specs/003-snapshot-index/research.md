@@ -252,8 +252,11 @@ checks (failures → exit 1) and a `semantic` status:
   types and normalized SQL), so an imported corpus cannot carry extra triggers, views or tables.
 - Semantic: `absent` (lexical-only) | `enabled` | `disabled` (identity differs from the model
   lock entry for the configured embedding model, or from the runtime's reported digest/dimension;
-  the message carries reindex guidance) | `unverified` (lock matches but the runtime is
-  unreachable). The runtime is queried only with `/api/tags` and `/api/show`; there are never
+  the message carries reindex guidance; also `disabled` with "run `models pull`" guidance when the
+  model lock has no embedding entry) | `unverified` (lock matches but the runtime is unreachable,
+  or no runtime was supplied). The validator takes an optional runtime: `index validate`, build
+  and activation supply one, while bundle import and inspect never do, so bundles stay socket-free
+  (FR-022). The runtime is queried only with `/api/tags` and `/api/show`; there are never
   embedding requests.
 
 ## R10. Bundles (FR-018–FR-020, clarification Q3)
@@ -297,8 +300,10 @@ in `index validate`.
 
 ## R12. Retention of sources (FR-015)
 
-**Decision**: after each activation, keep the newest `retention_count` (default 2, minimum 2)
-among non-deleted, non-failed snapshots (the active one always kept). Delete older unpinned
+**Decision**: after each activation, always keep the active snapshot **and the current rollback
+target** (`previous_id` of the latest activation-history row, FR-015 "active and previous").
+Then fill up to `retention_count` (default 2, minimum 2) with the newest remaining non-deleted,
+non-failed snapshots. Delete older unpinned
 ones. Then compute referenced revisions = the union of each retained snapshot manifest's
 `source_revisions` and the current `source-lock.json`. Delete
 `data/sources/<id>/<rev>/` directories not referenced, and `data/cache/git/<id>.git` for source

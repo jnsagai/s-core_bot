@@ -90,7 +90,7 @@ retired|validated ──retention (unpinned, beyond count)──▶ deleted (row
 Rules: only `validated` or `retired` can become `active`. `failed`/`building`/`deleted` never
 can. Exactly one `active` row at most. `failed` rows keep their `failure` reason.
 
-## ActivationHistory
+## ActivationRecord (table `activation_history`)
 
 `seq` (autoincrement), `snapshot_id`, `previous_id | null`, `kind: activate|rollback`,
 `at`. Rollback target = `previous_id` of the row with the highest `seq`.
