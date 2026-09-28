@@ -10,14 +10,18 @@ import typer
 import uvicorn
 
 from score_docs_assistant import __version__
+from score_docs_assistant.answers.service import AnswerService
 from score_docs_assistant.api.app import create_app
+from score_docs_assistant.cli import runtime_factory
 from score_docs_assistant.cli.config_paths import profiles_path_for
 from score_docs_assistant.cli.main import cli_app, handle_common_errors
 from score_docs_assistant.cli.runtime_factory import build_runtime
 from score_docs_assistant.cli.search_support import build_service as build_search_service
 from score_docs_assistant.config.loader import load_config
-from score_docs_assistant.domain.errors import ConfigError, ProfileNotFound
+from score_docs_assistant.config.schema import AppConfig
+from score_docs_assistant.domain.errors import ConfigError, GenerationError, ProfileNotFound
 from score_docs_assistant.models.profiles import get_profile, load_profiles
+from score_docs_assistant.models.runtime import GenerationProvider
 from score_docs_assistant.readiness import ReadinessService
 from score_docs_assistant.storage.corpus_probe import FileCorpusProbe
 
@@ -84,8 +88,16 @@ def serve_command(
         profile=profile,
         semantic_probe=search_service.active_semantic_available,
     )
+    answer_service = AnswerService(
+        config=config,
+        search=search_service,
+        provider=_generation_provider(config),
+    )
     app = create_app(
-        config=config, readiness_service=readiness_service, search_service=search_service
+        config=config,
+        readiness_service=readiness_service,
+        search_service=search_service,
+        answer_service=answer_service,
     )
 
     typer.echo(
@@ -111,3 +123,10 @@ def serve_command(
         access_log=False,
         log_config=None,
     )
+
+
+def _generation_provider(config: AppConfig) -> GenerationProvider | None:
+    try:
+        return runtime_factory.build_generation_provider(config)
+    except GenerationError:
+        return None

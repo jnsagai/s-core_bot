@@ -106,9 +106,9 @@ def test_wrong_method_is_405(client: TestClient) -> None:
     assert response.json()["error"]["code"] == "METHOD_NOT_ALLOWED"
 
 
-def test_compatible_corpus_search_available_chat_not_implemented(tmp_path: Path) -> None:
-    """F004 FR-015: a compatible corpus makes search available (degraded visibly when semantic
-    search is unusable); chat stays not_implemented until F005."""
+def test_compatible_corpus_search_and_chat_available(tmp_path: Path) -> None:
+    """F004 FR-015 / F005 FR-023: a compatible corpus makes search available (degraded visibly
+    when semantic search is unusable); chat is available when the generation model checks pass."""
     from tests.helpers.lifecycle import activate, snapshots
     from tests.helpers.snapshot_env import make_env
 
@@ -138,7 +138,7 @@ def test_compatible_corpus_search_available_chat_not_implemented(tmp_path: Path)
     healthy = payload(lambda: True)
     assert healthy["ready"] is True
     assert healthy["capabilities"]["search"] == {"available": True, "reasons": []}
-    assert "not_implemented" in healthy["capabilities"]["chat"]["reasons"]
+    assert healthy["capabilities"]["chat"] == {"available": True, "reasons": []}
     degraded = payload(lambda: False)
     assert degraded["capabilities"]["search"] == {
         "available": True,

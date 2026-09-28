@@ -194,7 +194,8 @@ def test_no_probability_like_fields_in_schemas() -> None:
 def test_readiness_reports_search_available(client: TestClient) -> None:
     payload = client.get("/health/ready", headers=HOST).json()
     assert payload["capabilities"]["search"] == {"available": True, "reasons": []}
-    assert "not_implemented" in payload["capabilities"]["chat"]["reasons"]
+    # F005: chat depends on the generation model (none installed in this fake runtime).
+    assert payload["capabilities"]["chat"]["reasons"] == ["generation_model_missing"]
 
 
 @pytest.mark.parametrize(
