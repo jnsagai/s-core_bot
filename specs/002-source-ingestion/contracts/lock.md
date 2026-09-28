@@ -15,6 +15,7 @@ Unknown fields rejected on read. Consumed by `sources inspect` and (F003) `index
       "kind": "git",
       "status": "ok",
       "failure": null,
+      "required": true,
       "repository": "https://github.com/eclipse-score/score.git",
       "ref": "main",
       "authority": "official-project",

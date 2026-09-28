@@ -22,6 +22,7 @@ BlockKind = Literal[
     "section",
     "paragraph",
     "list",
+    "list_item",
     "table",
     "code",
     "literal",
@@ -37,7 +38,7 @@ BlockKind = Literal[
     "generic_directive",
     "image",
 ]
-AttrValue = str | list[str] | list[list[str]]
+AttrValue = str | list[str] | list[list[str]] | dict[str, str]
 
 _FROZEN = ConfigDict(frozen=True, extra="forbid")
 
@@ -102,7 +103,7 @@ class Entity(BaseModel):
     path: str
     line_start: int | None
     line_end: int | None
-    origin: Literal["rst", "needs-export"]
+    origin: Literal["rst", "markdown", "needs-export"]
     revision_status: RevisionStatus
     # Raw export fields (exports only). Values are JSON-compatible without floats: the export
     # mapper stringifies any float so canonical hashing stays stable.
@@ -152,6 +153,7 @@ class LockedSource(BaseModel):
     kind: SourceKind
     status: Literal["ok", "failed"]
     failure: str | None = None
+    required: bool = True
     repository: str | None = None
     url: str | None = None
     ref: str | None = None

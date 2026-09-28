@@ -76,6 +76,13 @@ Apache-2.0, 3 **CC-BY-SA-4.0**, 1 CC0-1.0. Both repos contain a Sphinx `conf.py`
 **Markdown**: READMEs, contribution guides, `.github/` PR/release templates, design decision
 records (`DR-*.md`), training modules.
 
+**Correction 2 (found during implementation, 2026-09-28):** the sampling above counted only RST
+directives. Comparing our parse against the published export showed 10 `dec_rec` needs missing —
+all defined in `DR-*.md` Markdown via **MyST backtick directives** (```` ```{dec_rec} Title ````,
+11 occurrences, plus one `{mermaid}` and one `{toctree}`). No inline MyST roles, no YAML option
+blocks. Training modules use Docusaurus-style `:::tip`/`:::quiz` fences (not MyST); CommonMark
+keeps their content as paragraphs, so no text is lost (cosmetic limitation, no needs involved).
+
 **Published exports** (verified): `https://eclipse-score.github.io/score/main/needs.json`
 (718 776 B, 918 needs) and `…/process_description/main/needs.json` (1 236 569 B). Structure:
 `{current_version, project, project_url, versions: {"0.1": {creator: {program: sphinx_needs,
@@ -109,7 +116,17 @@ revision anywhere in the file** → association with a git revision cannot be ve
 - **Alternatives rejected**: hand-written block parser (would mis-handle grid tables, tabs,
   nested directives — high risk of silent content loss); Sphinx itself (executes `conf.py` and
   extensions — forbidden by SRC-006/ADR-005).
-- **Line numbers**: directive `lineno` and content offsets are exact; docutils' `node.line` for
+- **Line numbers — verified by prototype 2026-09-28 (T038)**: directive `lineno` is exact
+  (1-based) and `content_offset` is 0-based; paragraph/list-item/table-cell `node.line` is the
+  exact *first* line and the end follows from `rawsource` line count; section/title `line` is
+  the **underline** line (title line + 1) and is corrected by locating the title text; a need
+  with options but no body ends at its last option line, taken from `block_text`. Other
+  prototype findings: an empty permissive option mapping is falsy, so docutils skips option
+  parsing and swallows `:id:` into the title — the mapping must define `__bool__`; directive
+  lookup must use the registries (the public lookup needs a live document); docutils 0.23 maps
+  `code-block`/`sourcecode` to its own `code`; `role` is both a docutils directive and an S-CORE
+  need type (need type wins); `' .. document::` parses as a definition-list term (no need).
+- (Original R2 note, superseded by the verification above:) directive `lineno` and content offsets are exact; docutils' `node.line` for
   some body elements (paragraphs, list items) is approximate. Plan: entities, sections and
   directive blocks carry exact spans (asserted by tests); other blocks carry the best available
   line, with the rule documented in data-model.md (FR-016 "where the parser provides them").

@@ -247,7 +247,9 @@ check namespace, revision status, preserved fields, and the consistency statisti
   enumerated lists, definition and field lists, literal and code blocks (language kept), simple,
   grid, list and CSV tables (header rows and row identity kept), admonitions, toctree entries,
   configured need directives, and cross-reference roles; for Markdown (CommonMark + tables):
-  headings, paragraphs, lists, fenced/indented code (language kept), tables, block quotes.
+  headings, paragraphs, lists, fenced/indented code (language kept), tables, block quotes, and
+  MyST backtick-fenced directives (```` ```{name} argument ````, leading `:key: value` options),
+  which get the same profile-driven meaning as RST directives (need types become entities).
 - **FR-011** (SRC-005): Directives whose name is in the source's parser profile need-type list MUST
   become entities with: exact ID (case and punctuation preserved), type, title, every option's raw
   value, parsed links for the profile's link-option names (each item split into target ID and

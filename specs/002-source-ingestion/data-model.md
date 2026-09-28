@@ -38,7 +38,7 @@ file's parsed content.
 `redistribution_allowed_licenses`, `sources: list[LockedSource]`
 (sorted by `source_id`). Written atomically. See [contracts/lock.md](contracts/lock.md).
 
-**LockedSource**: `source_id`, `kind`, `status: ok|failed`, `failure: str|None`, `revision`
+**LockedSource**: `source_id`, `kind`, `status: ok|failed`, `failure: str|None`, `required`, `revision`
 (git: 40-hex SHA; export: SHA-256 of bytes), `ref` (git), `url`/`repository`, `fetched_at`,
 `selector_sha256` + `excluded_by_selector` count (git), `authority`, `repository_license`, `parser_profile` (git),
 `associated_source` + `docs_root` (export), `files: list[LockedFile]`, `notice_files: list[LockedFile]`,
@@ -79,7 +79,7 @@ allowed|requires_review`.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `kind` | enum | `section`, `paragraph`, `list`, `table`, `code`, `literal`, `diagram`, `admonition`, `field_list`, `definition_list`, `block_quote`, `toctree`, `need`, `dynamic_view`, `raw_excluded`, `generic_directive`, `image` |
+| `kind` | enum | `section`, `paragraph`, `list`, `list_item`, `table`, `code`, `literal`, `diagram`, `admonition`, `field_list`, `definition_list`, `block_quote`, `toctree`, `need`, `dynamic_view`, `raw_excluded`, `generic_directive`, `image` |
 | `text` | str | normalized, whitespace-collapsed; empty for `raw_excluded`/`dynamic_view` |
 | `heading_path` | list[str] | enclosing section titles |
 | `line_start`, `line_end` | int \| None | 1-based inclusive; exact for `section`, `need`, directive-based kinds; best-available otherwise (R2) |
@@ -100,7 +100,7 @@ allowed|requires_review`.
 | `options` | dict[str, str] | every option, raw |
 | `links` | list[LinkRef] | from profile link options |
 | `document_key`, `path`, `line_start`, `line_end` | | exact span of the directive block |
-| `origin` | `rst` \| `needs-export` | |
+| `origin` | `rst` \| `markdown` \| `needs-export` | markdown = MyST fenced directive in a `.md` file |
 | `revision_status` | `pinned` \| `unverified` | exports always `unverified` (FR-019) |
 | `export_fields` | dict \| None | raw export fields (exports only; e.g. `tags`, `fulfils_back`) |
 
