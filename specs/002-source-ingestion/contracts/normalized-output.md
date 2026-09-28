@@ -20,7 +20,8 @@ Shape only — all numbers below are illustrative, not measurements.
   "processing_hash": "…",
   "sources": [
     {"source_id": "score-platform", "kind": "git", "revision": "e2373d8…", "status": "ok",
-     "selected": 323, "included": 290, "partial": 31, "failed": [{"path": "…", "reason": "ENCODING_ERROR"}],
+     "selected": 323, "included": 290, "partial": 31,
+     "partial_files": [{"path": "…", "codes": ["MALFORMED_LINK"]}], "failed": [{"path": "…", "reason": "ENCODING_ERROR"}],
      "skipped": [{"path": "…", "reason": "symlink"}], "excluded_by_selector": 1402,
      "entities": 1403,
      "links": {"resolved": 2811, "ambiguous": 2, "unresolved": 144, "malformed": 0,
@@ -58,8 +59,10 @@ For `needs-export` sources: `selected`/`included` count 1 file; `export_consiste
 | `RAW_EXCLUDED` | info | `raw` directive / Markdown HTML excluded from text |
 | `EXTERNAL_RESOURCE_NOT_READ` | info | image/figure/csv-table target not read |
 | `INCLUDE_UNRESOLVED` | warning | include refused (escape, missing, unselected, depth, cycle, url) |
-| `HASH_MISMATCH` | error | acquired file differs from lock → source failed |
+| `HASH_MISMATCH` | error | acquired file differs from lock → source failed (source-level summary in `failure`) |
 | `EXPORT_INVALID` | error | export failed schema/size validation |
 | `LICENSE_UNKNOWN` | warning | no SPDX header and no repository license |
+| `UNSUPPORTED_FILE_TYPE` | error | selected file has no parser (e.g. a `conf.py` selected by mistake — never imported) |
+| `HASH_MISMATCH` (per file) | error | one per missing/changed acquired file; also listed under `failed` |
 
 Severity drives classification: any `error` → `failed`; any `warning` → `partial`.

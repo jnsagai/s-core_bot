@@ -48,6 +48,11 @@ def reference_role(
     content: Sequence[str] = (),
 ) -> RoleResult:
     link = parse_role_target(name, text)
+    if link.resolution == "malformed":
+        source, line = _where(inliner, lineno)
+        _ctx(inliner).diag(
+            "MALFORMED_LINK", "warning", source, line, f":{name}: target {text!r} is not a need ID"
+        )
     shown = text.split("<", 1)[0].strip() if "<" in text and text.rstrip().endswith(">") else text
     node = reference_node(rawtext, shown or link.target_id)
     node["link"] = link.model_dump(mode="json")

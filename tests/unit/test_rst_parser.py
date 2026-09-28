@@ -235,3 +235,10 @@ def test_directive_inside_grid_table_cell_is_registered() -> None:
     assert "UNKNOWN_DIRECTIVE" in codes(result)
     table = next(b for b in walk(result.blocks) if b.kind == "table")
     assert "@odra" in table.text
+
+
+def test_malformed_need_role_target_reported() -> None:
+    result = parse_rst("See :need:`not an id`.\n")
+    (para,) = [b for b in walk(result.blocks) if b.kind == "paragraph"]
+    assert para.references[0].resolution == "malformed"
+    assert "MALFORMED_LINK" in codes(result)

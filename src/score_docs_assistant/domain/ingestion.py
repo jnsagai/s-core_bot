@@ -193,6 +193,13 @@ class FailedFile(BaseModel):
     reason: str
 
 
+class PartialFile(BaseModel):
+    model_config = _FROZEN
+
+    path: str
+    codes: list[str]
+
+
 class AmbiguousItem(BaseModel):
     model_config = _FROZEN
 
@@ -244,6 +251,7 @@ class SourceCoverage(BaseModel):
     selected: int = 0
     included: int = 0
     partial: int = 0
+    partial_files: list[PartialFile] = []
     failed: list[FailedFile] = []
     skipped: list[SkippedEntry] = []
     excluded_by_selector: int | None = None
@@ -288,6 +296,7 @@ class DocumentParser(Protocol):
 class SourceAdapter(Protocol):
     """Acquires one registry source into a staging directory and describes it for the lock."""
 
-    kind: SourceKind
+    @property
+    def kind(self) -> SourceKind: ...
 
     def acquire(self, staging_root: Path) -> LockedSource: ...

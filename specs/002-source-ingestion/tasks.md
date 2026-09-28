@@ -151,7 +151,7 @@ synthetic fixtures carry a `SYNTHETIC — not S-CORE guidance` comment.
 - [x] T057 Execute quickstart.md scenarios A–E on the workstation (real GitHub and GitHub Pages); record resolved SHAs, file/entity/link counts, diagnostics summary, timings (SC-002, SC-005, SC-006, SC-007), a tally of hostile-fixture tests passed (SC-003), determinism result (SC-004) and any "not run" items with reasons in `specs/002-source-ingestion/verification.md`
 - [x] T058 [P] Update `docs/TRACEABILITY.md`: one row each for SRC-001–SRC-008, SRC-010–SRC-012 and SEC-005 with F002 FR IDs, task IDs, implementation paths, tests and evidence; note SRC-009 remains F003 (constitution IX)
 - [x] T059 [P] Update `docs/BACKLOG.md` (F002 state), `docs/ASSUMPTIONS.md` (docutils license review; exports unverified by construction; git ≥ 2.34 prerequisite for sync), `docs/toolchain.md` (docutils, markdown-it-py, git), `README.md` and `CLAUDE.md` command lists (`sources validate|sync|inspect`)
-- [ ] T060 Run `/speckit-converge` and complete any appended tasks before declaring F002 done
+- [x] T060 Run `/speckit-converge` and complete any appended tasks before declaring F002 done
 
 ---
 
@@ -198,3 +198,11 @@ Each story checkpoint runs the full local gate before continuing; commit per che
 - Mark a task `[x]` only after its verification ran and passed; record deviations in `verification.md`.
 - `real_network` tests skipped = "not run", never "passed".
 - Never run upstream `conf.py`, Sphinx, or any upstream script — not even "just to compare".
+
+## Phase 7: Convergence
+
+- [x] T061 Implement `GitSourceAdapter` and `ExportSourceAdapter` (the `SourceAdapter` protocol in `domain/ingestion.py`) in `src/score_docs_assistant/sources/adapters.py`, and make `SyncService` acquire through them instead of private methods per plan: Structure Decision, Constitution VI (partial)
+- [x] T062 Add `partial_files` (path + warning codes) to `SourceCoverage` and the text/JSON report so partially-parsed files are listed, not only counted per FR-023 (partial)
+- [x] T063 Emit one `HASH_MISMATCH` error diagnostic per missing/changed file (not only a coverage failure string) and include them in the report per contracts/normalized-output.md (partial)
+- [x] T064 Add `UNSUPPORTED_FILE_TYPE` (error; selected file with no parser, e.g. `conf.py`) to the diagnostic catalogue in `specs/002-source-ingestion/contracts/normalized-output.md` per spec Edge Cases (unrequested)
+- [x] T065 Emit `MALFORMED_LINK` for malformed `:need:` role targets in `src/score_docs_assistant/ingestion/rst/roles.py` per FR-011/FR-018 (partial)

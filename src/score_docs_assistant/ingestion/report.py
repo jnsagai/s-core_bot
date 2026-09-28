@@ -13,6 +13,7 @@ from score_docs_assistant.domain.ingestion import (
     AmbiguousItem,
     Block,
     CoverageReport,
+    Diagnostic,
     Entity,
     ExportConsistency,
     FailedFile,
@@ -20,6 +21,7 @@ from score_docs_assistant.domain.ingestion import (
     LinkSummary,
     LockedSource,
     NormalizedDocument,
+    PartialFile,
     SourceCoverage,
     UnresolvedItem,
 )
@@ -41,6 +43,7 @@ class SourceData:
     documents: list[NormalizedDocument] = field(default_factory=list)
     entities: list[Entity] = field(default_factory=list)
     coverage_failure: str | None = None
+    integrity_diagnostics: list[Diagnostic] = field(default_factory=list)
     processing_hash: str | None = None
     export_docnames: dict[str, str] = field(default_factory=dict)
     consistency: ExportConsistency | None = None
@@ -87,7 +90,16 @@ def _coverage(data: SourceData) -> SourceCoverage:
         )
         for d in data.documents
         if d.status == "failed"
+    ] + [FailedFile(path=x.path, reason=x.code) for x in data.integrity_diagnostics]
+    partial_files = [
+        PartialFile(
+            path=d.path, codes=sorted({x.code for x in d.diagnostics if x.severity == "warning"})
+        )
+        for d in data.documents
+        if d.status == "partial"
     ]
+    all_diagnostics = [x for d in data.documents for x in d.diagnostics]
+    all_diagnostics += data.integrity_diagnostics
     git_docs = [d for d in data.documents if d.format != "needs-export"]
     return SourceCoverage(
         source_id=locked.source_id,
@@ -98,14 +110,13 @@ def _coverage(data: SourceData) -> SourceCoverage:
         selected=len(locked.files),
         included=statuses["included"],
         partial=statuses["partial"],
+        partial_files=partial_files,
         failed=failed,
         skipped=list(locked.skipped),
         excluded_by_selector=locked.excluded_by_selector,
         entities=len(data.entities),
         links=_link_summary(data),
-        diagnostics_by_code=dict(
-            sorted(Counter(x.code for d in data.documents for x in d.diagnostics).items())
-        ),
+        diagnostics_by_code=dict(sorted(Counter(x.code for x in all_diagnostics).items())),
         licenses=dict(sorted(Counter(d.license.spdx or "unknown" for d in git_docs).items())),
         requires_review=sorted(
             d.path for d in git_docs if d.license.redistribution == "requires_review"
@@ -152,6 +163,10 @@ def render_text(report: CoverageReport) -> str:
         lines.append(
             f"  requires review: {len(c.requires_review)} files   top diagnostics: {diagnostics}"
         )
+        if c.partial_files:
+            shown = ", ".join(f"{p.path} ({'/'.join(p.codes)})" for p in c.partial_files[:5])
+            more = f" … +{len(c.partial_files) - 5} more" if len(c.partial_files) > 5 else ""
+            lines.append(f"  partial: {shown}{more}")
         if c.export_consistency is not None:
             s = c.export_consistency
             lines.append(

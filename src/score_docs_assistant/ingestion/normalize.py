@@ -144,6 +144,16 @@ class NormalizationService:
         root = source_root(self._data, locked.source_id, locked.revision)
         problems = verify_files(root, locked) if root.is_dir() else ["<revision directory>"]
         if problems:
+            source_data.integrity_diagnostics = [
+                _diag(
+                    locked.source_id,
+                    path,
+                    "HASH_MISMATCH",
+                    "error",
+                    "acquired file is missing or differs from the lock; source not parsed",
+                )
+                for path in problems
+            ]
             source_data.coverage_failure = (
                 f"HASH_MISMATCH: {len(problems)} acquired file(s) missing or changed, e.g. "
                 f"{problems[0]}"

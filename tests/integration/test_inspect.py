@@ -51,6 +51,8 @@ def test_report_invariants_and_classification(data: Path) -> None:
     assert cov.diagnostics_by_code["EMPTY_DOCUMENT"] == 1
     assert cov.licenses["CC-BY-SA-4.0"] == 1
     assert cov.excluded_by_selector == 1
+    # FR-023: partially parsed files are listed with their warning codes, not only counted.
+    assert [(f.path, f.codes) for f in cov.partial_files] == [("docs/reqs.rst", ["MALFORMED_LINK"])]
 
 
 def test_tampered_file_fails_source(data: Path) -> None:
@@ -63,6 +65,9 @@ def test_tampered_file_fails_source(data: Path) -> None:
     (cov,) = outcome.report.sources
     assert cov.status == "failed" and "HASH_MISMATCH" in (cov.failure or "")
     assert outcome.documents == []
+    # One error diagnostic per changed file (contracts/normalized-output.md).
+    assert cov.diagnostics_by_code == {"HASH_MISMATCH": 1}
+    assert [(f.path, f.reason) for f in cov.failed] == [("docs/index.rst", "HASH_MISMATCH")]
 
 
 def test_missing_revision_directory_fails_source(data: Path) -> None:

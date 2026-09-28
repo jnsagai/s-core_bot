@@ -194,6 +194,39 @@ license check 41 packages allowed or reviewed.
   `sources validate` 0, `sources inspect` 0, `serve` started (stopped by timeout, port 8080 free
   afterwards).
 
+## `/speckit-converge` — 2026-09-28
+
+First pass (independent re-read of 25 FRs, 7 SCs, acceptance scenarios, edge cases, plan
+decisions, contracts, constitution) found **5 gaps**, appended as Phase 7:
+
+| ID | Gap | Severity | Fix (task) |
+| --- | --- | --- | --- |
+| F1 | `SourceAdapter` protocol declared but not implemented (plan + constitution VI) | HIGH | `sources/adapters.py`: `GitSourceAdapter`, `ExportSourceAdapter`; `SyncService` now orchestrates only (T061); mypy statically checks protocol conformance |
+| F2 | Report counted partially-parsed files but did not list them (FR-023) | MEDIUM | `partial_files` with warning codes in JSON and text (T062) |
+| F3 | `HASH_MISMATCH` only a source-level string, no per-file diagnostics (contract) | LOW | one error diagnostic per file, also listed under `failed` (T063) |
+| F4 | `UNSUPPORTED_FILE_TYPE` emitted but absent from the contract catalogue | LOW | contract updated (T064) |
+| F5 | Malformed `:need:` role targets produced no `MALFORMED_LINK` diagnostic | LOW | emitted in `rst/roles.py` (T065) |
+
+Each code fix went test-first (confirmed red, then green). After the adapter refactor, a real
+re-sync against GitHub produced a lock identical to the previous one except timestamps and the
+`required` field (absent in the older lock, now correct), and real inspect results were unchanged
+(918/918, 1250/1250 parity).
+
+Follow-up pass: **0 findings — ✅ Converged.** `tasks.md` unchanged by the second pass.
+
+```
+$ uv run ruff format --check . && uv run ruff check .   → 182 files formatted; All checks passed!
+$ uv run mypy src                                        → Success: no issues found in 63 source files
+$ uv run pytest -q                                       → 350 passed, 3 skipped (opt-in: 2 real_runtime, 1 real_network)
+```
+
+## Open item for the project owner
+
+- **Confirm (or reject) the docutils license exception** in `config/license-exceptions.yaml`.
+  It is an *agent* review (research R3: the only GPL-3.0 file, `tools/editors/emacs/rst.el`, is
+  not in the installed wheel), not a human approval. Until confirmed, F002 is recorded as
+  *verified*, not *done*.
+
 ## Blockers
 
 (none)
