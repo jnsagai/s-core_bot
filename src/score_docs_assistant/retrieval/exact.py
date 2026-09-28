@@ -82,6 +82,10 @@ class EntityIndex:
             )
         }
 
+    def groups(self) -> list[tuple[str, list[EntityRow]]]:
+        """(need ID, entities in lookup order) for every distinct ID."""
+        return list(self._by_id.items())
+
     def match(self, token: str, source_id: str | None = None) -> list[tuple[EntityRow, MatchKind]]:
         """Verbatim matches, else alias matches; optionally restricted to one source."""
         if source_id is None and ":" in token:

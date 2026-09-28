@@ -1,0 +1,194 @@
+# Initial retrieval cases for F004 (specs/004-hybrid-search/contracts/eval-cases.md).
+# Agent-authored on 2026-09-28 by reading the pinned sources under data/sources/<id>/<rev>/ (file
+# headings, opening paragraphs and entity records), never from this system's own search output.
+# UNREVIEWED: results are development measurements, not release evidence (F008 owns review).
+schema_version: 1
+review_status: "unreviewed (agent-authored)"
+written_against:
+  score-platform: e2373d822fc2f6e9a3f8a0538904f3faa39309ea
+  score-process: 66321fe6bd131eae58fbd6395b0f0b92d63e00f5
+cases:
+  # --- onboarding / build -------------------------------------------------------------------
+  - id: onb-001
+    category: onboarding_build
+    question: "What is the recommended way to set up the development environment?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/development/development_environment.rst}
+    notes: "The page recommends the provided devcontainer."
+  - id: onb-002
+    category: onboarding_build
+    question: "How do I build the documentation locally?"
+    expected:
+      - - {source_id: score-platform, path: docs/users_guide/building_simple_application/doc_generation.rst}
+        - {source_id: score-platform, path: docs/contribute/documentation/docs-as-code.rst}
+    notes: "Either the users-guide doc generation page or the docs-as-code contribution page."
+  - id: onb-003
+    category: onboarding_build
+    question: "What rules apply to commit messages?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/general/git.rst}
+  - id: onb-004
+    category: onboarding_build
+    question: "How are files and folders named?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/general/naming.rst}
+    notes: "Snake case for files and folders; .drawio.svg for drawio pictures."
+  - id: onb-005
+    category: onboarding_build
+    question: "How do I release a module and register it in the S-CORE Bazel registry?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/general/release_guide.rst}
+  - id: onb-006
+    category: onboarding_build
+    question: "How do I make sure my contributions are attributed to my company?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/general/contribution_attribution.rst}
+  - id: onb-007
+    category: onboarding_build
+    question: "Which VS Code configuration and plugins are recommended?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/development/ide/vscode.rst}
+  - id: onb-008
+    category: onboarding_build
+    question: "How should a company structure forks of S-CORE repositories?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/fork/index.md}
+
+  # --- architecture / interfaces ------------------------------------------------------------
+  - id: arc-001
+    category: architecture_interfaces
+    question: "What is the logical interface of the persistency key-value store?"
+    expected:
+      - - {entity_key: "score-platform:logic_arc_int__persistency__interface"}
+        - {source_id: score-platform, path: docs/features/persistency/architecture/index.rst}
+  - id: arc-002
+    category: architecture_interfaces
+    question: "Which interfaces does the lifecycle feature provide, such as the alive and deadline monitor APIs?"
+    expected:
+      - - {source_id: score-platform, path: docs/features/lifecycle/architecture/index.rst}
+  - id: arc-003
+    category: architecture_interfaces
+    question: "How is the orchestration feature architected for mixed-criticality applications?"
+    expected:
+      - - {source_id: score-platform, path: docs/features/orchestration/architecture/index.rst}
+  - id: arc-004
+    category: architecture_interfaces
+    question: "What does the IPC architecture look like?"
+    expected:
+      - - {source_id: score-platform, path: docs/features/communication/ipc/architecture/index.rst}
+  - id: arc-005
+    category: architecture_interfaces
+    question: "What logging interfaces exist for C++ and Rust?"
+    expected:
+      - - {entity_key: "score-platform:logic_arc_int__log_cpp__logging"}
+        - {entity_key: "score-platform:logic_arc_int__log_rust__logging_rust"}
+        - {source_id: score-platform, path: docs/features/log_and_trace/logging/architecture/index.rst}
+  - id: arc-006
+    category: architecture_interfaces
+    question: "What makes a good API design?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/development/api_guideline.rst}
+  - id: arc-007
+    category: architecture_interfaces
+    question: "What work products describe the platform, feature and component architecture?"
+    expected:
+      - - {entity_key: "score-process:wp__platform_arch"}
+        - {entity_key: "score-process:wp__feature_arch"}
+        - {entity_key: "score-process:wp__component_arch"}
+        - {source_id: score-process, path: process/process_areas/architecture_design/architecture_workproducts.rst}
+  - id: arc-008
+    category: architecture_interfaces
+    question: "What is the SOME/IP gateway feature?"
+    expected:
+      - - {source_id: score-platform, path: docs/features/communication/some_ip_gateway/index.rst}
+
+  # --- process / work products --------------------------------------------------------------
+  - id: pro-001
+    category: process_work_products
+    question: "How are inspections performed and which work products are inspected?"
+    expected:
+      - - {source_id: score-process, path: process/general_concepts/score_review_concept.rst}
+  - id: pro-002
+    category: process_work_products
+    question: "What does the traceability concept require between requirements, architecture and tests?"
+    expected:
+      - - {source_id: score-process, path: process/general_concepts/score_traceability_concept.rst}
+  - id: pro-003
+    category: process_work_products
+    question: "How is a feature request proposed and decided?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/contribution_request/feature_request.rst}
+        - {entity_key: "score-process:gd_guidl__change_change_request"}
+  - id: pro-004
+    category: process_work_products
+    question: "How does problem resolution work according to ISO 26262 and ASPICE SUP.9?"
+    expected:
+      - - {source_id: score-process, path: process/process_areas/problem_resolution/problem_resolution_concept.rst}
+  - id: pro-005
+    category: process_work_products
+    question: "What is the concept for configuration management?"
+    expected:
+      - - {source_id: score-process, path: process/process_areas/configuration_management/configuration_concept.rst}
+  - id: pro-006
+    category: process_work_products
+    question: "Which verification work products exist, such as the verification plan and unit tests?"
+    expected:
+      - - {entity_key: "score-process:wp__verification_plan"}
+        - {entity_key: "score-process:wp__verification_sw_unit_test"}
+        - {source_id: score-process, path: process/process_areas/verification/verification_workproducts.rst}
+  - id: pro-007
+    category: process_work_products
+    question: "How is static code analysis for C++ established?"
+    expected:
+      - - {source_id: score-platform, path: docs/contribute/development/cpp/code_analysis.rst}
+  - id: pro-008
+    category: process_work_products
+    question: "What does the implementation guideline say?"
+    expected:
+      - - {entity_key: "score-process:gd_guidl__implementation"}
+        - {source_id: score-process, path: process/process_areas/implementation/guidance/implementation_guideline.rst}
+
+  # --- requirements / templates -------------------------------------------------------------
+  - id: req-001
+    category: requirements_templates
+    question: "Is there a template for feature architecture?"
+    expected:
+      - - {entity_key: "score-process:gd_temp__arch_feature"}
+  - id: req-002
+    category: requirements_templates
+    question: "What template is used for an impact analysis of a change?"
+    expected:
+      - - {entity_key: "score-process:gd_temp__change_impact_analysis"}
+  - id: req-003
+    category: requirements_templates
+    question: "What does a problem report template contain?"
+    expected:
+      - - {source_id: score-process, path: process/process_areas/problem_resolution/guidance/problem_resolution_template.rst}
+  - id: req-004
+    category: requirements_templates
+    question: "Which templates exist for stakeholder, feature and component requirements?"
+    expected:
+      - - {entity_key: "score-process:gd_temp__req_stkh_req"}
+        - {entity_key: "score-process:gd_temp__req_feat_req"}
+        - {entity_key: "score-process:gd_temp__req_comp_req"}
+        - {source_id: score-process, path: process/process_areas/requirements_engineering/guidance/requirements_templates.rst}
+  - id: req-005
+    category: requirements_templates
+    question: "Is there an FMEA template for components?"
+    expected:
+      - - {entity_key: "score-process:gd_temp__comp_saf_fmea"}
+  - id: req-006
+    category: requirements_templates
+    question: "What is the requirement feat_req__com__interfaces about?"
+    expected:
+      - - {entity_key: "score-platform:feat_req__com__interfaces"}
+  - id: req-007
+    category: requirements_templates
+    question: "What does ASPICE SWE.5.BP2 require?"
+    expected:
+      - - {entity_key: "score-process:std_req__aspice_40__SWE-5-BP2"}
+  - id: req-008
+    category: requirements_templates
+    question: "Which template is used for a configuration management plan?"
+    expected:
+      - - {entity_key: "score-process:gd_temp__config_mgt_plan"}

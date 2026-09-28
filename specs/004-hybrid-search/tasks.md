@@ -97,10 +97,10 @@ reasons; no cross-snapshot content.
 
 ## Phase 5: User Story 3 — Evaluation (P3)
 
-- [ ] T032 [P] [US3] Write `tests/unit/test_evaluation.py`: case-file schema (unknown keys, duplicate IDs, empty groups, bad lines → error); locator matching (path, line overlap, entity key); recall@10 per case, macro and by category with counts; unreviewed label; `written_against` mismatch warning; exact-ID suite counts failures and `ambiguous_by_design`; latency percentiles from injected timings; hybrid "not run" without runtime (FR-019–FR-021)
-- [ ] T033 [US3] Implement `retrieval/evaluation.py` — makes T032 pass
-- [ ] T034 [US3] Implement `eval retrieval | exact-ids | latency` in `cli/evaluate.py` with `tests/contract/test_cli_eval.py` (help lines, exit codes, report files, malformed case file exit 2)
-- [ ] T035 [US3] Author `eval/retrieval-dev.yaml`: ≥ 30 cases over the four categories (≥ 6 each) with gold locations read from the pinned sources (`data/sources/<id>/<rev>/…`), `review_status: "unreviewed (agent-authored)"`, `written_against` revisions; validate it with `eval retrieval` loading (FR-022)
+- [x] T032 [P] [US3] Write `tests/unit/test_evaluation.py`: case-file schema (unknown keys, duplicate IDs, empty groups, bad lines → error); locator matching (path, line overlap, entity key); recall@10 per case, macro and by category with counts; unreviewed label; `written_against` mismatch warning; exact-ID suite counts failures and `ambiguous_by_design`; latency percentiles from injected timings; hybrid "not run" without runtime (FR-019–FR-021)
+- [x] T033 [US3] Implement `retrieval/evaluation.py` — makes T032 pass
+- [x] T034 [US3] Implement `eval retrieval | exact-ids | latency` in `cli/evaluate.py` with `tests/contract/test_cli_eval.py` (help lines, exit codes, report files, malformed case file exit 2)
+- [x] T035 [US3] Author `eval/retrieval-dev.yaml`: ≥ 30 cases over the four categories (≥ 6 each) with gold locations read from the pinned sources (`data/sources/<id>/<rev>/…`), `review_status: "unreviewed (agent-authored)"`, `written_against` revisions; validate it with `eval retrieval` loading (FR-022)
 
 **Checkpoint**: gate green; quickstart E, F on the real snapshot recorded.
 
@@ -108,10 +108,10 @@ reasons; no cross-snapshot content.
 
 ## Phase 6: Polish
 
-- [ ] T036 [P] Update `README.md` and `CLAUDE.md` with `search`, `lookup`, `eval` and the new API routes; re-run documented commands
-- [ ] T037 [P] Update `docs/BACKLOG.md`, `docs/TRACEABILITY.md` (RET-001–RET-004, RET-008, LOC-006, RET-005/RET-007 search parts) and `docs/ASSUMPTIONS.md` (A-025 pinned-before-unverified ordering; A-026 64-term cap; A-027 export records returned without evidence chunks)
-- [ ] T038 Run the full gate plus `SCORE_ASSISTANT_REAL_RUNTIME=1 uv run pytest -m real_runtime`; record commands and results in `specs/004-hybrid-search/verification.md`
-- [ ] T039 Walk quickstart A–F on the workstation; record exact-ID results, recall@10 by category (labelled development measurement), p50/p95 per mode with environment, and deviations in `verification.md`
+- [x] T036 [P] Update `README.md` and `CLAUDE.md` with `search`, `lookup`, `eval` and the new API routes; re-run documented commands
+- [x] T037 [P] Update `docs/BACKLOG.md`, `docs/TRACEABILITY.md` (RET-001–RET-004, RET-008, LOC-006, RET-005/RET-007 search parts) and `docs/ASSUMPTIONS.md` (A-025 pinned-before-unverified ordering; A-026 64-term cap; A-027 export records returned without evidence chunks)
+- [x] T038 Run the full gate plus `SCORE_ASSISTANT_REAL_RUNTIME=1 uv run pytest -m real_runtime`; record commands and results in `specs/004-hybrid-search/verification.md`
+- [x] T039 Walk quickstart A–F on the workstation; record exact-ID results, recall@10 by category (labelled development measurement), p50/p95 per mode with environment, and deviations in `verification.md`
 
 ---
 

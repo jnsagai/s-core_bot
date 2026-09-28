@@ -15,14 +15,21 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   of RST, Markdown (incl. MyST directives) and Sphinx-Needs requirement records with exact source
   locations, relationships and licensing.
 
-- **F003 (implemented)** — immutable corpus snapshots: structure-aware chunking, an SQLite
+- **F003 (done)** — immutable corpus snapshots: structure-aware chunking, an SQLite
   corpus with a full-text index, local embeddings from `nomic-embed-text` (never truncated, reused
   across builds), manifests with checksums, staged builds, atomic activation and rollback,
   reader pins, retention, and verified bundle export/import:
   `index build | validate`, `snapshots list | activate | rollback`,
   `bundle export | inspect | import`.
 
-There is no search or chat yet — those arrive in later features (see `docs/BACKLOG.md`).
+- **F004 (implemented)** — evidence search over one pinned snapshot: exact requirement-ID lookup
+  with stored relationships, keyword search, and semantic search with the local embedding model,
+  fused into a short ranked list with provenance. It falls back to keyword-only search (stated
+  plainly) when embeddings are unavailable, and never needs the answer model. `search`, `lookup`,
+  `eval retrieval | exact-ids | latency`, and HTTP `/api/v1/search`, `/entities`,
+  `/relationships`, `/snapshots`, `/sources`, `/citations/…`.
+
+There is no chat yet — answers arrive in F005 (see `docs/BACKLOG.md`).
 
 ## Scope
 
@@ -64,6 +71,11 @@ uv run score-assistant --config config/local.yaml snapshots list
 uv run score-assistant --config config/local.yaml index validate --snapshot <id>
 uv run score-assistant --config config/local.yaml snapshots rollback
 uv run score-assistant --config config/local.yaml bundle export --snapshot <id> --output <file>
+
+# Evidence search (offline; may use the local embedding runtime, never the answer model)
+uv run score-assistant --config config/local.yaml search "How do I build the documentation?"
+uv run score-assistant --config config/local.yaml lookup feat_req__com__interfaces --relationships
+uv run score-assistant --config config/local.yaml eval retrieval --cases eval/retrieval-dev.yaml
 ```
 
 A build ends `validated` (integrity-checked, not an engineering approval) and is served only after
