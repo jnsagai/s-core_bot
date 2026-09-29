@@ -21,22 +21,22 @@ description: "Task list for F009 Portable Local Release and Hosting Preparation"
 
 ## Phase 3: US2 Package, install, restore (P1)
 
-- [ ] T007 `qualification/restore.py` (snapshot/chunk/citation comparison) + CLI entry; `tests/integration/test_restore_check.py` (identical, and a tampered restore detected)
-- [ ] T008 `scripts/prepare_package.sh` and `scripts/fresh_install.sh` (namespace, offline)
+- [x] T007 `qualification/restore.py` (snapshot/chunk/citation comparison) + CLI entry; `tests/integration/test_restore_check.py` (identical, and a tampered restore detected)
+- [x] T008 `scripts/prepare_package.sh` and `scripts/fresh_install.sh` (namespace, offline)
 
 ## Phase 4: US3 Contract parity (P2)
 
-- [ ] T009 `qualification/contract.py` (probe, signature, compare, CLI); `tests/unit/test_contract_probe.py`
+- [x] T009 `qualification/contract.py` (probe, signature, compare, CLI); `tests/unit/test_contract_probe.py`
 
 ## Phase 5: US4 Operations (P2)
 
-- [ ] T010 `scripts/sbom.py` (CycloneDX 1.5) + `tests/unit/test_sbom.py`
-- [ ] T011 `release assemble` (`qualification/release.py`) + `tests/unit/test_release_assembly.py`
-- [ ] T012 Runbooks `docs/runbooks/` (install, offline-preparation, backup-restore, upgrade-rollback, troubleshooting, logs), `docs/quality/hardware-matrix.md`, `docs/KNOWN_LIMITATIONS.md`
+- [x] T010 `scripts/sbom.py` (CycloneDX 1.5) + `tests/unit/test_sbom.py`
+- [x] T011 `release assemble` (`qualification/release.py`) + `tests/unit/test_release_assembly.py`
+- [x] T012 Runbooks `docs/runbooks/` (install, offline-preparation, backup-restore, upgrade-rollback, troubleshooting, logs), `docs/quality/hardware-matrix.md`, `docs/KNOWN_LIMITATIONS.md`
 
 ## Phase 6: US5 Gates
 
-- [ ] T013 F009 gates in `eval/release-gates.yaml` + gate-file test update
+- [x] T013 F009 gates in `eval/release-gates.yaml` + gate-file test update
 
 ## Phase 7: Real runs
 

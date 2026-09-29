@@ -374,3 +374,27 @@ def release_report_command(
     for item in report.blocking:
         typer.echo(f"  {item}")
     typer.echo(f"report: {out}/report.md")
+
+
+@release_app.command("assemble")
+@handle_common_errors
+def release_assemble_command(ctx: typer.Context) -> None:
+    """Collects the release contents (locks, SBOM, notices, model record, corpus identity, reports,
+    hardware matrix, limitations) with a hash manifest."""
+    from score_docs_assistant.qualification.release import assemble
+    from score_docs_assistant.storage.catalog import Catalog
+
+    config = _config(ctx)
+    manifest = None
+    catalog = Catalog.open(config.data_dir, create=False)
+    if catalog is not None:
+        with catalog:
+            active = catalog.active_id()
+        if active:
+            manifest = config.data_dir / "snapshots" / active / "manifest.json"
+    out = assemble(Path.cwd(), reports_dir(config), manifest, config.data_dir / "releases")
+    data = json.loads((out / "release-manifest.json").read_text())
+    typer.echo(f"release {data['version']}: {len(data['items'])} items → {out}")
+    if data["missing"]:
+        typer.echo(f"MISSING: {data['missing']}", err=True)
+        raise typer.Exit(code=1)

@@ -219,6 +219,58 @@ gates:
     kind: human
     refs: [UX-001, UX-004, SC-006 F006, A-040]
     evidence: {manual: "awaiting the owner's real-browser checks (no browser on the development machine, A-040)"}
+  # --- F009 deployment gates (local v1.0) --------------------------------------------------------
+  - id: container_loopback_private_runtime
+    title: "Containers: app published on 127.0.0.1 only, runtime without host port, hardened, cited answer"
+    target: "pass"
+    kind: real_model
+    critical: true
+    refs: [LOC-004, SEC-002, OPS-006, §17.2, F009 SC-001]
+    evidence: {report: "container-2*.json", field: "status", compare: "== pass"}
+  - id: container_config_rules
+    title: "Container mode is the only, image-gated exception to the loopback rules"
+    target: "pass"
+    kind: deterministic
+    critical: true
+    refs: [LOC-004, SEC-004, F009 FR-003]
+    evidence: {tests: [test_container_mode_needs_the_image_marker, test_marker_alone_does_not_open_anything, test_runtime_has_no_host_port_and_only_the_internal_network, test_app_publishes_on_loopback_only]}
+  - id: fresh_install_offline
+    title: "Fresh offline install from the prepared package reaches a cited answer"
+    target: "pass"
+    kind: real_model
+    refs: [LOC-002, LOC-003, §18.3 fresh install, F009 SC-002]
+    evidence: {report: "fresh-install-*.json", field: "status", compare: "== pass"}
+  - id: restore_keeps_citations
+    title: "Restored corpus keeps snapshot identity, chunks and citations"
+    target: "pass"
+    kind: real_model
+    critical: true
+    refs: [OPS-003, AT-16, §18.3 backup/restore, F009 SC-003]
+    evidence: {report: "restore-*.json", field: "status", compare: "== pass", accept_development: true}
+  - id: contract_parity
+    title: "Same API contract natively and in containers"
+    target: "pass"
+    kind: real_model
+    refs: [F009 FR-008, SC-004]
+    evidence: {report: "contract-2*.json", field: "status", compare: "== pass"}
+  - id: sbom
+    title: "Release SBOM (CycloneDX) from the locks"
+    target: "present"
+    kind: deterministic
+    refs: [OPS-005, §18.1]
+    evidence: {report: "sbom-*.cdx.json", field: "specVersion", compare: "== 1.5"}
+  - id: log_retention
+    title: "Logs are body-free, rotate, and keep at most seven days"
+    target: "pass"
+    kind: deterministic
+    refs: [OPS-001]
+    evidence: {tests: [test_records_are_body_free_and_retention_is_bounded]}
+  - id: operator_documents
+    title: "Runbooks, hardware matrix and known limitations present"
+    target: "present"
+    kind: deterministic
+    refs: [F009 FR-012, §18.1 hardware matrix, §18.3 limitations]
+    evidence: {tests: [test_operator_documents_present]}
   # --- deferred (not required for the local release) ---------------------------------------------
   - id: public_profile
     title: "Public hosting profile (AT-19, AT-20, PUB-001–PUB-008)"

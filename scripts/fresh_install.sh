@@ -39,7 +39,7 @@ APPDIR="$WORK/app"; DATA="$WORK/data"
 step "clone source from the package bundle" git clone -q "$PACKAGE/source.git.bundle" "$APPDIR"
 cd "$APPDIR"
 step "install locked dependencies offline" env UV_OFFLINE=1 uv sync --frozen --offline --no-dev
-step "install built frontend" tar -C frontend -xzf "$PACKAGE/frontend-dist.tar.gz"
+step "install built frontend" tar --no-same-owner -C frontend -xzf "$PACKAGE/frontend-dist.tar.gz"
 mkdir -p "$DATA" && cp "$PACKAGE/model-lock.json" "$DATA/model-lock.json"
 sed -e "s|^data_dir: .*|data_dir: $DATA|" config/local.yaml > config/fresh.yaml
 APP="$APPDIR/.venv/bin/score-assistant"
