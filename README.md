@@ -63,6 +63,18 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   that need a person (suite review, human-judged metrics, browser walkthrough). See
   `docs/user/quality.md`.
 
+- **F009 (done)** — portable local release:
+  - a hardened non-root image and `compose.yaml` (`bundled` CPU profile: app published on
+    127.0.0.1 only, model runtime on an internal network without a host port, models read-only;
+    Linux `host-runtime` profile; NVIDIA override documented, not run);
+  - offline package preparation and fresh install/restore scripts, and a native/container API
+    contract check;
+  - a CycloneDX SBOM, `release assemble`, runbooks (`docs/runbooks/`), a hardware matrix and known
+    limitations.
+
+  Local v1.0 report: `docs/quality/release-report-local-v1.0-2026-09-29.md` (blocked only by human
+  review and browser checks).
+
 ## Scope
 
 - Runs entirely on your own machine: no paid API, API key, vendor login, or cloud inference.

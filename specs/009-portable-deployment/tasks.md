@@ -40,11 +40,11 @@ description: "Task list for F009 Portable Local Release and Hosting Preparation"
 
 ## Phase 7: Real runs
 
-- [ ] T014 Build/pull images; run `container_check.sh`; record
-- [ ] T015 Package + fresh install + restore (offline namespace); record
-- [ ] T016 Contract parity native vs container; record
-- [ ] T017 SBOM, release assemble, pytest/vitest JUnit, release report (zero non-deferred `not run`); commit report copy
+- [x] T014 Build/pull images; run `container_check.sh`; record
+- [x] T015 Package + fresh install + restore (offline namespace); record
+- [x] T016 Contract parity native vs container; record
+- [x] T017 SBOM, release assemble, pytest/vitest JUnit, release report (zero non-deferred `not run`); commit report copy
 
 ## Phase 8: Polish
 
-- [ ] T018 README/CLAUDE.md, BACKLOG, TRACEABILITY (LOC/OPS/SEC F009 parts), ASSUMPTIONS (A-050+), verification, quickstart walk
+- [x] T018 README/CLAUDE.md, BACKLOG, TRACEABILITY (LOC/OPS/SEC F009 parts), ASSUMPTIONS (A-050+), verification, quickstart walk
