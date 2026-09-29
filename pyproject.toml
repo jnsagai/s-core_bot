@@ -52,6 +52,8 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # The model policy is prose sent verbatim to the model; wrapping it would change the prompt.
 "src/score_docs_assistant/answers/policy.py" = ["E501"]
 "src/score_docs_assistant/comparison/policy.py" = ["E501"]
+# Embedded JavaScript sent to the browser verbatim.
+"scripts/browser_check.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

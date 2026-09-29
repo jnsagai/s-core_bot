@@ -48,36 +48,39 @@ export function App() {
   return (
     <div className="app">
       <Header snapshotId={conversation.snapshotId} />
-      <div className="toolbar">
-        <SnapshotSelector
-          snapshots={readiness.snapshots}
-          selected={conversation.snapshotId}
-          hasTurns={conversation.turns.length > 0}
-          onSelect={(id) => dispatch({ type: "setSnapshot", snapshotId: id })}
-        />
-        <button
-          type="button"
-          onClick={() => dispatch({ type: "clear" })}
-          disabled={conversation.turns.length === 0}
-        >
-          New conversation
-        </button>
-      </div>
-      <div role="tablist" aria-label="Views" className="tabs">
-        {TABS.map((t) => (
+      {/* Landmarks for the snapshot controls and view tabs (real-browser axe `region` finding). */}
+      <nav aria-label="Snapshot and views">
+        <div className="toolbar">
+          <SnapshotSelector
+            snapshots={readiness.snapshots}
+            selected={conversation.snapshotId}
+            hasTurns={conversation.turns.length > 0}
+            onSelect={(id) => dispatch({ type: "setSnapshot", snapshotId: id })}
+          />
           <button
-            key={t.id}
             type="button"
-            role="tab"
-            id={`tab-${t.id}`}
-            aria-selected={tab === t.id}
-            aria-controls={`panel-${t.id}`}
-            onClick={() => selectTab(t.id)}
+            onClick={() => dispatch({ type: "clear" })}
+            disabled={conversation.turns.length === 0}
           >
-            {t.label}
+            New conversation
           </button>
-        ))}
-      </div>
+        </div>
+        <div role="tablist" aria-label="Views" className="tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`tab-${t.id}`}
+              aria-selected={tab === t.id}
+              aria-controls={`panel-${t.id}`}
+              onClick={() => selectTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </nav>
       <main>
         <div role="tabpanel" id="panel-chat" aria-labelledby="tab-chat" hidden={tab !== "chat"}>
           <ChatPanel
@@ -97,8 +100,8 @@ export function App() {
         <div role="tabpanel" id="panel-status" aria-labelledby="tab-status" hidden={tab !== "status"}>
           <StatusView readiness={readiness} onRefresh={refreshReadiness} />
         </div>
+        <LiveRegion message={message} />
       </main>
-      <LiveRegion message={message} />
     </div>
   );
 }

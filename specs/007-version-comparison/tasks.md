@@ -197,3 +197,12 @@ T001/T002; T006 with T003–T005; T007/T009; T011/T012/T013; T022/T023; T030/T03
 
 MVP = Phases 1–4 (the CLI/HTTP comparison with metadata). Then add the missing-coverage hardening,
 the UI, and the benchmark. Commit at each checkpoint after the gate passes.
+
+## Amendment A: comparison speed (2026-09-29, owner request)
+
+- [x] T034 Profile the comparison on the 12 benchmark questions (phase timings, output tokens, validation codes)
+- [x] T035 `AnswerBudget` in `answers/service.py`; comparison side budget and comparison-step output cap in `ComparisonConfig`; limits stated in the prompts; chat unchanged (tests)
+- [x] T036 Answer schema allows limit + 1 characters so a grammar cut-off claim is rejected (latent F005 issue exposed by shorter limits; test)
+- [x] T037 Comparison policy v2 (both-sides rule, neutral wording up front); `comparison.repair` option with measured default (tests)
+- [x] T038 Real benchmark and SC-006 re-measurement recorded in `verification.md`
+

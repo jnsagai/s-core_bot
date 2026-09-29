@@ -353,3 +353,23 @@ snapshots produces a report with all metrics; a real run over two real snapshots
 - F006's snapshot selector and chat remain single-snapshot. The Compare screen is a separate tab.
 - The benchmark cases are authored by the agent from the two real snapshots and are unreviewed
   (development measurement) until the owner reviews them.
+
+## Amendment 2026-09-29 — comparison speed (owner request, A-044 → A-054)
+
+The owner asked for the comparison to be optimized (SC-006 was measured at 3.5–3.9× on one
+question). Measured changes, all within the existing requirements:
+
+- **FR-013a**: side answers inside a comparison use a tighter answer budget than chat
+  (`comparison.side_max_claims` 4, `side_max_claim_characters` 500, `side_output_tokens` 700), stated
+  in the side prompt; the comparison step uses `max_differences` 4, `max_statement_characters` 400,
+  `comparison_output_tokens` 600, with the limits stated in its prompt. Chat's budget and prompt are
+  unchanged.
+- **FR-008 (amended again)**: with `comparison.repair: if_no_valid_difference` (default), a first
+  output that is structurally valid and has at least one difference passing every check is kept
+  without a repair; the dropped differences are reported. Structurally invalid output is still
+  repaired once. `repair: always` keeps the previous behaviour.
+- The comparison policy (version 2) states the both-sides citation rule and the neutral wording up
+  front instead of only in the repair hint.
+- Rejected: running the two side answers concurrently (5–10% gain measured; the runtime serializes
+  generations, and it would bend the one-generation rule).
+

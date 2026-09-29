@@ -212,3 +212,19 @@ Two real gaps would remain even with a review: held-out safe handling dipped to 
 - No missing or contradicting items, so no Convergence phase was appended.
 - Open items are owner-side: the human review (A-048 items included) and the browser walkthrough
   (A-040), plus the F007 speed decision (A-044).
+
+## Follow-up (2026-09-29, owner: "you decide the rest")
+
+- **A-048:** ho-031 replaced, because the old question is answered by the documentation (agent
+  review). Re-frozen with the reason (`previous_sha256` kept) and committed before the rerun.
+  Held-out ×3 (`suite-heldout-20260929T170034Z-*`): recall@10 96.2% ×3, safe handling **14/14 ×3**,
+  false abstention 0/26 ×3, citation integrity 40/40 ×3, log leaks 0. Still development
+  measurements: no human review has been imported.
+- **A-052:** agent license review of the three CC-BY-SA-4.0 files
+  (`docs/licensing/corpus-license-review.md`); not a legal approval.
+- **A-040:** automated real-browser check added (F006 verification). The screen reader remains
+  human; the release gate is split into `browser_automated` (pass) and `screen_reader` (blocked,
+  human).
+- Refreshed evidence on the final code: container check, fresh install + restore, contract parity,
+  adversarial 0/10, offline pass, pytest 1123 passed, vitest pass. Release report: 36 pass, 7
+  blocked (all human), 1 deferred.

@@ -1,8 +1,8 @@
 {
   "file": "heldout.yaml",
-  "sha256": "02d0cd29c78a55708871f8976915fdc2bcd33b8fb26de0602aecda9ec19fd870",
+  "sha256": "f1ca4abf19731d22739521db501f268159e8128834152457a371e0cc22eb8e40",
   "cases": 40,
   "frozen_on": "2026-09-29",
-  "reason": "initial freeze before any held-out run (agent-authored, unreviewed)",
-  "previous_sha256": null
+  "reason": "ho-031 replaced: the old question is answered by the documentation (agent review, A-048); no other case changed",
+  "previous_sha256": "02d0cd29c78a55708871f8976915fdc2bcd33b8fb26de0602aecda9ec19fd870"
 }

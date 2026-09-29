@@ -206,15 +206,28 @@ class GenerationConfig(BaseModel):
 
 
 class ComparisonConfig(BaseModel):
-    """Snapshot comparison settings (specs/007-version-comparison/data-model.md)."""
+    """Snapshot comparison settings (specs/007-version-comparison/data-model.md).
+
+    Output length dominates generation time, so a comparison asks for shorter side answers and a
+    short comparison step than chat does (F007 amendment, A-054); chat settings are unchanged.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     deadline_seconds: int = Field(default=240, ge=1, le=7200)
     evidence_items_per_side: int = Field(default=5, ge=1, le=20)
-    max_differences: int = Field(default=5, ge=1, le=30)
+    max_differences: int = Field(default=4, ge=1, le=30)
     # Short statements: a real run copied whole excerpts into statements and hit the output limit.
-    max_statement_characters: int = Field(default=600, ge=80, le=2000)
+    max_statement_characters: int = Field(default=400, ge=80, le=2000)
+    comparison_output_tokens: int = Field(default=600, ge=128, le=4096)
+    # 4 claims × 500 characters ≈ 500 tokens + JSON: the token cap leaves a margin.
+    side_max_claims: int = Field(default=4, ge=1, le=50)
+    side_max_claim_characters: int = Field(default=500, ge=100, le=10_000)
+    side_output_tokens: int = Field(default=700, ge=128, le=4096)
+    # "always": repair any invalid comparison output once. "if_no_valid_difference": keep the
+    # individually valid differences of a structurally valid first output without a repair (the
+    # dropped ones are reported). Chosen by measurement (A-054).
+    repair: Literal["always", "if_no_valid_difference"] = "if_no_valid_difference"
 
 
 class BundleConfig(BaseModel):

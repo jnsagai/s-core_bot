@@ -180,7 +180,8 @@ def make_comparison_fixture(tmp_path: Path) -> ComparisonFixture:
 
 def answer_citing_all(messages: list[dict[str, str]]) -> str:
     """A valid single-snapshot answer that cites every supplied excerpt (E1…)."""
-    ids = re.findall(r'<excerpt id="(E\d+)"', messages[1]["content"])
+    # At most 4 claims, like a real model held to the comparison side budget's schema.
+    ids = re.findall(r'<excerpt id="(E\d+)"', messages[1]["content"])[:4]
     if not ids:
         return json.dumps({"status": "insufficient_evidence", "claims": []})
     return json.dumps(

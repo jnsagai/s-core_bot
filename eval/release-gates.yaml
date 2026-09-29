@@ -213,12 +213,18 @@ gates:
     critical: true
     refs: [AT-18, SEC-004]
     evidence: {tests: [test_cross_site_without_origin_rejected, test_cross_site_api_and_health_never_exempted, test_cross_origin_rejected]}
-  - id: browser_walkthrough
-    title: Real-browser walkthrough, keyboard-only, contrast, screen reader
+  - id: browser_automated
+    title: "Real browser (headless Firefox): same-origin, CSP, axe incl. contrast, keyboard, ask → citation → Escape, storage, reload"
+    target: "pass"
+    kind: real_model
+    refs: [UX-001, UX-002, UX-004, SEC-003, AT-15, SC-001 F006, SC-002 F006, SC-006 F006, A-040]
+    evidence: {report: "browser-2*.json", field: "status", compare: "== pass"}
+  - id: screen_reader
+    title: Screen-reader use and human judgement of the UI
     target: "pass"
     kind: human
-    refs: [UX-001, UX-004, SC-006 F006, A-040]
-    evidence: {manual: "awaiting the owner's real-browser checks (no browser on the development machine, A-040)"}
+    refs: [UX-004, A-040]
+    evidence: {manual: "awaiting a person with a screen reader; automated real-browser checks pass (browser_automated)"}
   # --- F009 deployment gates (local v1.0) --------------------------------------------------------
   - id: container_loopback_private_runtime
     title: "Containers: app published on 127.0.0.1 only, runtime without host port, hardened, cited answer"

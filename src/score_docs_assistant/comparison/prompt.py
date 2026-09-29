@@ -87,9 +87,15 @@ def build_comparison_prompt(
     evidence_tokens: int,
     context_tokens: int,
     output_tokens: int,
+    max_differences: int = 4,
+    max_statement_characters: int = 400,
 ) -> ComparisonPrompt:
     """`left`/`right` must already be relabelled (L…/R…) and ordered."""
-    question_block = f"<question>\n{escape(question)}\n</question>"
+    question_block = (
+        f"<question>\n{escape(question)}\n</question>\n"
+        f"Report at most {max_differences} differences, each statement at most "
+        f"{max_statement_characters} characters."
+    )
     fixed = estimate_tokens(COMPARISON_POLICY) + estimate_tokens(question_block) + 40
     available = context_tokens - output_tokens - fixed - SAFETY_MARGIN_TOKENS
     budget = max(min(evidence_tokens, available), 0)

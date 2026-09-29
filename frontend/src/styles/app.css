@@ -174,3 +174,8 @@ input {
 .difference-changed strong {
   text-decoration: underline;
 }
+
+.brand {
+  font-size: 1.25rem;
+  margin: 0;
+}

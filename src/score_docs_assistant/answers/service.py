@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Any
 
 from score_docs_assistant.answers.citations import SourceLinks, build_citations
@@ -53,6 +54,16 @@ NO_ANSWER_LIMITATION = "The supplied evidence does not answer this question."
 
 async def _no_progress(_event: dict[str, Any]) -> None:
     return None
+
+
+@dataclass(frozen=True)
+class AnswerBudget:
+    """Output limits for one answer. Chat uses the configured defaults; a comparison asks for
+    shorter side answers, since output length dominates generation time (F007 amendment, A-054)."""
+
+    max_claims: int
+    max_claim_characters: int
+    output_tokens: int
 
 
 class AnswerService:
@@ -134,8 +145,18 @@ class AnswerService:
         """The locked, installed generation model; raises GENERATION_UNAVAILABLE otherwise."""
         return await self._identity()
 
+    def default_budget(self) -> AnswerBudget:
+        return AnswerBudget(
+            max_claims=self._config.generation.max_claims,
+            max_claim_characters=self._config.generation.max_claim_characters,
+            output_tokens=self._config.runtime.output_tokens,
+        )
+
     async def generate_json(
-        self, messages: list[dict[str, str]], schema: dict[str, Any]
+        self,
+        messages: list[dict[str, str]],
+        schema: dict[str, Any],
+        output_tokens: int | None = None,
     ) -> GenerationResult:
         """One schema-constrained call with the answer settings (used by F007 comparison)."""
         if self._provider is None:
@@ -149,7 +170,7 @@ class AnswerService:
             schema=schema,
             temperature=self._config.generation.temperature,
             context_tokens=self._config.runtime.context_tokens,
-            output_tokens=self._config.runtime.output_tokens,
+            output_tokens=output_tokens or self._config.runtime.output_tokens,
         )
 
     async def generation_available(self) -> tuple[bool, str | None]:
@@ -192,7 +213,9 @@ class AnswerService:
 
         async with self._queue.slot(on_queued):
             timings["queue"] = _ms(started)
-            envelope, _ = await self._flow(request, request_id, emit, deadline, timings, started)
+            envelope, _ = await self._flow(
+                request, request_id, emit, deadline, timings, started, self.default_budget()
+            )
             return envelope
 
     async def answer_in_slot(
@@ -202,6 +225,7 @@ class AnswerService:
         request_id: str,
         deadline: float,
         progress: Progress | None = None,
+        budget: AnswerBudget | None = None,
     ) -> tuple[AnswerEnvelope, list[EvidenceItem]]:
         """The answer flow for a caller that already holds the generation slot (F007 comparison).
 
@@ -210,7 +234,13 @@ class AnswerService:
         """
         self._check_request(request)
         return await self._flow(
-            request, request_id, progress or _no_progress, deadline, {}, time.monotonic()
+            request,
+            request_id,
+            progress or _no_progress,
+            deadline,
+            {},
+            time.monotonic(),
+            budget or self.default_budget(),
         )
 
     async def _flow(
@@ -221,6 +251,7 @@ class AnswerService:
         deadline: float,
         timings: dict[str, float],
         started: float,
+        budget: AnswerBudget,
     ) -> tuple[AnswerEnvelope, list[EvidenceItem]]:
         await emit({"stage": "searching"})
         mark = time.monotonic()
@@ -271,7 +302,11 @@ class AnswerService:
             search.results,
             self._config.generation,
             self._config.runtime.context_tokens,
-            self._config.runtime.output_tokens,
+            budget.output_tokens,
+            max_claims=None if budget == self.default_budget() else budget.max_claims,
+            max_claim_characters=(
+                None if budget == self.default_budget() else budget.max_claim_characters
+            ),
         )
         warnings += history_warnings + prompt.warnings
         if not prompt.evidence:
@@ -297,7 +332,7 @@ class AnswerService:
 
         await emit({"stage": "generating"})
         outcome, generation_ms, repair_ms, repaired = await self._generate_validated(
-            prompt, deadline, emit
+            prompt, deadline, emit, budget
         )
         timings["generation"] = generation_ms
         timings["repair"] = repair_ms
@@ -339,11 +374,11 @@ class AnswerService:
         )
 
     async def _generate_validated(
-        self, prompt: Prompt, deadline: float, emit: Progress
+        self, prompt: Prompt, deadline: float, emit: Progress, budget: AnswerBudget
     ) -> tuple[ValidationOutcome, float, float, bool]:
         assert self._provider is not None
         generation = self._config.generation
-        schema = answer_schema(generation.max_claims, generation.max_claim_characters)
+        schema = answer_schema(budget.max_claims, budget.max_claim_characters)
         evidence = prompt.evidence_map()
 
         async def call(messages: list[dict[str, str]]) -> tuple[ValidationOutcome, str]:
@@ -353,15 +388,15 @@ class AnswerService:
                 schema=schema,
                 temperature=generation.temperature,
                 context_tokens=self._config.runtime.context_tokens,
-                output_tokens=self._config.runtime.output_tokens,
+                output_tokens=budget.output_tokens,
             )
             await emit({"stage": "validating"})
             outcome = validate_draft(
                 result.text,
                 truncated=result.truncated,
                 evidence=evidence,
-                max_claims=generation.max_claims,
-                max_claim_characters=generation.max_claim_characters,
+                max_claims=budget.max_claims,
+                max_claim_characters=budget.max_claim_characters,
             )
             return outcome, result.text
 
