@@ -125,3 +125,30 @@ Pages?", baseline vs active, measured twice each:
 **SC-006 not met** under its strict reading: 10.8–12.2 s against a 3.1 s single answer is 3.5–3.9 ×. A
 comparison is structurally two answers plus a third, longer model call; the 3 × target was set before measuring.
 Recorded as open item A-044 for the owner (keep the target and optimize, or accept ~4 ×).
+
+## Phase 6 — Compare tab (T022–T025), 2026-09-29 (Vitest + jsdom, no browser)
+
+```text
+$ cd frontend && npm run lint && npm run typecheck && npx vitest run && npm run build
+eslint 0 problems; tsc ok; Test Files 15 passed, Tests 76 passed (60 before F007);
+dist/assets/index-D-18CiV2.js 416.44 kB (gzip 126.80 kB)
+$ npm run check-no-third-party-assets && npm run check-no-telemetry
+third-party asset check passed; telemetry check passed: 23 dependencies (no new dependency)
+```
+
+- `src/api/sse.ts` extracted; the chat API tests pass unchanged on it. `api/compare.test.ts`: request body
+  carries both snapshot IDs and no history; stream events with sides; diff URL encoding.
+- `components/compare.test.tsx`: defaults (right = active, left = the other snapshot); side headings; typed
+  differences with the coverage phrase "not found in the left snapshot's retrieved evidence"; "No release
+  label"; an `L` button opens the left excerpt with the left revision and an `R` button the right one; the
+  same snapshot on both sides disables Compare with an explanation; one snapshot only → guidance; Stop
+  aborts the fetch signal and offers Retry; a typed error with Retry and no automatic retry; Markdown and
+  JSON exports via Blobs, offered only after a result. Export content: both snapshot IDs, both revisions,
+  differences with side evidence, the model, `release_label: null`, no absolute path or credential-shaped
+  string, coverage never phrased as removal.
+- axe (layout-independent rules) on the Compare result and with a side's evidence dialog open: 0
+  violations; keyboard reaches pickers, question, Compare, `L`/`R` evidence buttons and export.
+- Privacy: compare → export writes no Web Storage or cookies, logs no question text, and calls only
+  `/api/v1/*` and `/health/*`.
+- Not run (no browser on this machine): real-browser walkthrough of the Compare tab, colour contrast,
+  screen reader (A-040 applies).

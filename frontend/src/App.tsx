@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useState } from "react";
 import { ChatPanel } from "./components/ChatPanel";
+import { ComparePanel } from "./components/ComparePanel";
 import { Header } from "./components/Header";
 import { LiveRegion } from "./components/LiveRegion";
 import { useAnnouncer } from "./state/announcer";
@@ -9,10 +10,11 @@ import { StatusView } from "./components/StatusView";
 import { conversationReducer, EMPTY_CONVERSATION } from "./state/conversation";
 import { useReadiness } from "./state/readiness";
 
-type Tab = "chat" | "search" | "status";
+type Tab = "chat" | "search" | "compare" | "status";
 const TABS: { id: Tab; label: string }[] = [
   { id: "chat", label: "Ask" },
   { id: "search", label: "Search" },
+  { id: "compare", label: "Compare" },
   { id: "status", label: "Status" },
 ];
 
@@ -88,6 +90,9 @@ export function App() {
         </div>
         <div role="tabpanel" id="panel-search" aria-labelledby="tab-search" hidden={tab !== "search"}>
           <SearchPanel snapshotId={conversation.snapshotId} sources={snapshot?.sources ?? []} announce={announce} />
+        </div>
+        <div role="tabpanel" id="panel-compare" aria-labelledby="tab-compare" hidden={tab !== "compare"}>
+          <ComparePanel readiness={readiness} onRetryReadiness={refreshReadiness} announce={announce} />
         </div>
         <div role="tabpanel" id="panel-status" aria-labelledby="tab-status" hidden={tab !== "status"}>
           <StatusView readiness={readiness} onRefresh={refreshReadiness} />

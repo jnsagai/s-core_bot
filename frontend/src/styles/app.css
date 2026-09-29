@@ -134,3 +134,43 @@ input {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* F007 Compare tab */
+.pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pickers label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1.5rem;
+}
+
+.snapshot-diff table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.snapshot-diff th,
+.snapshot-diff td {
+  border-bottom: 1px solid GrayText;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+}
+
+.difference {
+  margin-bottom: 0.5rem;
+}
+
+.difference-conflicting strong,
+.difference-changed strong {
+  text-decoration: underline;
+}

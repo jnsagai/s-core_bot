@@ -132,18 +132,18 @@ checklists/comparison.md
 
 ## Phase 6: User Story 4 — Compare tab and export (P2)
 
-- [ ] T022 [P] [US4] Extract the SSE reader into `frontend/src/api/sse.ts` (chat keeps working, its
+- [x] T022 [P] [US4] Extract the SSE reader into `frontend/src/api/sse.ts` (chat keeps working, its
   tests unchanged); add `frontend/src/api/compare.ts` (JSON, stream, snapshot diff) with tests in
   `frontend/test/api/compare.test.ts`
-- [ ] T023 [P] [US4] `frontend/src/comparison/model.ts` (view models) and `export.ts` (Markdown/
+- [x] T023 [P] [US4] `frontend/src/comparison/model.ts` (view models) and `export.ts` (Markdown/
   JSON with question, both snapshot IDs, per-source revisions, both answers, differences with side
   evidence, model identity, no absolute paths)
-- [ ] T024 [US4] Components `ComparePanel.tsx`, `DifferenceList.tsx`, `SnapshotDiffTable.tsx`, and
+- [x] T024 [US4] Components `ComparePanel.tsx`, `DifferenceList.tsx`, `SnapshotDiffTable.tsx`, and
   a "Compare" tab in `App.tsx`: pickers with defaults, same-snapshot block, fewer-than-two message,
   progress with side, Stop (abort), side-labelled answers (reusing `AnswerView`), difference type
   labels, evidence buttons opening `EvidencePanel` with the side's citation, the metadata table
   with "No release label" note, comparison export
-- [ ] T025 [US4] Tests `frontend/test/components/compare.test.tsx` (flow, same-snapshot block,
+- [x] T025 [US4] Tests `frontend/test/components/compare.test.tsx` (flow, same-snapshot block,
   per-side citation dialog, stop aborts, export content), axe + keyboard cases in
   `frontend/test/a11y/accessibility.test.tsx`, and the Compare flow in
   `frontend/test/privacy/no-storage-writes.test.tsx`
