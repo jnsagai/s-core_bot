@@ -172,13 +172,13 @@ checklists/comparison.md
 
 ## Phase 8: Polish
 
-- [ ] T030 [P] Docs: README, CLAUDE.md commands, `docs/user/local-ui.md` (Compare tab),
+- [x] T030 [P] Docs: README, CLAUDE.md commands, `docs/user/local-ui.md` (Compare tab),
   `docs/user/comparison.md` (baseline procedure, reading differences, the no-deletion rule)
-- [ ] T031 [P] `docs/BACKLOG.md`, `docs/TRACEABILITY.md` (RET-006, ANS-005, ANS-007, SRC-003,
+- [x] T031 [P] `docs/BACKLOG.md`, `docs/TRACEABILITY.md` (RET-006, ANS-005, ANS-007, SRC-003,
   AT-03, AT-10, AT-17), `docs/ASSUMPTIONS.md` (A-041 onward)
-- [ ] T032 Full local gate and HTTP smoke test on the real server (compare JSON + SSE, diff
+- [x] T032 Full local gate and HTTP smoke test on the real server (compare JSON + SSE, diff
   endpoint, no question text in the log); record in `verification.md`
-- [ ] T033 Walk quickstart §A–§E and record the results; the browser part of §D is recorded as "not
+- [x] T033 Walk quickstart §A–§E and record the results; the browser part of §D is recorded as "not
   run — no browser on this machine, deferred to the owner"
 
 ---

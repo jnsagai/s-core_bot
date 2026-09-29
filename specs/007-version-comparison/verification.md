@@ -152,3 +152,54 @@ third-party asset check passed; telemetry check passed: 23 dependencies (no new 
   `/api/v1/*` and `/health/*`.
 - Not run (no browser on this machine): real-browser walkthrough of the Compare tab, colour contrast,
   screen reader (A-040 applies).
+
+## Phase 8 — Polish (T030–T033), 2026-09-29
+
+### Full gate (T032)
+
+```text
+$ uv run ruff format --check . && uv run ruff check . && uv run mypy src
+388 files already formatted / All checks passed! / Success: no issues found in 123 source files
+$ uv run pytest -q
+1019 passed, 10 skipped (opt-in; the real-runtime comparison test was run separately above)
+$ uv run python scripts/check_licenses.py
+License check passed: 470 packages, all allowed or reviewed.   (no new dependency in F007)
+$ cd frontend && npm run lint && npm run typecheck && npx vitest run && npm run build
+0 problems; ok; Tests 76 passed (76); dist/assets/index-D-18CiV2.js 416.44 kB
+$ npm run check-no-third-party-assets && npm run check-no-telemetry
+passed; passed (23 dependencies)
+```
+
+### Real server over HTTP (T032; background `serve`, stopped by its PID from `ss -ltnp`)
+
+```text
+GET  /api/v1/snapshots/diff?left=<baseline>&right=<active>  → 200; score-platform/score-process different,
+     both needs exports right_only; release_label null
+GET  same, Sec-Fetch-Site: cross-site                       → 403
+GET  /health/ready                                          → compare {"available": true, "reasons": []}
+POST /api/v1/compare (JSON, GitHub Pages question)          → 200; origin model; 5 × unchanged (the file is
+     byte-identical in both revisions); left bound to the baseline; right evidence only from the active snapshot
+POST /api/v1/compare (SSE, feature-flags question)          → 7 × progress, 1 × comparison, 1 × done
+POST /api/v1/compare with the same snapshot twice           → 422
+Question marker text in the server log                      → 0 occurrences
+```
+
+Process note: a `pgrep -f` pattern matched the agent's own shell (a known pitfall); the server was then
+identified by its listening port and stopped by PID.
+
+### Quickstart walk (T033)
+
+| Section | Result |
+| --- | --- |
+| 0. Baseline | run; see Phase 7 (lock restored byte-identical, baseline validated and not activated) |
+| A. Deterministic | the gate above |
+| B. `snapshots diff` | run; expected relations, `unverified` exports, no release label |
+| C. CLI compare | run; inspection question (Phase 7) and `gd_req__req_attr_uid`: exact record `changed` in options, text (the new `:version:` option; location differs), model differences `unchanged`/`not_established`; no removal wording |
+| D. HTTP | run (above). **Browser part not run — no browser on this machine, deferred to the owner** (Compare tab walkthrough, keyboard-only, contrast, screen reader; A-040) |
+| E. Benchmark | run twice (Phase 7) |
+
+### Docs (T030–T031)
+
+README (F007 entry), CLAUDE.md (commands), `docs/user/comparison.md` (new), `docs/user/local-ui.md` (Compare
+tab), BACKLOG (F007 implemented), TRACEABILITY (RET-006, SRC-003, ANS-005/ANS-007 notes),
+ASSUMPTIONS A-041–A-044.

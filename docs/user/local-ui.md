@@ -23,6 +23,9 @@ Open <http://127.0.0.1:8080/> in a browser on the same machine.
   and content kind. Requirement IDs are matched exactly.
 - **Status**: which capabilities are available, installed models and limits. It re-checks only
   when you open it or press "Check again" — the UI never polls in the background.
+- **Compare**: pick two snapshots and ask one question; see two separately cited answers, typed
+  differences with evidence buttons per side, and both snapshots' per-source revisions. Export as
+  Markdown or JSON. See `docs/user/comparison.md`.
 - **Snapshot**: pick another documentation snapshot. If the conversation has turns you are asked
   to confirm, because switching clears it.
 - **Export**: download a finished answer as Markdown or JSON (question, statements, citations,
