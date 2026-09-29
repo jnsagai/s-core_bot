@@ -133,3 +133,19 @@ Header/App/ChatPanel and readiness (no polling), and `test/components/search-sna
 covers SearchPanel, SnapshotSelector, New conversation and Export. `test/a11y/accessibility.test.tsx`
 covers axe, keyboard order and focus trap, and `test/privacy/no-storage-writes.test.tsx` covers
 privacy. Each `describe` block names its task ID.
+
+## Real-browser check (2026-09-29, A-040 partly resolved)
+
+`scripts/browser_check.py` drives the machine's Firefox 156 headless through Marionette (no driver
+download; throwaway profile under ~/snap/firefox/common, removed afterwards) against the real server.
+
+- First run: axe-core in the real browser (all rules, including colour contrast) found two genuine
+  issues jsdom had missed: `page-has-heading-one` and `region` (the toolbar and tabs were outside any
+  landmark). Fixed: the product name is the page's `<h1>`; the snapshot controls and tabs are in a
+  labelled `<nav>`; the live region moved into `<main>`.
+- The final run (`browser-20260929T171545Z.json`) passed 12/12 steps: same-origin resources (5 entries); CSP
+  blocks a remote image (`img-src`); axe 0 violations; keyboard Tab order snapshot → tabs →
+  question, with a visible focus indicator on every control; ask → cited answer → evidence dialog →
+  Escape restores focus; screenshot; no Web Storage or cookies; reload clears the conversation.
+- The question text did not appear in the server log.
+- Still open for a person: screen reader and human judgement of the visual design.
