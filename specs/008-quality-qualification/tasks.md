@@ -23,14 +23,14 @@ tests are "not run".
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Create `src/score_docs_assistant/qualification/` (`__init__.py` + modules per plan)
+- [x] T001 [P] Create `src/score_docs_assistant/qualification/` (`__init__.py` + modules per plan)
   and `cli/qualify.py` registered in `cli/main.py`
 
 ## Phase 2: Foundational
 
-- [ ] T002 [P] `qualification/junit.py`: parse pytest/vitest JUnit XML into test outcomes
+- [x] T002 [P] `qualification/junit.py`: parse pytest/vitest JUnit XML into test outcomes
   (passed/failed/skipped per test name); tests in `tests/unit/test_junit.py`
-- [ ] T003 [P] `qualification/suite.py`: SuiteCase/SuiteFile models, loader, composition checks
+- [x] T003 [P] `qualification/suite.py`: SuiteCase/SuiteFile models, loader, composition checks
   (100, minimums, stratification, unique IDs), freeze manifest write/verify; tests in
   `tests/unit/test_suite_files.py` and `tests/unit/test_freeze.py` (with small fixture files)
 
@@ -40,18 +40,18 @@ tests are "not run".
 
 ## Phase 3: US2 — Suite, harness, review (P1)
 
-- [ ] T004 [US2] `qualification/harness.py`: `run_suite` (retrieval top 10 + answers per case;
+- [x] T004 [US2] `qualification/harness.py`: `run_suite` (retrieval top 10 + answers per case;
   metrics recall@10, status agreement, safe handling, false abstention, citation integrity,
   forbidden hits, evidence overlap, latency; labels; freeze check for held-out; log capture and
   question-text scan) and `combine_runs` (per-run metrics + spread); tests in
   `tests/unit/test_harness.py` over the F004/F005 fixture snapshot with fake providers
-- [ ] T005 [US2] `qualification/review.py`: review sheet generation (claim IDs, facts, citations,
+- [x] T005 [US2] `qualification/review.py`: review sheet generation (claim IDs, facts, citations,
   forbidden hits) and `import_review` (run reference, claim IDs, reviewer/date required, partial
   review counts, precision/coverage per category); tests in `tests/unit/test_review.py`
-- [ ] T006 [US2] CLI `eval suite`, `eval freeze`, `eval review import` in `cli/qualify.py`;
+- [x] T006 [US2] CLI `eval suite`, `eval freeze`, `eval review import` in `cli/qualify.py`;
   contract tests in `tests/contract/test_cli_qualify.py`
-- [ ] T007 [US2] `docs/quality/review-rubric.md` (FR-004, with examples)
-- [ ] T008 [US2] Author `eval/suite/dev.yaml` (60) and `eval/suite/heldout.yaml` (40) from the
+- [x] T007 [US2] `docs/quality/review-rubric.md` (FR-004, with examples)
+- [x] T008 [US2] Author `eval/suite/dev.yaml` (60) and `eval/suite/heldout.yaml` (40) from the
   pinned sources; `tests/unit/test_suite_files.py` validates the committed files; run
   `eval freeze --split heldout` and commit the manifest BEFORE any held-out run
 
