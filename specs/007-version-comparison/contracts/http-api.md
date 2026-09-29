@@ -21,7 +21,7 @@ event (the full result) or an `error` event; then `done`. Event IDs increase mon
 claim or difference text appears before the `comparison` event.
 
 Errors: 422 `REQUEST_INVALID` (same snapshot twice, bad ID format, question length, language);
-404 `SNAPSHOT_NOT_FOUND`; 409 `SNAPSHOT_INCOMPATIBLE`; 429 `QUEUE_FULL`; 503
+404 `SNAPSHOT_NOT_FOUND`; 409 `SNAPSHOT_INCOMPATIBLE`; 429 `CHAT_BUSY` (the queue shared with chat is full; same code as F005); 503
 `GENERATION_UNAVAILABLE`; 504 `DEADLINE_EXCEEDED`. Cross-site → 403 (guard, unchanged).
 
 ## `GET /api/v1/snapshots/diff?left=<id>&right=<id>`

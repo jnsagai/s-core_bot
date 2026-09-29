@@ -203,3 +203,14 @@ identified by its listening port and stopped by PID.
 README (F007 entry), CLAUDE.md (commands), `docs/user/comparison.md` (new), `docs/user/local-ui.md` (Compare
 tab), BACKLOG (F007 implemented), TRACEABILITY (RET-006, SRC-003, ANS-005/ANS-007 notes),
 ASSUMPTIONS A-041–A-044.
+
+## Convergence (agent review), 2026-09-29
+
+Converged: FR-001–FR-020 and SC-001–SC-005 checked against the code and tests, along with the plan's
+decisions and constitution I–XII; no missing or contradicting items, so no Convergence phase was appended
+to `tasks.md`. One contract text mismatch was fixed (`contracts/http-api.md` named the 429 code
+`QUEUE_FULL`; the service reuses F005's `CHAT_BUSY`, as the tests assert).
+
+Open, not an agent task: **SC-006** is measured and not met (3.5–3.9 ×). Meeting it would need dropping
+or changing a requirement (for example the per-side answers of FR-003), which is the owner's decision
+(A-044).

@@ -45,7 +45,7 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   `docs/user/local-ui.md`. Its real-browser walkthrough has not been run on the development machine
   (no browser installed there).
 
-- **F007 (implemented)** — explicit two-snapshot comparison: `compare "question" --left A --right B`,
+- **F007 (done)** — explicit two-snapshot comparison: `compare "question" --left A --right B`,
   `POST /api/v1/compare`, and a Compare tab. It shows two separately cited answers, typed differences
   (changed / unchanged / conflicting / not established) and per-source revisions of both snapshots.
   It never claims that something was removed when coverage is missing, and never infers a release
