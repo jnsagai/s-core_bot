@@ -119,3 +119,17 @@ contrast and screen reader.
 | C. Real browser walkthrough | **not run — no browser on this machine, deferred to the owner** (A-040). The HTTP-level substitute above (real server: CSP, static exemption, SSE flow, no question text in log) was run |
 | D. Hostile rendering | `SafeMarkdown.test.tsx` passed (raw `<script>`/`<img onerror>` inert, `javascript:`/`data:` links neutralized, no `<img>` node created) |
 | E. Snapshot-switch confirmation | SnapshotSelector cases in `search-snapshot-export.test.tsx` passed (D + E files: 16 tests) |
+
+## Convergence (agent review), 2026-09-29
+
+✅ Converged — FR-001–FR-020 (incl. FR-006a, FR-010a, FR-011a), SC-001–SC-006, the plan's decisions
+and constitution I–XII checked against the code; no missing, partial or contradicting items, so no
+Convergence phase was appended to `tasks.md`. The real-browser parts of SC-001, SC-002 and SC-006
+remain deferred to the owner (A-040).
+
+Deviation (file layout only): the planned per-component test files were consolidated.
+`test/components/components.test.tsx` covers StatusBadge/LiveRegion, AnswerView/EvidencePanel,
+Header/App/ChatPanel and readiness (no polling), and `test/components/search-snapshot-export.test.tsx`
+covers SearchPanel, SnapshotSelector, New conversation and Export. `test/a11y/accessibility.test.tsx`
+covers axe, keyboard order and focus trap, and `test/privacy/no-storage-writes.test.tsx` covers
+privacy. Each `describe` block names its task ID.
