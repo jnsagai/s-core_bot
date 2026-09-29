@@ -46,10 +46,16 @@ answer is `insufficient_evidence` would have nothing to compare).
 `left_evidence_ids` and existing, likewise `R`); `changed`/`unchanged`/`conflicting` need ≥ 1 ID on
 each side; `not_established` needs IDs on exactly one side; `changed` is rejected when every cited
 left excerpt is text-identical to a cited right excerpt (`CHANGED_WITHOUT_DIFFERENCE`); forbidden
-wording (`DELETION_CLAIM`: removed/removal, deleted/deletion, dropped, no longer, was/were/has
-been/have been added, newly added, discontinued, eliminated); plus F005's URL, hidden-thought,
-quote-in-evidence and injection-advice checks. Any error triggers the single repair; a second
-failure drops all model differences, and a warning is added.
+wording (`DELETION_CLAIM`: remove/removed/removal, delete/deleted/deletion, dropped, no longer,
+adds/added, introduces/introduced, discontinued, eliminated; widened after a real run in which
+the model wrote "the right adds a test expert role", an absence claim about the left); plus F005's URL, hidden-thought,
+quote-in-evidence and injection-advice checks. Any error triggers the single repair, whose message
+lists the errors (and, for `DELETION_CLAIM`, suggests neutral wording). If the repaired output
+still has errors but parsed and matched the schema, differences that individually passed every
+check are kept and the dropped count is reported (`comparison_differences_dropped`); otherwise
+all model differences are dropped with `comparison_output_invalid`. Amended after the first real
+runs (A-043): the model repeatedly wrote "the right adds …" in one difference while the others
+were sound, and discarding the whole output lost valid, checked differences.
 
 **Rationale**: AT-17 and FR-006 need a hard guarantee, not a prompt request. The wording check is
 deliberately broad; a false rejection only costs a repair or a deterministic fallback, whereas a

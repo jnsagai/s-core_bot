@@ -13,8 +13,9 @@ def test_defaults() -> None:
     assert (config.deadline_seconds, config.evidence_items_per_side, config.max_differences) == (
         240,
         5,
-        8,
+        5,
     )
+    assert config.max_statement_characters == 600
 
 
 @pytest.mark.parametrize(

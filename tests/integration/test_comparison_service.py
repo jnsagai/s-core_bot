@@ -337,3 +337,32 @@ def test_citation_links_for_archived_left_revision(fx: ComparisonFixture) -> Non
     assert all(f"/blob/{c.revision}/" in (c.immutable_url or "") for c in result.evidence.right)
     assert {c.revision for c in result.evidence.right} <= {RIGHT_REV, PLATFORM_REV}
     assert all(c.revision_match == "exact" for c in result.evidence.left + result.evidence.right)
+
+
+def test_salvage_after_repair_keeps_only_valid_differences(fx: ComparisonFixture) -> None:
+    def mixed(messages: list[dict[str, str]]) -> str:
+        ev = side_evidence(messages)
+        left, right = find(ev, "L", "two independent"), find(ev, "R", "three independent")
+        return json.dumps(
+            differences(
+                ("changed", "The left requires two reviewers; the right three.", [left], [right]),
+                ("changed", "The right adds a third reviewer.", [left], [right]),
+            )
+        )
+
+    result = fx.compare(
+        "How many reviewers perform inspections?",
+        answer_citing_all,
+        answer_citing_all,
+        mixed,
+        mixed,
+    )
+    isolated(result)
+    model = [d for d in result.differences if d.origin == "model"]
+    assert [d.statement for d in model] == ["The left requires two reviewers; the right three."]
+    assert result.origin == "model"
+    assert any(
+        w.startswith("comparison_differences_dropped: 1") and "DELETION_CLAIM" in w
+        for w in result.warnings
+    )
+    assert "only the right excerpts state" in fx.generator.calls[3][-1]["content"]

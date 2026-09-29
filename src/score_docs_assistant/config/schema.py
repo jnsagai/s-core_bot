@@ -197,7 +197,9 @@ class ComparisonConfig(BaseModel):
 
     deadline_seconds: int = Field(default=240, ge=1, le=7200)
     evidence_items_per_side: int = Field(default=5, ge=1, le=20)
-    max_differences: int = Field(default=8, ge=1, le=30)
+    max_differences: int = Field(default=5, ge=1, le=30)
+    # Short statements: a real run copied whole excerpts into statements and hit the output limit.
+    max_statement_characters: int = Field(default=600, ge=80, le=2000)
 
 
 class BundleConfig(BaseModel):

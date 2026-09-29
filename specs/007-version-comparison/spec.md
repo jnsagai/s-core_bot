@@ -255,8 +255,10 @@ snapshots produces a report with all metrics; a real run over two real snapshots
 - **FR-008**: The comparison step MUST see both sides' evidence only under side-namespaced IDs
   (`L1…`, `R1…`) in separately delimited blocks, under the same untrusted-data policy as F005, and
   its output MUST be validated (schema, evidence membership per side, type/evidence rules,
-  forbidden wording) with at most one repair; on failure only deterministic differences are
-  returned, with a warning.
+  forbidden wording) with at most one repair. If the repaired output is still invalid but
+  structurally sound, only the differences that individually pass every check are kept and the
+  number dropped is reported in a warning; otherwise only deterministic differences are returned,
+  with a warning. (Amended after the first real runs, A-043.)
 
 **Deterministic comparisons (SRC-003, RET-006)**
 

@@ -1,0 +1,36 @@
+# Baseline registry for the F007 comparison benchmark (specs/007-version-comparison/research.md
+# R9): the same approved git sources pinned to commits from 2026-05-29 (last `main` commit before
+# 2026-06-01). Published needs exports exist only for `main`, so they are left out, which makes the
+# baseline a real missing-coverage case for export-only records. Never activate the result.
+schema_version: 1
+allowed_hosts: [github.com, eclipse-score.github.io]
+redistribution_allowed_licenses: [Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, CC0-1.0, CC-BY-4.0]
+limits:
+  max_text_file_bytes: 10485760      # 10 MiB
+  max_export_bytes: 104857600        # 100 MiB
+  max_sync_bytes: 1073741824         # 1 GiB
+  connect_timeout_seconds: 10
+  read_timeout_seconds: 60
+sources:
+  - source_id: score-platform
+    kind: git
+    repository: https://github.com/eclipse-score/score.git
+    ref: ba13d8296dd6021067bdeb6ba644b0546f8ad0c6
+    include: ["docs/**/*.rst", "docs/**/*.md", "README.md", "CONTRIBUTION.md"]
+    exclude: []
+    authority: official-project
+    repository_license: Apache-2.0
+    license_policy: inspect-file-and-repository-notices
+    required: true
+    parser_profile: s-core
+  - source_id: score-process
+    kind: git
+    repository: https://github.com/eclipse-score/process_description.git
+    ref: 82bca166065990e52b871de47c87668b6a3d5f49
+    include: ["process/**/*.rst", "process/**/*.md", "README.md"]
+    exclude: []
+    authority: official-project
+    repository_license: Apache-2.0
+    license_policy: inspect-file-and-repository-notices
+    required: true
+    parser_profile: s-core

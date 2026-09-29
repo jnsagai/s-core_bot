@@ -58,8 +58,10 @@ every difference ID resolves on its side.
 
 ## ComparisonConfig (`config/schema.py`, section `comparison`)
 
-`deadline_seconds` (240, 1..7200), `evidence_items_per_side` (5, 1..20), `max_differences` (8,
-1..30).
+`deadline_seconds` (240, 1..7200), `evidence_items_per_side` (5, 1..20), `max_differences` (5,
+1..30), `max_statement_characters` (600, 80..2000; the output schema allows one more character so a
+grammar cut-off is always rejected; lowered after a real run in which the model
+copied whole excerpts into statements and its output was cut off at the token limit).
 
 ## Evaluation records
 

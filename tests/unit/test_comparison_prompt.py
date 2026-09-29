@@ -62,8 +62,13 @@ def test_unused_budget_moves_to_other_side() -> None:
 
 
 def test_schema_patterns() -> None:
-    schema = comparison_schema(8, 1200)
+    schema = comparison_schema(8, 1200)  # explicit values
     item = schema["properties"]["differences"]["items"]["properties"]
     assert item["left_evidence_ids"]["items"]["pattern"] == "^L[0-9]{1,2}$"
     assert item["type"]["enum"] == ["changed", "unchanged", "conflicting", "not_established"]
     assert schema["properties"]["differences"]["maxItems"] == 8
+
+
+def test_statement_schema_allows_one_character_over_the_limit() -> None:
+    item = comparison_schema(5, 600)["properties"]["differences"]["items"]["properties"]
+    assert item["statement"]["maxLength"] == 601

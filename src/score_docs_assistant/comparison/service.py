@@ -50,6 +50,17 @@ from score_docs_assistant.storage.snapshot_store import FileSnapshotHandle
 
 Progress = Callable[[dict[str, Any]], Awaitable[None]]
 MAX_REPAIR_ECHO = 4000
+# Generic guidance per validation code, appended to the single repair request.
+REPAIR_HINTS = {
+    "DELETION_CLAIM": "Describe both sides neutrally: instead of 'the right adds X' write "
+    "'only the right excerpts state X'.",
+    "MISSING_SIDE_EVIDENCE": "When only one side's excerpts address a point, use type "
+    "not_established and cite only that side.",
+    "ONE_SIDE_ONLY": "A not_established difference cites exactly one side; if both sides "
+    "address the point, use changed, unchanged or conflicting.",
+    "CHANGED_WITHOUT_DIFFERENCE": "The cited excerpts are identical on both sides; use unchanged, "
+    "or cite the excerpts that actually differ.",
+}
 
 
 async def _no_progress(_event: dict[str, Any]) -> None:
@@ -222,13 +233,21 @@ class ComparisonService:
                 mark = time.monotonic()
                 outcome, repaired = await self._generate(prompt, deadline)
                 timings["comparison"] = _ms(mark)
+                codes = sorted({e.split(":")[0] for e in outcome.errors})
                 if outcome.ok:
                     origin = "model"
                     if repaired:
                         warnings.append("repaired: the first comparison output failed validation")
                     differences += self._model_differences(outcome, prompt, left, right)
+                elif outcome.structural and outcome.differences:
+                    # After the repair, keep only differences that passed every check themselves.
+                    origin = "model"
+                    warnings.append(
+                        f"comparison_differences_dropped: {outcome.rejected} model difference(s) "
+                        f"failed validation ({', '.join(codes)}) and are not shown"
+                    )
+                    differences += self._model_differences(outcome, prompt, left, right)
                 else:
-                    codes = sorted({e.split(":")[0] for e in outcome.errors})
                     warnings.append(
                         "comparison_output_invalid: the model output failed validation "
                         f"({', '.join(codes)}); showing deterministic differences only"
@@ -262,7 +281,7 @@ class ComparisonService:
     ) -> tuple[ComparisonOutcome, bool]:
         generation = self._config.generation
         comparison = self._config.comparison
-        schema = comparison_schema(comparison.max_differences, generation.max_claim_characters)
+        schema = comparison_schema(comparison.max_differences, comparison.max_statement_characters)
         evidence = prompt.evidence_map()
 
         async def call(messages: list[dict[str, str]]) -> tuple[ComparisonOutcome, str]:
@@ -272,7 +291,7 @@ class ComparisonService:
                 truncated=result.truncated,
                 evidence=evidence,
                 max_differences=comparison.max_differences,
-                max_statement_characters=generation.max_claim_characters,
+                max_statement_characters=comparison.max_statement_characters,
             )
             return outcome, result.text
 
@@ -291,6 +310,11 @@ class ComparisonService:
                 "role": "user",
                 "content": "Your previous output failed these checks:\n- "
                 + "\n- ".join(outcome.errors)
+                + "".join(
+                    f"\n{hint}"
+                    for code, hint in REPAIR_HINTS.items()
+                    if any(e.startswith(code) for e in outcome.errors)
+                )
                 + "\nReturn a corrected JSON object that follows all rules and the schema.",
             },
         ]

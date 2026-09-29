@@ -108,6 +108,11 @@ def test_difference_errors(difference: dict[str, Any], code: str) -> None:
     assert code in codes(outcome) and not outcome.ok and outcome.differences == []
 
 
+def test_statement_cut_by_output_grammar_is_rejected() -> None:
+    # The schema allows limit + 1 characters, so a grammar cut-off always exceeds the limit.
+    assert "SCHEMA_INVALID" in codes(_run(d("changed", "y" * 201, ["L1"], ["R1"])))
+
+
 def test_too_many_differences() -> None:
     item = d("changed", "Reviewer count differs.", ["L1"], ["R1"])
     assert "SCHEMA_INVALID" in codes(_run(item, item, item, item))
@@ -132,6 +137,9 @@ def test_quote_found_in_evidence_is_fine() -> None:
         "The rule was discontinued.",
         "The rule was eliminated.",
         "The rule has been introduced.",
+        "The right adds a test expert role.",
+        "The right introduces a maturity criterion.",
+        "Remove the step before merging.",
     ],
 )
 def test_deletion_wording_variants(text: str) -> None:
@@ -143,7 +151,7 @@ def test_deletion_wording_variants(text: str) -> None:
     [
         "Only the right snapshot describes the checklist.",
         "The left requires two reviewers; the right requires three.",
-        "Both define the same added value for users.",  # "added value", not "was added"
+        "Both sides describe the review in the same way.",
         "The address field is described on both sides.",
     ],
 )

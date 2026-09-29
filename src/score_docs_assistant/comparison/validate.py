@@ -1,8 +1,8 @@
 """Validation of comparison drafts (FR-004–FR-008, research R3, contracts/comparison-schema.md).
 
 The model never supplies coverage reasons, and absence is never stated as removal: any wording
-that asserts removal, deletion or addition is rejected, so a repair or the deterministic fallback
-takes over.
+that asserts removal, deletion or addition is rejected. Each difference is checked on its own; the
+caller decides whether a structurally valid output with rejected differences may be salvaged.
 """
 
 from __future__ import annotations
@@ -25,9 +25,8 @@ _QUOTES = (
     re.compile(r"`([^`\n]{" + str(MIN_QUOTE_CHARACTERS) + r",})`"),
 )
 DELETION_WORDING = re.compile(
-    r"\b(remov(ed|es|al|ing)|delet(ed|es|ion|ing)|dropped|discontinued|eliminated|"
-    r"no\s+longer|newly\s+added|(was|were|is|are|has\s+been|have\s+been|got|gets)\s+added|"
-    r"(was|were|has\s+been|have\s+been)\s+introduced)\b",
+    r"\b(remov(e|ed|es|al|ing)|delet(e|ed|es|ion|ing)|dropped|discontinued|eliminated|"
+    r"no\s+longer|adds|added|introduc(es|ed|ing))\b",
     re.IGNORECASE,
 )
 _LEFT = re.compile(r"^L[0-9]{1,2}$")
@@ -59,8 +58,10 @@ class ValidDifference:
 
 @dataclass
 class ComparisonOutcome:
-    differences: list[ValidDifference] = field(default_factory=list)
+    differences: list[ValidDifference] = field(default_factory=list)  # each passed every check
     errors: list[str] = field(default_factory=list)
+    structural: bool = False  # parsed, matched the schema and the size limit
+    rejected: int = 0  # differences that failed at least one check
 
     @property
     def ok(self) -> bool:
@@ -100,11 +101,15 @@ def validate_comparison(
         return outcome
     if len(draft.differences) > max_differences:
         errors.append(f"SCHEMA_INVALID: more than {max_differences} differences")
+        return outcome
+    outcome.structural = True
     for index, d in enumerate(draft.differences):
         label = f"difference {index + 1}"
         statement = d.statement.strip()
+        before = len(errors)
         if not statement:
             errors.append(f"EMPTY_STATEMENT: {label}")
+            outcome.rejected += 1
             continue
         if len(statement) > max_statement_characters:
             errors.append(
@@ -154,6 +159,9 @@ def validate_comparison(
             for quoted in pattern.findall(statement):
                 if not any(_normalize(quoted) in hay for hay in haystacks):
                     errors.append(f"QUOTE_NOT_IN_EVIDENCE: {label} quotes text not in its evidence")
+        if len(errors) > before:
+            outcome.rejected += 1
+            continue
         outcome.differences.append(
             ValidDifference(
                 type=d.type,
@@ -162,6 +170,4 @@ def validate_comparison(
                 right_evidence_ids=list(dict.fromkeys(d.right_evidence_ids)),
             )
         )
-    if errors:
-        outcome.differences = []
     return outcome

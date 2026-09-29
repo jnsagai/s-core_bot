@@ -154,17 +154,17 @@ checklists/comparison.md
 
 ## Phase 7: User Story 5 — Benchmark (P3)
 
-- [ ] T026 [US5] `comparison/evaluation.py` (case file model, metrics: type agreement, isolation
+- [x] T026 [US5] `comparison/evaluation.py` (case file model, metrics: type agreement, isolation
   violations, citation integrity, deletion claims, timings; labels) and `eval comparison` in
   `cli/evaluate.py`; tests `tests/unit/test_comparison_evaluation.py` and
   `tests/contract/test_cli_eval_comparison.py`
-- [ ] T027 [US5] Build the real baseline: choose older commits, write
+- [x] T027 [US5] Build the real baseline: choose older commits, write
   `config/sources-baseline.yaml`, run quickstart §0 (sync with the lock backup/restore, build
   without activation) and record commands and results in `verification.md`
-- [ ] T028 [US5] Author `eval/comparison-dev.yaml` (≥ 10 cases from the two real snapshots: ≥ 2
+- [x] T028 [US5] Author `eval/comparison-dev.yaml` (≥ 10 cases from the two real snapshots: ≥ 2
   missing coverage, ≥ 2 unchanged, ≥ 1 exact ID) with a test enforcing the minimums; run
   `eval comparison` for real and record the metrics (development measurement)
-- [ ] T029 [US5] `real_runtime` comparison test in `tests/integration/test_real_runtime.py`
+- [x] T029 [US5] `real_runtime` comparison test in `tests/integration/test_real_runtime.py`
   (baseline vs active when present, else skipped) and the SC-006 timing (warm single answer vs
   warm comparison)
 

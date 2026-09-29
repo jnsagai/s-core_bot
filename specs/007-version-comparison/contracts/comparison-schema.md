@@ -4,12 +4,12 @@
 
 ```json
 {"type": "object", "additionalProperties": false, "required": ["differences"],
- "properties": {"differences": {"type": "array", "maxItems": 8, "items": {
+ "properties": {"differences": {"type": "array", "maxItems": 5, "items": {
    "type": "object", "additionalProperties": false,
    "required": ["type", "statement", "left_evidence_ids", "right_evidence_ids"],
    "properties": {
      "type": {"enum": ["changed", "unchanged", "conflicting", "not_established"]},
-     "statement": {"type": "string", "maxLength": 1200},
+     "statement": {"type": "string", "maxLength": 601},
      "left_evidence_ids": {"type": "array", "items": {"pattern": "^L[0-9]{1,2}$"}},
      "right_evidence_ids": {"type": "array", "items": {"pattern": "^R[0-9]{1,2}$"}}}}}}}
 ```

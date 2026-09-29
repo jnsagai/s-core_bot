@@ -240,3 +240,74 @@ def answers_command(
     typer.echo(f"  required-fact coverage: {report.human_review.required_fact_coverage}")
     typer.echo(f"report: {path}")
     typer.echo(f"review sheet: {sheet_path}")
+
+
+@eval_app.command("comparison")
+@handle_common_errors
+@handle_search_errors
+def comparison_command(
+    ctx: typer.Context,
+    cases: CasesOption,
+    left: Annotated[
+        str | None, typer.Option("--left", help="Left snapshot (default: from the case file).")
+    ] = None,
+    right: Annotated[
+        str | None, typer.Option("--right", help="Right snapshot (default: from the case file).")
+    ] = None,
+    json_output: Annotated[bool, typer.Option("--json", help="Print the report as JSON.")] = False,
+) -> None:
+    """Runs comparison cases against the local model and reports difference types, evidence
+    isolation and deletion claims; development measurement unless reviewed."""
+    import asyncio
+
+    from score_docs_assistant.cli.compare import build_comparison_service
+    from score_docs_assistant.comparison.evaluation import (
+        evaluate_comparisons,
+        load_comparison_cases,
+        report_path,
+    )
+    from score_docs_assistant.domain.errors import ConfigError, GenerationError
+
+    config = _config(ctx)
+    case_file, sha = load_comparison_cases(cases)
+    left_id, right_id = left or case_file.left_snapshot, right or case_file.right_snapshot
+    if not left_id or not right_id:
+        raise ConfigError([(str(cases), "give --left/--right or left_snapshot/right_snapshot")])
+    service = build_comparison_service(config)
+    try:
+        report = asyncio.run(
+            evaluate_comparisons(service, case_file, sha, left=left_id, right=right_id)
+        )
+    except GenerationError as exc:
+        typer.echo(f"{exc.code}: {exc.message}", err=True)
+        raise typer.Exit(code=1) from None
+    path = report_path(config.data_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(report.model_dump_json(indent=2) + "\n")
+    if json_output:
+        typer.echo(report.model_dump_json())
+        return
+    label = f" [{', '.join(report.labels)}]" if report.labels else ""
+    typer.echo(
+        f"left {report.left_snapshot_id}  right {report.right_snapshot_id}  "
+        f"model {report.model['name']}  review: {report.review_status}{label}"
+    )
+    for case in report.cases:
+        mark = "ok " if case.type_ok else "MISS"
+        observed = ", ".join(case.observed_types) or case.error or "none"
+        typer.echo(
+            f"  {mark} {case.id:<10} {case.category:<17} expected {case.expected_type:<16} "
+            f"observed {observed}  ({case.latency_ms / 1000:.1f} s)"
+        )
+    typer.echo(
+        f"  type agreement {report.type_agreement.ok}/{report.type_agreement.total}   "
+        f"isolation violations {report.isolation_violations}   "
+        f"citation integrity {report.citation_integrity.ok}/{report.citation_integrity.total}   "
+        f"deletion claims {report.deletion_claims}   "
+        f"deterministic only {report.deterministic_only}   errors {report.errors}"
+    )
+    typer.echo(
+        f"  latency p50 {report.latency_ms['p50'] / 1000:.1f} s  "
+        f"p95 {report.latency_ms['p95'] / 1000:.1f} s"
+    )
+    typer.echo(f"report: {path}")
