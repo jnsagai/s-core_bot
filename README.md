@@ -29,7 +29,7 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   `eval retrieval | exact-ids | latency`, and HTTP `/api/v1/search`, `/entities`,
   `/relationships`, `/snapshots`, `/sources`, `/citations/…`.
 
-- **F005 (implemented)** — grounded local answers: `ask "question"` and `POST /api/v1/chat`
+- **F005 (done)** — grounded local answers: `ask "question"` and `POST /api/v1/chat`
   (JSON or a server-sent-event progress stream) answer from one snapshot with the locked local
   model. Answers are short claims, each documented claim citing stored excerpts (with exact-revision
   GitHub links where provable). They are validated server-side, with one repair and otherwise a
@@ -38,7 +38,12 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   `eval answers` measures status, citation integrity and evidence overlap; human-judged quality stays
   "not run" until reviewed.
 
-There is no web UI yet — it arrives in F006 (see `docs/BACKLOG.md`).
+- **F006 (implemented)** — local web UI served by the same backend at `http://127.0.0.1:8080/`:
+  ask with progress, stop and retry, citation panel, direct search, snapshot selector, status view,
+  Markdown/JSON export. Conversations stay in page memory only; no CDN, telemetry or third-party
+  requests (strict CSP). Build once with `cd frontend && npm ci && npm run build`. See
+  `docs/user/local-ui.md`. Its real-browser walkthrough has not been run on the development machine
+  (no browser installed there).
 
 ## Scope
 
