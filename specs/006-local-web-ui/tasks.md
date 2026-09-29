@@ -212,11 +212,11 @@ browser on this machine."
 
 ## Phase 8: Polish
 
-- [ ] T035 [P] Update `README.md`/`CLAUDE.md`/`docs/user/` with the frontend build/serve commands
+- [x] T035 [P] Update `README.md`/`CLAUDE.md`/`docs/user/` with the frontend build/serve commands
   and the "no browser installed here" verification caveat
-- [ ] T036 [P] Update `docs/BACKLOG.md`, `docs/TRACEABILITY.md` (UX-001–UX-005, SEC-002, SEC-003,
+- [x] T036 [P] Update `docs/BACKLOG.md`, `docs/TRACEABILITY.md` (UX-001–UX-005, SEC-002, SEC-003,
   OPS-001), `docs/ASSUMPTIONS.md` (already updated during clarify — confirm no further gaps)
-- [ ] T037 Run the full local gate (backend + frontend) and record commands/results in
+- [x] T037 Run the full local gate (backend + frontend) and record commands/results in
   `specs/006-local-web-ui/verification.md`
 - [ ] T038 Walk quickstart.md §A, §B, §D, §E and record real results; record §C as "not run — no
   browser on this machine, deferred to the owner" per constitution VII

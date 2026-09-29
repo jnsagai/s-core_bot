@@ -20,7 +20,7 @@ Expected: all pass; `frontend/dist/index.html` and hashed `frontend/dist/assets/
 
 ```bash
 uv run ruff format --check . && uv run ruff check . && uv run mypy src
-uv run pytest tests/unit/test_guard.py tests/contract/test_static_serving.py
+uv run pytest tests/contract/test_guard.py tests/contract/test_static_serving.py
 uv run pytest
 uv run python scripts/check_licenses.py
 ```
@@ -67,6 +67,6 @@ node is ever created, and the unsafe links render as inert text or a neutralized
 
 ## E. Snapshot-switch confirmation (automated)
 
-`test/components/SnapshotSelector.test.tsx` asserts: switching snapshots with zero turns applies
+`test/components/search-snapshot-export.test.tsx` (SnapshotSelector cases) asserts: switching snapshots with zero turns applies
 immediately (no dialog); switching with ≥ 1 turn shows a confirmation dialog, and only confirming
 clears the conversation and applies the new snapshot (FR-017, A-035).
