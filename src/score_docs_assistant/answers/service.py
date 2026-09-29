@@ -17,6 +17,7 @@ from score_docs_assistant.answers.citations import SourceLinks, build_citations
 from score_docs_assistant.answers.fallback import extractive_fallback
 from score_docs_assistant.answers.policy import POLICY_VERSION, answer_schema
 from score_docs_assistant.answers.prompt import (
+    EvidenceItem,
     Prompt,
     build_prompt,
     retrieval_query,
@@ -37,7 +38,11 @@ from score_docs_assistant.domain.answers import (
 from score_docs_assistant.domain.errors import GenerationError
 from score_docs_assistant.domain.retrieval import SearchRequest, SearchResponse
 from score_docs_assistant.models.lock import read_lock
-from score_docs_assistant.models.runtime import GenerationProvider, normalize_tag
+from score_docs_assistant.models.runtime import (
+    GenerationProvider,
+    GenerationResult,
+    normalize_tag,
+)
 from score_docs_assistant.retrieval.query import valid_snapshot_id
 from score_docs_assistant.retrieval.service import SearchService
 
@@ -125,6 +130,28 @@ class AnswerService:
             )
         return identity
 
+    async def identity(self) -> GenerationIdentity:
+        """The locked, installed generation model; raises GENERATION_UNAVAILABLE otherwise."""
+        return await self._identity()
+
+    async def generate_json(
+        self, messages: list[dict[str, str]], schema: dict[str, Any]
+    ) -> GenerationResult:
+        """One schema-constrained call with the answer settings (used by F007 comparison)."""
+        if self._provider is None:
+            raise GenerationError(
+                "GENERATION_UNAVAILABLE",
+                "no generation runtime configured",
+                reason="runtime_unreachable",
+            )
+        return await self._provider.generate(
+            messages,
+            schema=schema,
+            temperature=self._config.generation.temperature,
+            context_tokens=self._config.runtime.context_tokens,
+            output_tokens=self._config.runtime.output_tokens,
+        )
+
     async def generation_available(self) -> tuple[bool, str | None]:
         """For readiness: (available, reason). Never generates."""
         try:
@@ -165,125 +192,151 @@ class AnswerService:
 
         async with self._queue.slot(on_queued):
             timings["queue"] = _ms(started)
-            await emit({"stage": "searching"})
-            mark = time.monotonic()
-            question = request.question.strip()
-            query = retrieval_query(
-                question, request.history, self._config.limits.question_characters
-            )
-            search = await asyncio.to_thread(
-                self._search.search,
-                SearchRequest(
-                    query=query,
-                    snapshot_id=request.snapshot_id,
-                    limit=self._config.generation.evidence_items,
-                ),
-            )
-            timings["retrieval"] = _ms(mark)
-            warnings = list(search.warnings)
-            if self.after_retrieval is not None:
-                await self.after_retrieval()
+            envelope, _ = await self._flow(request, request_id, emit, deadline, timings, started)
+            return envelope
 
-            if not search.results:
-                return self._envelope(
-                    request_id=request_id,
-                    request=request,
-                    search=search,
-                    status="insufficient_evidence",
-                    origin="no_evidence",
-                    claims=[
-                        Claim(
-                            text="The selected snapshot contains no evidence for this question.",
-                            kind="limitation",
-                        )
-                    ],
-                    prompt=None,
-                    identity=None,
-                    warnings=warnings,
-                    timings=timings,
-                    started=started,
-                )
+    async def answer_in_slot(
+        self,
+        request: ChatRequest,
+        *,
+        request_id: str,
+        deadline: float,
+        progress: Progress | None = None,
+    ) -> tuple[AnswerEnvelope, list[EvidenceItem]]:
+        """The answer flow for a caller that already holds the generation slot (F007 comparison).
 
-            identity = await self._identity()
-            history, history_warnings = select_history(
-                request.history,
-                search.snapshot_id,
-                max_turns=self._config.generation.history_turns,
-            )
-            prompt = build_prompt(
-                question,
-                history,
-                search.results,
-                self._config.generation,
-                self._config.runtime.context_tokens,
-                self._config.runtime.output_tokens,
-            )
-            warnings += history_warnings + prompt.warnings
-            if not prompt.evidence:
-                warnings.append("evidence_budget: no excerpt fits the evidence budget")
-                return self._envelope(
-                    request_id=request_id,
-                    request=request,
-                    search=search,
-                    status="insufficient_evidence",
-                    origin="no_evidence",
-                    claims=[
-                        Claim(
-                            text="No evidence excerpt fits the configured context budget.",
-                            kind="limitation",
-                        )
-                    ],
-                    prompt=None,
-                    identity=None,
-                    warnings=warnings,
-                    timings=timings,
-                    started=started,
-                )
+        Returns the envelope and the evidence items its prompt carried, so the caller can reuse
+        exactly the evidence this answer saw. The caller owns the deadline.
+        """
+        self._check_request(request)
+        return await self._flow(
+            request, request_id, progress or _no_progress, deadline, {}, time.monotonic()
+        )
 
-            await emit({"stage": "generating"})
-            outcome, generation_ms, repair_ms, repaired = await self._generate_validated(
-                prompt, deadline, emit
-            )
-            timings["generation"] = generation_ms
-            timings["repair"] = repair_ms
-            if outcome.ok:
-                assert outcome.status is not None
-                if repaired:
-                    warnings.append("repaired: the first model output failed validation")
-                warnings += outcome.notes
-                status: AnswerStatus = outcome.status
-                origin: AnswerOrigin = "model"
-                claims = outcome.claims
-                if status == "insufficient_evidence" and not any(
-                    c.kind == "limitation" for c in claims
-                ):
-                    # A server-authored gap statement: it asserts nothing about S-CORE.
-                    claims = [*claims, Claim(text=NO_ANSWER_LIMITATION, kind="limitation")]
-            else:
-                codes = sorted({e.split(":")[0] for e in outcome.errors})
-                warnings.append(
-                    "model_output_invalid: the model output failed validation "
-                    f"({', '.join(codes)}); showing extractive excerpts"
-                )
-                claims = extractive_fallback(
-                    prompt.evidence, self._config.generation.fallback_excerpts
-                )
-                has_excerpts = any(c.kind == "documented" for c in claims)
-                status = "partial" if has_excerpts else "insufficient_evidence"
-                origin = "extractive_fallback"
-            return self._envelope(
+    async def _flow(
+        self,
+        request: ChatRequest,
+        request_id: str,
+        emit: Progress,
+        deadline: float,
+        timings: dict[str, float],
+        started: float,
+    ) -> tuple[AnswerEnvelope, list[EvidenceItem]]:
+        await emit({"stage": "searching"})
+        mark = time.monotonic()
+        question = request.question.strip()
+        query = retrieval_query(question, request.history, self._config.limits.question_characters)
+        search = await asyncio.to_thread(
+            self._search.search,
+            SearchRequest(
+                query=query,
+                snapshot_id=request.snapshot_id,
+                limit=self._config.generation.evidence_items,
+            ),
+        )
+        timings["retrieval"] = _ms(mark)
+        warnings = list(search.warnings)
+        if self.after_retrieval is not None:
+            await self.after_retrieval()
+
+        if not search.results:
+            return self._result(
                 request_id=request_id,
                 request=request,
                 search=search,
-                status=status,
-                origin=origin,
-                claims=claims,
-                prompt=prompt,
-                identity=identity,
+                status="insufficient_evidence",
+                origin="no_evidence",
+                claims=[
+                    Claim(
+                        text="The selected snapshot contains no evidence for this question.",
+                        kind="limitation",
+                    )
+                ],
+                prompt=None,
+                identity=None,
                 warnings=warnings,
                 timings=timings,
                 started=started,
             )
+
+        identity = await self._identity()
+        history, history_warnings = select_history(
+            request.history,
+            search.snapshot_id,
+            max_turns=self._config.generation.history_turns,
+        )
+        prompt = build_prompt(
+            question,
+            history,
+            search.results,
+            self._config.generation,
+            self._config.runtime.context_tokens,
+            self._config.runtime.output_tokens,
+        )
+        warnings += history_warnings + prompt.warnings
+        if not prompt.evidence:
+            warnings.append("evidence_budget: no excerpt fits the evidence budget")
+            return self._result(
+                request_id=request_id,
+                request=request,
+                search=search,
+                status="insufficient_evidence",
+                origin="no_evidence",
+                claims=[
+                    Claim(
+                        text="No evidence excerpt fits the configured context budget.",
+                        kind="limitation",
+                    )
+                ],
+                prompt=None,
+                identity=None,
+                warnings=warnings,
+                timings=timings,
+                started=started,
+            )
+
+        await emit({"stage": "generating"})
+        outcome, generation_ms, repair_ms, repaired = await self._generate_validated(
+            prompt, deadline, emit
+        )
+        timings["generation"] = generation_ms
+        timings["repair"] = repair_ms
+        if outcome.ok:
+            assert outcome.status is not None
+            if repaired:
+                warnings.append("repaired: the first model output failed validation")
+            warnings += outcome.notes
+            status: AnswerStatus = outcome.status
+            origin: AnswerOrigin = "model"
+            claims = outcome.claims
+            if status == "insufficient_evidence" and not any(
+                c.kind == "limitation" for c in claims
+            ):
+                # A server-authored gap statement: it asserts nothing about S-CORE.
+                claims = [*claims, Claim(text=NO_ANSWER_LIMITATION, kind="limitation")]
+        else:
+            codes = sorted({e.split(":")[0] for e in outcome.errors})
+            warnings.append(
+                "model_output_invalid: the model output failed validation "
+                f"({', '.join(codes)}); showing extractive excerpts"
+            )
+            claims = extractive_fallback(prompt.evidence, self._config.generation.fallback_excerpts)
+            has_excerpts = any(c.kind == "documented" for c in claims)
+            status = "partial" if has_excerpts else "insufficient_evidence"
+            origin = "extractive_fallback"
+        return self._result(
+            request_id=request_id,
+            request=request,
+            search=search,
+            status=status,
+            origin=origin,
+            claims=claims,
+            prompt=prompt,
+            identity=identity,
+            warnings=warnings,
+            timings=timings,
+            started=started,
+        )
 
     async def _generate_validated(
         self, prompt: Prompt, deadline: float, emit: Progress
@@ -337,6 +390,10 @@ class AnswerService:
         repaired, _ = await call(repair_messages)
         return repaired, generation_ms, _ms(mark), repaired.ok
 
+    def _result(self, **kwargs: Any) -> tuple[AnswerEnvelope, list[EvidenceItem]]:
+        prompt: Prompt | None = kwargs["prompt"]
+        return self._envelope(**kwargs), list(prompt.evidence) if prompt is not None else []
+
     def _envelope(
         self,
         *,
@@ -353,7 +410,7 @@ class AnswerService:
         started: float,
     ) -> AnswerEnvelope:
         evidence = prompt.evidence_map() if prompt is not None else {}
-        links = SourceLinks.from_lock(self._config.data_dir / "source-lock.json")
+        links = SourceLinks.for_data_dir(self._config.data_dir)
         citations = build_citations(claims, evidence, links)
         timings["total"] = _ms(started)
         return AnswerEnvelope(

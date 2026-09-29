@@ -190,6 +190,16 @@ class GenerationConfig(BaseModel):
     repair_min_seconds: float = Field(default=15.0, ge=0.0, le=600.0)
 
 
+class ComparisonConfig(BaseModel):
+    """Snapshot comparison settings (specs/007-version-comparison/data-model.md)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    deadline_seconds: int = Field(default=240, ge=1, le=7200)
+    evidence_items_per_side: int = Field(default=5, ge=1, le=20)
+    max_differences: int = Field(default=8, ge=1, le=30)
+
+
 class BundleConfig(BaseModel):
     """Bundle import caps (spec clarification Q3)."""
 
@@ -215,6 +225,7 @@ class AppConfig(BaseModel):
     index: IndexConfig = Field(default_factory=IndexConfig)
     bundles: BundleConfig = Field(default_factory=BundleConfig)
     generation: GenerationConfig = Field(default_factory=GenerationConfig)
+    comparison: ComparisonConfig = Field(default_factory=ComparisonConfig)
 
     @model_validator(mode="after")
     def _evidence_items_within_search_limit(self) -> AppConfig:

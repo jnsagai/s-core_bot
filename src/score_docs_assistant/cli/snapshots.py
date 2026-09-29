@@ -116,3 +116,33 @@ def rollback_command(ctx: typer.Context) -> None:
     warnings = lifecycle.rollback(config=config, runtime=_runtime(config), progress=_progress)
     for warning in warnings:
         typer.echo(f"warning: {warning}", err=True)
+
+
+@snapshots_app.command("diff")
+@handle_common_errors
+def diff_command(
+    ctx: typer.Context,
+    left: Annotated[str, typer.Argument(help="Left snapshot ID.")],
+    right: Annotated[str, typer.Argument(help="Right snapshot ID.")],
+    json_output: Annotated[bool, typer.Option("--json", help="Print JSON.")] = False,
+) -> None:
+    """Shows per-source revisions and processing differences of two snapshots (offline, no
+    model)."""
+    from score_docs_assistant.cli.compare import render_diff
+    from score_docs_assistant.cli.search_support import build_service
+    from score_docs_assistant.comparison.metadata import snapshot_diff
+    from score_docs_assistant.comparison.service import check_pair
+    from score_docs_assistant.domain.errors import GenerationError, SearchError
+
+    search = build_service(_config(ctx))
+    try:
+        check_pair(left, right)
+        with search.pinned(left) as a, search.pinned(right) as b:
+            diff = snapshot_diff(a.manifest, b.manifest)
+    except (GenerationError, SearchError) as exc:
+        typer.echo(f"{exc.code}: {exc.message}", err=True)
+        raise typer.Exit(code=2 if exc.usage_error else 1) from None
+    if json_output:
+        typer.echo(json.dumps(diff.model_dump(mode="json"), sort_keys=True))
+    else:
+        typer.echo("\n".join(render_diff(diff)))

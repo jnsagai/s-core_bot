@@ -105,6 +105,7 @@ def register_routes(
                 active_generations=config.limits.active_generations,
                 queued_generations=config.limits.queued_generations,
                 request_deadline_seconds=config.limits.request_deadline_seconds,
+                comparison_deadline_seconds=config.comparison.deadline_seconds,
             ),
             models=ModelsOut(
                 generation=config.runtime.generation_model,

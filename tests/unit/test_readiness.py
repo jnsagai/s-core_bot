@@ -87,17 +87,26 @@ def test_chat_reasons_runtime_unreachable() -> None:
     assert ReasonCode.RUNTIME_UNREACHABLE in chat.reasons
 
 
-def test_compare_always_not_implemented() -> None:
+def _compare(models: list[InstalledModel], state: CorpusState, count: int):  # type: ignore[no-untyped-def]
     service = ReadinessService(
         config=AppConfig(),
-        runtime=_FakeRuntime([]),
-        corpus_probe=_FakeProbe(CorpusState.ABSENT),
+        runtime=_FakeRuntime(models),
+        corpus_probe=_FakeProbe(state),
         profile=_profile(),
         cache_seconds=0,
+        snapshot_count=lambda: count,
     )
-    compare = service.get().capabilities[Capability.COMPARE]
-    assert compare.available is False
-    assert compare.reasons == [ReasonCode.NOT_IMPLEMENTED]
+    return service.get().capabilities[Capability.COMPARE]
+
+
+def test_compare_needs_chat_and_two_snapshots() -> None:
+    model = [InstalledModel(tag="gen:latest", digest="d" * 64, size_bytes=1)]
+    assert _compare(model, CorpusState.COMPATIBLE, 2).available is True
+    one = _compare(model, CorpusState.COMPATIBLE, 1)
+    assert one.available is False and one.reasons == [ReasonCode.SNAPSHOTS_INSUFFICIENT]
+    no_model = _compare([], CorpusState.COMPATIBLE, 3)
+    assert no_model.reasons == [ReasonCode.GENERATION_MODEL_MISSING]
+    assert ReasonCode.NOT_IMPLEMENTED not in _compare([], CorpusState.ABSENT, 0).reasons
 
 
 def test_cache_ttl_honoured_and_runtime_change_reflected_after_expiry() -> None:

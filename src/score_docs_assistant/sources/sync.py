@@ -28,7 +28,13 @@ from score_docs_assistant.sources.adapters import (
 )
 from score_docs_assistant.sources.git_client import GitClient, GitError
 from score_docs_assistant.sources.http_fetch import FetchError
-from score_docs_assistant.sources.lock import LOCK_FILENAME, source_root, verify_files, write_lock
+from score_docs_assistant.sources.lock import (
+    LOCK_FILENAME,
+    archive_lock,
+    source_root,
+    verify_files,
+    write_lock,
+)
 from score_docs_assistant.sources.paths import UnsafePathError
 from score_docs_assistant.sources.registry import ExportSource, GitSource, SourceRegistry
 
@@ -124,6 +130,7 @@ class SyncService:
             sources=entries,
         )
         write_lock(self.lock_path, lock)
+        archive_lock(self._data, self.lock_path)
         return SyncOutcome(0, self.lock_path, lock, results)
 
     @staticmethod

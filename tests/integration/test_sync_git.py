@@ -49,6 +49,8 @@ def test_lock_fields_and_acquired_bytes(tmp_path: Path) -> None:
     assert entry.status == "ok" and entry.revision == repo.head and entry.ref == "main"
     assert entry.revision_status == "pinned" and entry.release_mapping is None
     assert entry.fetched_at.tzinfo is not None
+    [archived] = (data / "source-locks").glob("*.json")  # F007 research R7
+    assert archived.read_bytes() == (data / "source-lock.json").read_bytes()
     assert entry.selector_sha256 is not None and len(entry.selector_sha256) == 64
     assert entry.parser_profile == "s-core" and entry.repository_license == "Apache-2.0"
     selected = ["README.md", "docs/guide/setup.rst", "docs/index.rst", "docs/notes.md"]

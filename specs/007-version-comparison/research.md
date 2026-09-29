@@ -89,7 +89,9 @@ are appended to the side evidence lists with the next `L`/`R` numbers.
 
 **Decision**: no release label is inferred or displayed. Identity is the per-source revisions. The
 UI and CLI state "No release label: per-source revisions identify each snapshot". Published needs
-exports stay `unverified` (A-014) and are flagged in the diff.
+exports stay `unverified` (A-014) and are flagged in the diff. The source lock's
+`release_mapping` field exists since F002 but is always null; when a future source provides an
+evidenced mapping, it is the only permitted origin of a label.
 
 ## R7 — Links for older revisions
 

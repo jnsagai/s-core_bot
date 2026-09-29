@@ -20,7 +20,7 @@ from score_docs_assistant.domain.models import ModelProfile
 from score_docs_assistant.domain.readiness import Capability, CapabilityState, Readiness, ReasonCode
 from score_docs_assistant.models.lock import compare_role, read_lock
 from score_docs_assistant.models.runtime import ModelRuntime, normalize_tag
-from score_docs_assistant.storage.corpus_probe import CorpusProbe, CorpusState
+from score_docs_assistant.storage.corpus_probe import CorpusProbe, CorpusState, count_queryable
 
 
 def _state(reasons: list[ReasonCode]) -> CapabilityState:
@@ -38,6 +38,7 @@ class ReadinessService:
         cache_seconds: float | None = None,
         clock: Callable[[], float] = time.monotonic,
         semantic_probe: Callable[[], bool | None] | None = None,
+        snapshot_count: Callable[[], int] | None = None,
     ) -> None:
         self._config = config
         self._runtime = runtime
@@ -51,6 +52,8 @@ class ReadinessService:
         self._clock = clock
         # Returns whether the active snapshot's semantic search is usable (None: unknown).
         self._semantic_probe = semantic_probe
+        # Queryable snapshots; comparison needs two (F007).
+        self._snapshot_count = snapshot_count or (lambda: count_queryable(config.data_dir))
         self._cached: Readiness | None = None
         self._cached_at: float | None = None
 
@@ -109,7 +112,11 @@ class ReadinessService:
                 reasons=[ReasonCode.SEMANTIC_UNAVAILABLE] if degraded else [],
             )
         chat_state = _state(chat_reasons)
-        compare_state = _state([ReasonCode.NOT_IMPLEMENTED])
+        # F007: comparison runs the chat pipeline twice, so it needs chat plus two snapshots.
+        compare_reasons = list(chat_reasons)
+        if self._snapshot_count() < 2:
+            compare_reasons.append(ReasonCode.SNAPSHOTS_INSUFFICIENT)
+        compare_state = _state(compare_reasons)
 
         return Readiness(
             capabilities={
