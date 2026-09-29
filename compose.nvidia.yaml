@@ -1,0 +1,13 @@
+# NVIDIA acceleration for the bundled runtime (optional). Requires the NVIDIA container toolkit on
+# the host (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/). Not run on the
+# reference machine: the toolkit is not installed there (see docs/quality/hardware-matrix.md).
+#   docker compose -f compose.yaml -f compose.nvidia.yaml --profile bundled up -d --pull never
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

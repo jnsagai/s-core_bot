@@ -9,15 +9,15 @@ description: "Task list for F009 Portable Local Release and Hosting Preparation"
 
 ## Phase 1: Configuration and logging (foundational)
 
-- [ ] T001 `DeploymentConfig` + `LoggingConfig` in `config/schema.py`; loopback rules moved to an `AppConfig` validator with the container exception (R3); tests `tests/unit/test_deployment_config.py`
-- [ ] T002 Providers take `allowed_hosts` from `cli/runtime_factory.py` (loopback + private hosts in container mode); provider tests updated
-- [ ] T003 Rotating file log (`logging.file`, `retention_days`) in `api/logging.py`/`cli/serve.py`; `tests/unit/test_log_retention.py`; `doctor` shows deployment mode and log settings
+- [x] T001 `DeploymentConfig` + `LoggingConfig` in `config/schema.py`; loopback rules moved to an `AppConfig` validator with the container exception (R3); tests `tests/unit/test_deployment_config.py`
+- [x] T002 Providers take `allowed_hosts` from `cli/runtime_factory.py` (loopback + private hosts in container mode); provider tests updated
+- [x] T003 Rotating file log (`logging.file`, `retention_days`) in `api/logging.py`/`cli/serve.py`; `tests/unit/test_log_retention.py`; the `serve` startup event shows deployment mode and log file
 
 ## Phase 2: US1 Containers (P1)
 
-- [ ] T004 `Dockerfile` (pinned base digests), `.dockerignore`, `config/container.yaml`
-- [ ] T005 `compose.yaml` (`bundled`, `host-runtime`), `compose.nvidia.yaml`; `tests/unit/test_compose_policy.py` (loopback-only ports, no runtime ports, hardening, internal network, read-only models)
-- [ ] T006 `scripts/container_check.sh` (up → inspect → probe → down → `container-*.json`)
+- [x] T004 `Dockerfile` (pinned base digests), `.dockerignore`, `config/container.yaml`
+- [x] T005 `compose.yaml` (`bundled`, `host-runtime`), `compose.nvidia.yaml`; `tests/unit/test_compose_policy.py` (loopback-only ports, no runtime ports, hardening, internal network, read-only models)
+- [x] T006 `scripts/container_check.sh` (up → inspect → probe → down → `container-*.json`)
 
 ## Phase 3: US2 Package, install, restore (P1)
 

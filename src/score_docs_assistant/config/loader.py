@@ -22,6 +22,7 @@ from .schema import AppConfig
 ENV_PREFIX = "SCORE_ASSISTANT_"
 _ENV_SPECIAL = {
     "SCORE_ASSISTANT_CONFIG",
+    "SCORE_ASSISTANT_CONTAINER",  # set by the application image (F009); not a config value
     "SCORE_ASSISTANT_REAL_RUNTIME",
     "SCORE_ASSISTANT_REAL_PULL",
 }

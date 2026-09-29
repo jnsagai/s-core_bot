@@ -1,0 +1,46 @@
+# Configuration for the application image (specs/009-portable-deployment research R2/R3).
+# `deployment.mode: container` is accepted only inside the image (SCORE_ASSISTANT_CONTAINER=1).
+# The app binds 0.0.0.0 inside its container; compose.yaml publishes it on 127.0.0.1 only, and
+# Host/Origin validation still admits only localhost/127.0.0.1 on server.port.
+schema_version: 1
+profile: local
+
+deployment:
+  mode: container
+  runtime_private_hosts: [ollama]
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  allowed_hosts: [localhost, 127.0.0.1]
+  allowed_origins: [http://127.0.0.1:8080, http://localhost:8080]
+
+data_dir: /data
+
+runtime:
+  provider: ollama
+  base_url: http://ollama:11434
+  cloud_fallback: false
+  model_profile: local-small
+  generation_model: qwen3:4b-instruct
+  embedding_model: nomic-embed-text
+  context_tokens: 8192
+  output_tokens: 900
+
+retrieval:
+  lexical_candidates: 30
+  semantic_candidates: 30
+  evidence_chunks: 8
+  fusion_constant: 60
+
+limits:
+  question_characters: 4000
+  history_characters: 12000
+  active_generations: 1
+  queued_generations: 4
+  request_deadline_seconds: 240     # CPU inference in the portable profile is slower
+
+privacy:
+  persist_chats: false
+  log_message_bodies: false
+  telemetry: false

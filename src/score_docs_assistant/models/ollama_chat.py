@@ -33,8 +33,11 @@ class OllamaGenerationProvider:
         timeout_seconds: float = 120.0,
         connect_timeout_seconds: float = 1.0,
         client: httpx.AsyncClient | None = None,
+        allowed_hosts: frozenset[str] = frozenset(),
     ) -> None:
-        if not is_loopback_host(httpx.URL(base_url).host):
+        host = httpx.URL(base_url).host
+        # allowed_hosts: private runtime names, passed only in validated container mode (F009).
+        if not is_loopback_host(host) and host not in allowed_hosts:
             raise GenerationError(
                 "GENERATION_UNAVAILABLE", f"{base_url}: not a loopback runtime", reason="config"
             )
