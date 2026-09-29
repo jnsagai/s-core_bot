@@ -61,12 +61,12 @@ tests are "not run".
 
 ## Phase 4: US3 — Adversarial, offline, privacy (P1)
 
-- [ ] T009 [P] [US3] `eval/hostile/` SYNTHETIC documents and `cases.yaml` (≥ 10 cases, R5)
-- [ ] T010 [US3] `qualification/adversarial.py`: throwaway snapshot from `eval/hostile/` with the
+- [x] T009 [P] [US3] `eval/hostile/` SYNTHETIC documents and `cases.yaml` (≥ 10 cases, R5)
+- [x] T010 [US3] `qualification/adversarial.py`: throwaway snapshot from `eval/hostile/` with the
   production build pipeline, answers per case, automated judges; `eval adversarial` CLI; tests
   (judges unit + fake-provider integration) in `tests/unit/test_adversarial_judges.py` and
   `tests/integration/test_adversarial_snapshot.py`
-- [ ] T011 [US3] `qualification/offline.py` probe + `scripts/offline_check.sh` namespace wrapper
+- [x] T011 [US3] `qualification/offline.py` probe + `scripts/offline_check.sh` namespace wrapper
   (egress probe, private runtime, serve, probe, report, cleanup); unit test of the probe against a
   fake HTTP app; `not run` path when `unshare` fails
 

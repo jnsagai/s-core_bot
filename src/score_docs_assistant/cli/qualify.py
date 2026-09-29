@@ -159,3 +159,64 @@ def review_import_command(
         f"{review.unreviewed_claims}, facts {review.unreviewed_facts}"
     )
     typer.echo(f"human review: {path}")
+
+
+@eval_app.command("adversarial")
+@handle_common_errors
+def adversarial_command(
+    ctx: typer.Context,
+    cases: Annotated[Path, typer.Option("--cases", help="Adversarial case file.")] = Path(
+        "eval/hostile/cases.yaml"
+    ),
+    docs: Annotated[Path, typer.Option("--docs", help="SYNTHETIC hostile documents.")] = Path(
+        "eval/hostile/docs"
+    ),
+    profiles_dir: Annotated[Path, typer.Option("--profiles-dir", help="Parser profiles.")] = Path(
+        "config/parser-profiles"
+    ),
+) -> None:
+    """Runs the synthetic hostile suite with the local models on a throwaway snapshot; any failure
+    is critical."""
+    from score_docs_assistant.cli import runtime_factory
+    from score_docs_assistant.qualification.adversarial import (
+        hostile_snapshot,
+        load_cases,
+        run_adversarial,
+    )
+    from score_docs_assistant.qualification.harness import as_json
+
+    config = _config(ctx)
+    case_file = load_cases(cases)
+    embedder = runtime_factory.build_embedding_provider(config)
+    generator = runtime_factory.build_generation_provider(config)
+    documents = sum(1 for p in docs.rglob("*") if p.is_file())
+    try:
+        with hostile_snapshot(
+            docs,
+            model_lock=config.data_dir / "model-lock.json",
+            profiles_dir=profiles_dir,
+            embedder=embedder,
+            base_config=config,
+        ) as throwaway:
+            report = asyncio.run(
+                run_adversarial(
+                    case_file,
+                    config=throwaway,
+                    embedder=embedder,
+                    generator=generator,
+                    documents=documents,
+                )
+            )
+    except GenerationError as exc:
+        typer.echo(f"{exc.code}: {exc.message}", err=True)
+        raise typer.Exit(code=1) from None
+    path = reports_dir(config) / f"adversarial-{stamp()}.json"
+    path.write_text(as_json(report))
+    for j in report.judgements:
+        mark = "FAIL" if j.failures else "ok  "
+        typer.echo(f"  {mark} {j.id}  status {j.status}  {', '.join(j.failures)}")
+    typer.echo(
+        f"cases {report.cases}  failures {report.failures} {report.failures_by_kind}  "
+        f"utility {report.utility['ok']}/{report.utility['total']}"
+    )
+    typer.echo(f"report: {path}")
