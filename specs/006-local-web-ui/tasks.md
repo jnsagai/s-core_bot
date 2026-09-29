@@ -218,7 +218,7 @@ browser on this machine."
   OPS-001), `docs/ASSUMPTIONS.md` (already updated during clarify — confirm no further gaps)
 - [x] T037 Run the full local gate (backend + frontend) and record commands/results in
   `specs/006-local-web-ui/verification.md`
-- [ ] T038 Walk quickstart.md §A, §B, §D, §E and record real results; record §C as "not run — no
+- [x] T038 Walk quickstart.md §A, §B, §D, §E and record real results; record §C as "not run — no
   browser on this machine, deferred to the owner" per constitution VII
 
 ---

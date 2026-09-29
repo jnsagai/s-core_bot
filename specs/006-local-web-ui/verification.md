@@ -109,3 +109,13 @@ SSE chat (same-origin headers) → progress ×3, answer, done; question text in 
 Quickstart §C in a real browser: the first-run-to-citation walkthrough, the Network-tab proof that
 no request leaves 127.0.0.1, the storage inspector after reload, keyboard-only review, colour
 contrast and screen reader.
+
+## Quickstart walk (T038), 2026-09-29
+
+| Section | Result |
+| --- | --- |
+| A. Frontend checks | lint 0 problems; typecheck ok; `vitest run` 13 files / 60 tests passed; build emits `dist/index.html` + `dist/assets/index-DJTwm2Gf.js` (401.84 kB, gzip 123.50 kB); asset and telemetry checks passed |
+| B. Backend checks | ruff format (349 files) + ruff check + mypy (111 files) clean; `pytest tests/contract/test_guard.py tests/contract/test_static_serving.py` 24 passed; full `pytest` 873 passed, 9 skipped (opt-in); license check 470 packages OK (Python + npm) |
+| C. Real browser walkthrough | **not run — no browser on this machine, deferred to the owner** (A-040). The HTTP-level substitute above (real server: CSP, static exemption, SSE flow, no question text in log) was run |
+| D. Hostile rendering | `SafeMarkdown.test.tsx` passed (raw `<script>`/`<img onerror>` inert, `javascript:`/`data:` links neutralized, no `<img>` node created) |
+| E. Snapshot-switch confirmation | SnapshotSelector cases in `search-snapshot-export.test.tsx` passed (D + E files: 16 tests) |
