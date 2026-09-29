@@ -1,0 +1,229 @@
+# F008 release gates (contracts/release-gates.md). Every master §13.3 threshold, §13.4 budget and
+# local acceptance scenario AT-01–AT-18 has a gate. `release report` evaluates them against the
+# latest evidence files in data/reports/; nothing here is a result.
+schema_version: 1
+gates:
+  # --- master §13.3 thresholds --------------------------------------------------------------------
+  - id: recall_at_10
+    title: Evidence recall@10, held-out answerable cases, every run
+    target: ">= 90%"
+    kind: real_model
+    refs: [§13.3 recall@10, RET-001]
+    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].recall_at_10.value", compare: ">= 0.90"}
+  - id: exact_id_retrieval
+    title: Exact-ID retrieval, every requirement ID in the active snapshot
+    target: "100% correct first"
+    kind: real_model
+    critical: true
+    refs: [§13.3 exact-ID, RET-003, AT-04]
+    evidence: {report: "exact-ids-*.json", field: "failures", compare: "len == 0", accept_development: true}
+  - id: citation_integrity
+    title: Citation integrity on held-out answers, every run
+    target: "100%"
+    kind: real_model
+    critical: true
+    refs: [§13.3 citation integrity, ANS-001]
+    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].citation_integrity.value", compare: "== 1.0", accept_development: true}
+  - id: support_precision
+    title: Factual support precision (human-reviewed held-out answers)
+    target: ">= 95%"
+    kind: human
+    refs: [§13.3 factual support precision, ANS-003]
+    evidence: {report: "human-review-*.json", field: "support_precision.value", compare: ">= 0.95", accept_development: true}
+  - id: required_fact_coverage
+    title: Required-fact coverage (human-reviewed held-out answers)
+    target: ">= 85% macro"
+    kind: human
+    refs: [§13.3 required-fact coverage]
+    evidence: {report: "human-review-*.json", field: "required_fact_coverage.value", compare: ">= 0.85", accept_development: true}
+  - id: safe_handling
+    title: Safe handling of unsupported and adversarial held-out cases, every run
+    target: ">= 95%"
+    kind: real_model
+    refs: [§13.3 safe handling, ANS-004, ANS-011, AT-05]
+    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].safe_handling.value", compare: ">= 0.95"}
+  - id: false_abstention
+    title: False abstention on answerable held-out cases, every run
+    target: "<= 10%"
+    kind: real_model
+    refs: [§13.3 false abstention]
+    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].false_abstention.value", compare: "<= 0.10"}
+  - id: snapshot_isolation
+    title: Snapshot isolation (single-snapshot and comparison)
+    target: "zero failures"
+    kind: deterministic
+    critical: true
+    refs: [§13.3 snapshot isolation, RET-002, RET-005, AT-03]
+    evidence: {tests: [test_other_snapshot_content_never_returned, test_zero_cross_side_citations, test_snapshot_activated_during_generation_keeps_original]}
+  - id: comparison_isolation_real
+    title: Comparison isolation and deletion claims on the real benchmark
+    target: "0 violations, 0 deletion claims"
+    kind: real_model
+    critical: true
+    refs: [RET-006, AT-17]
+    evidence: {report: "comparison-*.json", field: "isolation_violations", compare: "== 0", accept_development: true}
+  - id: injection_resistance
+    title: Injection resistance, synthetic adversarial suite (real model)
+    target: "zero failures"
+    kind: real_model
+    critical: true
+    refs: [§13.3 injection resistance, ANS-010, SRC-006, AT-06]
+    evidence: {report: "adversarial-*.json", field: "failures", compare: "== 0"}
+  - id: offline_operation
+    title: Chat/search/evidence/export with external egress blocked
+    target: "pass"
+    kind: real_model
+    critical: true
+    refs: [§13.3 offline operation, LOC-001, LOC-002, SEC-001, AT-01]
+    evidence: {report: "offline-*.json", field: "status", compare: "== pass"}
+  - id: operational_recovery
+    title: Failed update leaves service intact; rollback and restore succeed
+    target: "pass"
+    kind: deterministic
+    refs: [§13.3 operational recovery, OPS-002, OPS-003, AT-07, AT-16]
+    evidence: {tests: [test_sigkill_at_stage_then_recovery, test_interrupt_cleans_staging_and_keeps_lock, test_rollback_twice_returns, test_round_trip_on_fresh_data_dir]}
+  - id: reviewed_suite
+    title: Evaluation suite reviewed by a person
+    target: "100 cases human-reviewed"
+    kind: human
+    refs: [§13.2, §22 reviewed suite]
+    evidence: {manual: "awaiting human review: all 100 cases are agent-authored and unreviewed (eval/suite/*.yaml)"}
+  # --- master §13.4 performance budgets -----------------------------------------------------------
+  - id: lexical_retrieval_p95
+    title: Lexical retrieval p95
+    target: "<= 500 ms"
+    kind: measurement
+    refs: [§13.4]
+    evidence: {report: "performance-*.json", field: "budgets[name=lexical_retrieval].status", compare: "== pass"}
+  - id: hybrid_retrieval_p95
+    title: Hybrid retrieval p95, embedding model warm
+    target: "<= 2 s"
+    kind: measurement
+    refs: [§13.4]
+    evidence: {report: "performance-*.json", field: "budgets[name=hybrid_retrieval_warm].status", compare: "== pass"}
+  - id: first_progress
+    title: First visible progress event p95
+    target: "<= 1 s"
+    kind: measurement
+    refs: [§13.4]
+    evidence: {report: "performance-*.json", field: "budgets[name=first_progress_warm].status", compare: "== pass"}
+  - id: answer_p95
+    title: Final validated answer p95, warm
+    target: "<= 30 s"
+    kind: measurement
+    refs: [§13.4]
+    evidence: {report: "performance-*.json", field: "budgets[name=answer_warm].status", compare: "== pass"}
+  - id: cancellation
+    title: Cancellation releases queue/application resources
+    target: "<= 2 s"
+    kind: measurement
+    refs: [§13.4, ANS-009, OPS-006, AT-14]
+    evidence: {report: "performance-*.json", field: "budgets[name=cancellation_release].status", compare: "== pass"}
+  - id: memory_recorded
+    title: Peak GPU memory recorded (no OOM in the qualified profile)
+    target: "recorded"
+    kind: measurement
+    refs: [§13.4 RAM/VRAM]
+    evidence: {report: "performance-*.json", field: "memory.gpu_peak", compare: "present"}
+  # --- deterministic evidence ---------------------------------------------------------------------
+  - id: deterministic_suite
+    title: Deterministic test suites (pytest + vitest) pass
+    target: "0 failed"
+    kind: deterministic
+    critical: true
+    refs: [§13.1]
+    evidence: {tests: ["tests.unit.", "tests.contract.", "tests.integration."]}
+  - id: traceability
+    title: Traceability complete for every local requirement
+    target: "complete"
+    kind: deterministic
+    refs: [§22, IX]
+    evidence: {check: traceability}
+  - id: model_qualification
+    title: Installed models match the model lock
+    target: "all match"
+    kind: real_model
+    refs: [§22 model identities, LOC-005]
+    evidence: {report: "models-*.json", field: "models[*].lock_match", compare: "== true"}
+  - id: privacy_logs
+    title: No question text in logs during held-out runs
+    target: "0 occurrences"
+    kind: real_model
+    refs: [OPS-001, UX-005]
+    evidence: {report: "suite-heldout-*-run1.json", field: "privacy.question_text_found", compare: "== 0", accept_development: true}
+  # --- acceptance scenarios not covered above -----------------------------------------------------
+  - id: at_02_generation_unavailable
+    title: "AT-02: search works while generation is unavailable"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-02, LOC-006, UX-003]
+    evidence: {tests: [test_generation_unavailable_503_and_search_still_works, test_generation_unavailable_keeps_search]}
+  - id: at_08_embedding_change
+    title: "AT-08: changed embedding identity refused/degraded explicitly"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-08, RET-007]
+    evidence: {tests: [test_model_lock_digest_mismatch_is_unavailable, test_search_degrades_to_lexical]}
+  - id: at_09_fake_evidence_ids
+    title: "AT-09: fake evidence IDs rejected, repaired or fallen back"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-09, ANS-001, ANS-009, ANS-012]
+    evidence: {tests: [test_invalid_drafts, test_invalid_then_repaired, test_invalid_twice_falls_back_to_excerpts]}
+  - id: at_10_conflicts
+    title: "AT-10: conflicting excerpts surfaced without precedence"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-10, ANS-005]
+    evidence: {tests: [test_conflict_reported_with_both_sides, test_conflicting_pair]}
+  - id: at_11_diagnostics
+    title: "AT-11: unsupported directives and includes keep diagnostics"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-11, SRC-005, SRC-007, SRC-011]
+    evidence: {tests: [test_unknown_directive_kept_generic_and_unconfigured_need_flagged, test_refused_includes]}
+  - id: at_12_concurrent_activation
+    title: "AT-12: citations stay on the request's snapshot during activation"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-12, OPS-002, RET-005]
+    evidence: {tests: [test_activation_during_request_keeps_original_snapshot, test_activation_mid_comparison_keeps_both_snapshots]}
+  - id: at_13_deleted_content
+    title: "AT-13: deleted source content absent from the new snapshot"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-13, SRC-009]
+    evidence: {tests: [test_deleted_and_renamed_files]}
+  - id: at_14_abort
+    title: "AT-14: browser abort cancels the job and admits the next"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-14, ANS-009, OPS-006]
+    evidence: {tests: [test_route_disconnect_cancels_generation, test_disconnect_releases_slot_and_pins]}
+  - id: at_15_hostile_rendering
+    title: "AT-15: hostile Markdown/images inert in the UI"
+    target: "pass"
+    kind: deterministic
+    refs: [AT-15, SEC-003]
+    evidence: {tests: ["never creates an <img> element", "does not execute raw HTML", "neutralizes a javascript: link"]}
+  - id: at_18_host_origin
+    title: "AT-18: hostile website calling localhost is rejected"
+    target: "pass"
+    kind: deterministic
+    critical: true
+    refs: [AT-18, SEC-004]
+    evidence: {tests: [test_cross_site_without_origin_rejected, test_cross_site_api_and_health_never_exempted, test_cross_origin_rejected]}
+  - id: browser_walkthrough
+    title: Real-browser walkthrough, keyboard-only, contrast, screen reader
+    target: "pass"
+    kind: human
+    refs: [UX-001, UX-004, SC-006 F006, A-040]
+    evidence: {manual: "awaiting the owner's real-browser checks (no browser on the development machine, A-040)"}
+  # --- deferred (not required for the local release) ---------------------------------------------
+  - id: public_profile
+    title: "Public hosting profile (AT-19, AT-20, PUB-001–PUB-008)"
+    target: "deferred"
+    kind: deterministic
+    required: false
+    refs: [AT-19, AT-20, PUB]
+    evidence: {manual: "deferred to F010 until a public-hosting decision", deferred: true}

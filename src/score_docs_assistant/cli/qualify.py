@@ -9,15 +9,18 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
+import httpx
 import typer
 import yaml
 
 from score_docs_assistant.cli.evaluate import eval_app
-from score_docs_assistant.cli.main import handle_common_errors
+from score_docs_assistant.cli.main import cli_app, handle_common_errors
+from score_docs_assistant.cli.models import models_app
 from score_docs_assistant.cli.search_support import _config, handle_search_errors
 from score_docs_assistant.config.schema import AppConfig
 from score_docs_assistant.domain.errors import GenerationError
@@ -220,3 +223,154 @@ def adversarial_command(
         f"utility {report.utility['ok']}/{report.utility['total']}"
     )
     typer.echo(f"report: {path}")
+
+
+@eval_app.command("performance")
+@handle_common_errors
+@handle_search_errors
+def performance_command(
+    ctx: typer.Context,
+    cases: Annotated[list[Path], typer.Option("--cases", help="Suite file(s) with questions.")],
+    answers_n: Annotated[int, typer.Option("--answers", min=1, help="Warm answers to time.")] = 50,
+    cold: Annotated[int, typer.Option("--cold", min=0, help="Cold samples.")] = 5,
+) -> None:
+    """Measures retrieval, progress, answer, cancellation and memory against the performance
+    budgets."""
+    from score_docs_assistant.cli.ask import build_answer_service
+    from score_docs_assistant.qualification.harness import as_json
+    from score_docs_assistant.qualification.performance import OllamaControl, measure
+    from score_docs_assistant.qualification.suite import load_suite
+
+    config = _config(ctx)
+    questions = [c.question for path in cases for c in load_suite(path)[0].cases]
+    service = build_answer_service(config)
+    control = OllamaControl(
+        config.runtime.base_url, [config.runtime.generation_model, config.runtime.embedding_model]
+    )
+    try:
+        report = asyncio.run(
+            measure(
+                search=service._search,  # noqa: SLF001
+                answers=service,
+                questions=questions,
+                answers_n=answers_n,
+                cold_samples=cold,
+                unload=control.unload if cold else None,
+                loaded=control.loaded,
+            )
+        )
+    except GenerationError as exc:
+        typer.echo(f"{exc.code}: {exc.message}", err=True)
+        raise typer.Exit(code=1) from None
+    path = reports_dir(config) / f"performance-{stamp()}.json"
+    path.write_text(as_json(report))
+    for name, dist in report.distributions.items():
+        typer.echo(
+            f"  {name:<24} n={dist.samples:<4} p50={dist.p50} ms  p95={dist.p95} ms  "
+            f"max={dist.max} ms"
+        )
+    for budget in report.budgets:
+        typer.echo(
+            f"  budget {budget.name:<22} {budget.statistic} {budget.measured_ms} ms "
+            f"≤ {budget.target_ms:.0f} ms → {budget.status}"
+        )
+    typer.echo(f"memory: {report.memory}  cold unload verified: {report.cold_unload_verified}")
+    typer.echo(f"report: {path}")
+
+
+@models_app.command("qualify")
+@handle_common_errors
+def models_qualify_command(ctx: typer.Context) -> None:
+    """Records the locked models' identity, license and context from the local runtime (no
+    downloads)."""
+    from score_docs_assistant.qualification.harness import as_json
+    from score_docs_assistant.qualification.models import http_fetch, qualify
+
+    config = _config(ctx)
+    out = reports_dir(config)
+    try:
+        record = qualify(
+            config.data_dir / "model-lock.json", http_fetch(config.runtime.base_url), out
+        )
+    except (httpx.HTTPError, OSError, ValueError) as exc:
+        typer.echo(f"RUNTIME_UNAVAILABLE: {exc}", err=True)
+        raise typer.Exit(code=1) from None
+    path = out / f"models-{stamp()}.json"
+    path.write_text(as_json(record))
+    for m in record.models:
+        typer.echo(
+            f"  {m.role:<10} {m.tag}  digest {m.locked_digest[:12]} lock match {m.lock_match}  "
+            f"{m.family} {m.parameter_size} {m.quantization} ctx {m.context_length}  "
+            f"license {m.license_spdx_guess or m.license_first_line}"
+        )
+    typer.echo(f"runtime {record.runtime_version} (locked {record.locked_runtime_version})")
+    typer.echo(f"report: {path}")
+
+
+release_app = typer.Typer(add_completion=False, help="Release evidence.")
+cli_app.add_typer(release_app, name="release")
+
+
+@release_app.command("report")
+@handle_common_errors
+def release_report_command(
+    ctx: typer.Context,
+    gates: Annotated[Path, typer.Option("--gates", help="Gate file.")] = Path(
+        "eval/release-gates.yaml"
+    ),
+    suite_dir: Annotated[Path, typer.Option("--suite-dir", help="Suite directory.")] = SUITE_DIR,
+) -> None:
+    """Builds the release report from recorded evidence; gates without evidence are "not run",
+    human-judged gates without a review are "blocked"."""
+    import importlib.util
+
+    from score_docs_assistant.qualification.gates import Identity, load_gates
+    from score_docs_assistant.qualification.report import build_report, to_markdown
+    from score_docs_assistant.qualification.suite import freeze_status, load_suite
+    from score_docs_assistant.storage.catalog import Catalog
+
+    config = _config(ctx)
+    active = None
+    catalog = Catalog.open(config.data_dir, create=False)
+    if catalog is not None:
+        with catalog:
+            active = catalog.active_id()
+    digest = None
+    lock_path = config.data_dir / "model-lock.json"
+    if lock_path.is_file():
+        for model in json.loads(lock_path.read_text()).get("models", []):
+            if model.get("role") == "generation":
+                digest = str(model.get("digest", "")).removeprefix("sha256:")
+    heldout = suite_dir / "heldout.yaml"
+    freeze = freeze_status(heldout, load_suite(heldout)[1])[1] if heldout.is_file() else None
+    traceability: list[str] | None = None
+    script = Path("scripts/check_traceability.py")
+    if script.is_file():
+        spec = importlib.util.spec_from_file_location("check_traceability", script)
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            root = Path.cwd()
+            traceability = module.check(
+                (root / "docs" / "PROJECT_SPEC.md").read_text(),
+                (root / "docs" / "TRACEABILITY.md").read_text(),
+                root,
+            )
+    report = build_report(
+        load_gates(gates),
+        reports=reports_dir(config),
+        identity=Identity(snapshot_id=active, generation_digest=digest, freeze=freeze),
+        traceability=traceability,
+        assumptions=Path("docs/ASSUMPTIONS.md"),
+    )
+    out = reports_dir(config) / f"release-{stamp()}"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "report.json").write_text(report.model_dump_json(indent=2) + "\n")
+    (out / "report.md").write_text(to_markdown(report))
+    counts: dict[str, int] = {}
+    for gate in report.gates:
+        counts[gate.status] = counts.get(gate.status, 0) + 1
+    typer.echo(f"verdict: {report.verdict}  gates: {counts}")
+    for item in report.blocking:
+        typer.echo(f"  {item}")
+    typer.echo(f"report: {out}/report.md")

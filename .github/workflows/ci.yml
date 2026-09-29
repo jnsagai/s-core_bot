@@ -47,6 +47,9 @@ jobs:
       - name: Dependency license check (Python + npm)
         run: uv run python scripts/check_licenses.py
 
+      - name: Traceability completeness check
+        run: uv run python scripts/check_traceability.py
+
   frontend:
     # F006: the static UI bundle. Uses the Node.js preinstalled on the runner (no extra action).
     name: Frontend lint, types, tests, build, asset and telemetry checks

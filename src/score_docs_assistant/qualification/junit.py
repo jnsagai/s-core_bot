@@ -11,14 +11,14 @@ Outcome = Literal["passed", "failed", "skipped"]
 
 
 @dataclass(frozen=True)
-class TestOutcome:
+class CaseOutcome:
     name: str  # "<classname>::<name>" (pytest node-like)
     outcome: Outcome
 
 
 @dataclass(frozen=True)
 class JUnitSummary:
-    tests: list[TestOutcome]
+    tests: list[CaseOutcome]
 
     @property
     def counts(self) -> dict[str, int]:
@@ -27,13 +27,13 @@ class JUnitSummary:
             result[test.outcome] += 1
         return result
 
-    def matching(self, needle: str) -> list[TestOutcome]:
+    def matching(self, needle: str) -> list[CaseOutcome]:
         return [t for t in self.tests if needle in t.name]
 
 
 def parse_junit(path: Path) -> JUnitSummary:
     root = ET.parse(path).getroot()  # noqa: S314 — trusted local file
-    outcomes: list[TestOutcome] = []
+    outcomes: list[CaseOutcome] = []
     for case in root.iter("testcase"):
         name = f"{case.get('classname', '')}::{case.get('name', '')}"
         if case.find("failure") is not None or case.find("error") is not None:
@@ -42,5 +42,5 @@ def parse_junit(path: Path) -> JUnitSummary:
             outcome = "skipped"
         else:
             outcome = "passed"
-        outcomes.append(TestOutcome(name=name, outcome=outcome))
+        outcomes.append(CaseOutcome(name=name, outcome=outcome))
     return JUnitSummary(outcomes)

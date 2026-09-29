@@ -76,25 +76,25 @@ tests are "not run".
 
 ## Phase 5: US4 — Performance (P2)
 
-- [ ] T012 [US4] `qualification/performance.py`: warm/cold/cancellation/memory measurement,
+- [x] T012 [US4] `qualification/performance.py`: warm/cold/cancellation/memory measurement,
   percentiles, budgets, insufficient-sample rule; `eval performance` CLI; tests with fake
   providers in `tests/unit/test_performance.py`
 
 ## Phase 6: US5 — Traceability and model qualification (P2)
 
-- [ ] T013 [P] [US5] `scripts/check_traceability.py` + `tests/unit/test_traceability.py` (fixture
+- [x] T013 [P] [US5] `scripts/check_traceability.py` + `tests/unit/test_traceability.py` (fixture
   spec/traceability pairs and the real files); add to CI; fix any real gaps it finds in
   `docs/TRACEABILITY.md`
-- [ ] T014 [P] [US5] `qualification/models.py` + `models qualify` CLI (lock + `/api/show`, no pull);
+- [x] T014 [P] [US5] `qualification/models.py` + `models qualify` CLI (lock + `/api/show`, no pull);
   tests with a fake runtime in `tests/unit/test_model_qualification.py`
 
 ## Phase 7: US1 — Gates and release report (P1, needs the evidence producers)
 
-- [ ] T015 [US1] `qualification/gates.py` (gate file model, evaluation: report/tests/manual,
+- [x] T015 [US1] `qualification/gates.py` (gate file model, evaluation: report/tests/manual,
   stale evidence, development labels, human gates) and `qualification/report.py` (Markdown/JSON,
   sections, verdict); tests in `tests/unit/test_gates.py`, `tests/unit/test_release_report.py`
   covering every status path and the critical override
-- [ ] T016 [US1] `eval/release-gates.yaml` covering every master §13.3 threshold, §13.4 budget and
+- [x] T016 [US1] `eval/release-gates.yaml` covering every master §13.3 threshold, §13.4 budget and
   local AT-01–AT-18 scenario; `release report` CLI; a test that every AT and threshold ID has a gate
 
 **Checkpoint**: gate green; commit and push.
