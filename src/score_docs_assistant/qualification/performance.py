@@ -134,10 +134,11 @@ class OllamaControl:
             for model in self._models:
                 client.post("/api/generate", json={"model": model, "keep_alive": 0})
                 client.post("/api/embed", json={"model": model, "input": [], "keep_alive": 0})
-            for _ in range(20):
+            # A real run showed the embedding model needs more than 5 s to leave memory.
+            for _ in range(60):
                 if not client.get("/api/ps").json().get("models"):
                     return True
-                time.sleep(0.25)
+                time.sleep(0.5)
         return False
 
     def loaded(self) -> list[dict[str, Any]]:

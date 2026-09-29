@@ -103,21 +103,21 @@ tests are "not run".
 
 ## Phase 8: Real runs (evidence)
 
-- [ ] T017 Run `eval suite --split dev` (real) and record it
-- [ ] T018 Run `eval suite --split heldout --runs 3` (real, after the freeze commit) and record it
-- [ ] T019 Run `eval adversarial` (real) and record it
-- [ ] T020 Run `scripts/offline_check.sh` (real) and record it; update A-032
-- [ ] T021 Run `eval performance` (real, ≥ 50 queries) and record it
-- [ ] T022 Run `models qualify` (real) and record it
-- [ ] T023 Run pytest/vitest with JUnit output and `check_traceability.py`, then `release report`;
+- [x] T017 Run `eval suite --split dev` (real) and record it
+- [x] T018 Run `eval suite --split heldout --runs 3` (real, after the freeze commit) and record it
+- [x] T019 Run `eval adversarial` (real) and record it
+- [x] T020 Run `scripts/offline_check.sh` (real) and record it; update A-032
+- [x] T021 Run `eval performance` (real, ≥ 50 queries) and record it
+- [x] T022 Run `models qualify` (real) and record it
+- [x] T023 Run pytest/vitest with JUnit output and `check_traceability.py`, then `release report`;
   commit the report copy to `docs/quality/release-report-2026-09-29.md`
 
 ## Phase 9: Polish
 
-- [ ] T024 [P] Docs: README, CLAUDE.md commands, `docs/user/` quality guide (how to review and
+- [x] T024 [P] Docs: README, CLAUDE.md commands, `docs/user/` quality guide (how to review and
   regenerate the report)
-- [ ] T025 [P] `docs/BACKLOG.md`, `docs/TRACEABILITY.md`, `docs/ASSUMPTIONS.md` (A-045 onward)
-- [ ] T026 Full gate; quickstart walk; `verification.md`
+- [x] T025 [P] `docs/BACKLOG.md`, `docs/TRACEABILITY.md`, `docs/ASSUMPTIONS.md` (A-045 onward)
+- [x] T026 Full gate; quickstart walk; `verification.md`
 
 ---
 

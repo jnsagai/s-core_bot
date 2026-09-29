@@ -51,6 +51,18 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   It never claims that something was removed when coverage is missing, and never infers a release
   label. `snapshots diff A B` shows identities without the model. See `docs/user/comparison.md`.
 
+- **F008 (done)** — quality qualification and release evidence:
+  - a 100-case evaluation suite (60 development / 40 frozen held-out) with a review rubric and an
+    import for human review sheets;
+  - a synthetic adversarial suite, a no-root blocked-egress check, performance budgets and model
+    qualification;
+  - a traceability check in CI;
+  - `release report`, which marks every gate pass / fail / blocked / not run from recorded evidence.
+
+  The current report (`docs/quality/release-report-2026-09-29.md`) is **blocked** only by items
+  that need a person (suite review, human-judged metrics, browser walkthrough). See
+  `docs/user/quality.md`.
+
 ## Scope
 
 - Runs entirely on your own machine: no paid API, API key, vendor login, or cloud inference.

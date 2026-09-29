@@ -132,7 +132,7 @@ gates:
     kind: deterministic
     critical: true
     refs: [§13.1]
-    evidence: {tests: ["tests.unit.", "tests.contract.", "tests.integration."]}
+    evidence: {tests: ["tests.unit.", "tests.contract.", "tests.integration.", "test/components/", "test/a11y/", "test/api/", "test/privacy/", "test/state/"]}
   - id: traceability
     title: Traceability complete for every local requirement
     target: "complete"
