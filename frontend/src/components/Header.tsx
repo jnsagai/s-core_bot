@@ -3,9 +3,9 @@
 export function Header({ snapshotId }: { snapshotId: string | null }) {
   return (
     <header className="header">
-      <p className="brand">
-        <strong>S-CORE Docs Assistant</strong> <span className="tag">Community project</span>
-      </p>
+      <h1 className="brand">
+        S-CORE Docs Assistant <span className="tag">Community project</span>
+      </h1>
       <p className="meta">
         <span>Snapshot: {snapshotId ?? "none"}</span> · <span>Runs on this computer</span>
       </p>
