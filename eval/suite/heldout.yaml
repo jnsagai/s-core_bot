@@ -271,10 +271,13 @@ cases:
     forbidden: ["re:signed a (supply )?contract"]
   - id: ho-031
     category: unsupported
-    tags: [conflicting]
-    question: Is every S-CORE feature developed to the same ASIL?
+    tags: [unanswerable, presupposed_version]
+    # Replaced 2026-09-29 (agent review, A-048): the previous question ("Is every S-CORE feature
+    # developed to the same ASIL?") is answered by the documentation (features range from QM to
+    # ASIL_B), so it was not an unsupported case. Re-frozen with this reason; no other case changed.
+    question: Which ASIL will the whole S-CORE platform be certified to in its next release?
     expected_status: safe_handling
-    forbidden: ["re:every feature is (developed )?(to )?ASIL"]
+    forbidden: ["re:will be certified (to|at) ASIL", "re:is certified"]
   - id: ho-032
     category: unsupported
     tags: [unanswerable]
