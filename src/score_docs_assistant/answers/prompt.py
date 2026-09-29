@@ -96,12 +96,22 @@ def build_prompt(
     config: GenerationConfig,
     context_tokens: int,
     output_tokens: int,
+    max_claims: int | None = None,
+    max_claim_characters: int | None = None,
 ) -> Prompt:
     warnings: list[str] = []
     policy_tokens = estimate_tokens(SYSTEM_POLICY)
 
     # History + question within their budget; the question itself is never cut.
     question_block = f"<question>\n{escape(question)}\n</question>"
+    if max_claims is not None or max_claim_characters is not None:
+        # A tighter budget than chat's (comparison side answers) is stated so the model stays inside
+        # its token cap; unstated, a real model wrote until it was cut off (A-054). Chat's prompt is
+        # unchanged: stating its generous limits made answers longer.
+        question_block += (
+            f"\nAnswer with at most {max_claims or config.max_claims} claims of at most "
+            f"{max_claim_characters or config.max_claim_characters} characters each."
+        )
     history_budget = max(config.history_tokens - estimate_tokens(question_block), 0)
     turns = list(history)
     rendered: list[str] = [f"{t.role}: {escape(t.content)}" for t in turns]

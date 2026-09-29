@@ -17,7 +17,7 @@ from typing import Any
 from score_docs_assistant.answers.citations import SourceLinks, citation_for
 from score_docs_assistant.answers.injection import addresses_assistant
 from score_docs_assistant.answers.prompt import EvidenceItem, escape
-from score_docs_assistant.answers.service import AnswerService
+from score_docs_assistant.answers.service import AnswerBudget, AnswerService
 from score_docs_assistant.comparison.coverage import missing_reason, reason_text, source_reason
 from score_docs_assistant.comparison.metadata import snapshot_diff
 from score_docs_assistant.comparison.policy import COMPARISON_POLICY_VERSION, comparison_schema
@@ -178,6 +178,12 @@ class ComparisonService:
 
         async with self._answers.queue.slot(on_queued):
             timings["queue"] = _ms(started)
+            comparison_cfg = self._config.comparison
+            side_budget = AnswerBudget(
+                max_claims=comparison_cfg.side_max_claims,
+                max_claim_characters=comparison_cfg.side_max_claim_characters,
+                output_tokens=comparison_cfg.side_output_tokens,
+            )
             envelopes: dict[str, AnswerEnvelope] = {}
             items: dict[str, list[EvidenceItem]] = {}
             for side, handle in (("left", left), ("right", right)):
@@ -191,6 +197,7 @@ class ComparisonService:
                     request_id=request_id,
                     deadline=deadline,
                     progress=side_emit,
+                    budget=side_budget,
                 )
                 timings[side] = _ms(mark)
             if self.after_answers is not None:
@@ -216,7 +223,9 @@ class ComparisonService:
                 ordered["right"],
                 evidence_tokens=self._config.generation.evidence_tokens,
                 context_tokens=self._config.runtime.context_tokens,
-                output_tokens=self._config.runtime.output_tokens,
+                output_tokens=comparison_cfg.comparison_output_tokens,
+                max_differences=comparison_cfg.max_differences,
+                max_statement_characters=comparison_cfg.max_statement_characters,
             )
             sides = {"left": _Side("L"), "right": _Side("R")}
             sides["left"].items = list(prompt.left)
@@ -285,7 +294,9 @@ class ComparisonService:
         evidence = prompt.evidence_map()
 
         async def call(messages: list[dict[str, str]]) -> tuple[ComparisonOutcome, str]:
-            result = await self._answers.generate_json(messages, schema)
+            result = await self._answers.generate_json(
+                messages, schema, output_tokens=comparison.comparison_output_tokens
+            )
             outcome = validate_comparison(
                 result.text,
                 truncated=result.truncated,
@@ -297,10 +308,12 @@ class ComparisonService:
 
         outcome, raw = await call(prompt.messages)
         remaining = deadline - asyncio.get_running_loop().time()
+        salvageable = outcome.structural and bool(outcome.differences)
         if (
             outcome.ok
             or generation.repair_attempts < 1
             or remaining < generation.repair_min_seconds
+            or (comparison.repair == "if_no_valid_difference" and salvageable)
         ):
             return outcome, False
         repair = [

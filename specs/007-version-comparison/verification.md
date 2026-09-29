@@ -214,3 +214,26 @@ to `tasks.md`. One contract text mismatch was fixed (`contracts/http-api.md` nam
 Open, not an agent task: **SC-006** is measured and not met (3.5–3.9 ×). Meeting it would need dropping
 or changing a requirement (for example the per-side answers of FR-003), which is the owner's decision
 (A-044).
+
+## Amendment A — comparison speed (2026-09-29, owner request)
+
+Profile before the change (12 benchmark questions, warm): single answer p50 4.9 s; comparison p50
+14.2 s (left 4.3 s, right 4.4 s, comparison step 6.6 s).
+
+Measurements and decisions:
+
+| Step | Result |
+| --- | --- |
+| Concurrent side answers (probe) | sequential 13.4/15.2/8.5 s vs parallel 12.7/14.3/7.7 s → rejected (runtime serializes; one-generation rule) |
+| Shorter side/step budgets, limits unstated | worse (comparison p50 16.1 s): side answers hit the 500-token cap 4×, extra repairs |
+| Limits stated in prompts, side cap 700 tokens | side outputs 200–270 tokens, no cut-offs |
+| Stating chat's own limits | made chat answers longer (single p50 9.7 s) → chat prompt left unchanged |
+| Remaining repairs | DELETION_CLAIM 11 ("right adds …"), ONE_SIDE_ONLY/MISSING_SIDE_EVIDENCE 10 → policy v2; "adds" persists and stays forbidden (A-043) |
+| Benchmark, repair always | p50 15.1 s, type agreement 10/12, isolation 0, deletion 0 |
+| Benchmark, repair only without valid differences (default) | **p50 13.1 s, p95 14.2 s**, type agreement 9/12, isolation 0, deletion 0, citation integrity 12/12 (`comparison-20260929T165447Z.json`) |
+
+SC-006 re-measured on the F007 question ("How is the documentation published to GitHub Pages?"):
+ask 5.6 s / 5.6 s; compare 12.9 s / 12.4 s → **2.2–2.3×** (≤ 3×: met). On the benchmark set:
+comparison p50 13.1 s vs single-answer p50 ≈ 4.6 s → ≈ 2.8×. Type agreement varies 9–10/12 between
+runs (as before the change); every shown difference is still fully validated.
+

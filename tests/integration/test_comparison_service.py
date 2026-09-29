@@ -350,12 +350,14 @@ def test_salvage_after_repair_keeps_only_valid_differences(fx: ComparisonFixture
             )
         )
 
+    service = fx.service(comparison={"repair": "always"})
     result = fx.compare(
         "How many reviewers perform inspections?",
         answer_citing_all,
         answer_citing_all,
         mixed,
         mixed,
+        service=service,
     )
     isolated(result)
     model = [d for d in result.differences if d.origin == "model"]
@@ -366,3 +368,77 @@ def test_salvage_after_repair_keeps_only_valid_differences(fx: ComparisonFixture
         for w in result.warnings
     )
     assert "only the right excerpts state" in fx.generator.calls[3][-1]["content"]
+
+
+def test_side_answers_and_comparison_use_the_shorter_budget(fx: ComparisonFixture) -> None:
+    fx.compare(
+        "How many reviewers perform inspections?",
+        answer_citing_all,
+        answer_citing_all,
+        changed_script,
+    )
+    left, right, step = fx.generator.requests[:3]
+    for side in (left, right):
+        assert side["num_predict"] == 700
+        claims = side["schema"]["properties"]["claims"]
+        assert claims["maxItems"] == 4 and claims["items"]["properties"]["text"]["maxLength"] == 501
+    assert step["num_predict"] == 600
+    assert step["schema"]["properties"]["differences"]["maxItems"] == 4
+
+
+def test_chat_budget_is_unchanged(fx: ComparisonFixture) -> None:
+    import asyncio
+
+    from score_docs_assistant.domain.answers import ChatRequest
+
+    service = fx.service()
+    fx.generator.outputs.append(answer_citing_all)
+    asyncio.run(service._answers.answer(ChatRequest(question="reviewers"), request_id="c"))  # noqa: SLF001
+    request = fx.generator.requests[-1]
+    assert request["num_predict"] == 900
+    assert request["schema"]["properties"]["claims"]["maxItems"] == 12
+
+
+def test_limits_are_stated_in_the_prompts(fx: ComparisonFixture) -> None:
+    fx.compare(
+        "How many reviewers perform inspections?",
+        answer_citing_all,
+        answer_citing_all,
+        changed_script,
+    )
+    side_user = fx.generator.calls[0][1]["content"]
+    step_user = fx.generator.calls[2][1]["content"]
+    assert "at most 4 claims of at most 500 characters" in side_user
+    assert "at most 4 differences, each statement at most 400 characters" in step_user
+
+
+def test_default_keeps_valid_differences_without_a_repair(fx: ComparisonFixture) -> None:
+    def mixed(messages: list[dict[str, str]]) -> str:
+        ev = side_evidence(messages)
+        left, right = find(ev, "L", "two independent"), find(ev, "R", "three independent")
+        return json.dumps(
+            differences(
+                ("changed", "The left requires two reviewers; the right three.", [left], [right]),
+                ("changed", "The right adds a third reviewer.", [left], [right]),
+            )
+        )
+
+    result = fx.compare(
+        "How many reviewers perform inspections?", answer_citing_all, answer_citing_all, mixed
+    )
+    assert len(fx.generator.calls) == 3  # two side answers + one comparison call, no repair
+    assert [d.statement for d in result.differences if d.origin == "model"] == [
+        "The left requires two reviewers; the right three."
+    ]
+    assert any(w.startswith("comparison_differences_dropped: 1") for w in result.warnings)
+
+
+def test_structurally_invalid_output_is_still_repaired(fx: ComparisonFixture) -> None:
+    result = fx.compare(
+        "How many reviewers perform inspections?",
+        answer_citing_all,
+        answer_citing_all,
+        "not json",
+        changed_script,
+    )
+    assert len(fx.generator.calls) == 4 and result.origin == "model"

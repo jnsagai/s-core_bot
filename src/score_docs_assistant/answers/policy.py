@@ -40,7 +40,9 @@ def answer_schema(max_claims: int, max_claim_characters: int) -> dict[str, Any]:
                     "additionalProperties": False,
                     "required": ["text", "kind", "evidence_ids"],
                     "properties": {
-                        "text": {"type": "string", "maxLength": max_claim_characters},
+                        # One character above the validation limit: a claim cut off by the output
+                        # grammar is rejected by validation instead of passing as complete.
+                        "text": {"type": "string", "maxLength": max_claim_characters + 1},
                         "kind": {
                             "type": "string",
                             "enum": ["documented", "interpretation", "limitation"],
