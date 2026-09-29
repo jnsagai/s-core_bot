@@ -58,6 +58,11 @@ uv run score-assistant --config config/local.yaml eval answers --cases eval/answ
 uv run score-assistant --config config/local.yaml snapshots diff <left> <right>            # offline, no model
 uv run score-assistant --config config/local.yaml compare "question" --left <id> --right <id> [--json]
 uv run score-assistant --config config/local.yaml eval comparison --cases eval/comparison-dev.yaml
+uv run score-assistant --config config/local.yaml eval suite --split dev|heldout [--runs 3]   # held-out is frozen
+uv run score-assistant --config config/local.yaml eval adversarial | performance --cases ... | review import ...
+uv run score-assistant --config config/local.yaml models qualify && uv run score-assistant --config config/local.yaml release report
+scripts/offline_check.sh                     # blocked-egress scenario in a loopback-only namespace (no root)
+uv run python scripts/check_traceability.py  # every local requirement mapped (CI)
 cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run build   # web UI
 cd frontend && npm run check-no-third-party-assets && npm run check-no-telemetry
 # Opt-in tests: SCORE_ASSISTANT_REAL_RUNTIME=1 (Ollama), SCORE_ASSISTANT_REAL_NETWORK=1 (GitHub)

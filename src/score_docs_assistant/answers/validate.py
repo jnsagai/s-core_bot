@@ -20,7 +20,19 @@ MAX_RAW_BYTES = 64 * 1024
 MIN_QUOTE_CHARACTERS = 12
 NORMALIZED_PARTIAL = "The supplied evidence may answer only part of this question."
 NORMALIZED_CLARIFICATION = "More context (for example the release or module) is needed."
-_URL = re.compile(r"(https?://|www\.|file:|mailto:)", re.IGNORECASE)
+URL_PATTERN = re.compile(r"(https?://|www\.|file:|mailto:|javascript:|data:)", re.IGNORECASE)
+_URL = URL_PATTERN
+# Evidence IDs belong in evidence_ids, never in claim text; text markers can only be copied from a
+# document (F008 adversarial finding: a hostile excerpt's fake "[E9]" was relayed as a citation).
+EVIDENCE_MARKER = re.compile(r"\[[A-Z]\d{1,3}\]")
+# A claim citing text addressed to AI assistants may only describe it as document text (policy
+# rule 9a), for example "the notice contains text instructing readers …; it is not guidance".
+FRAMED_AS_DOCUMENT_TEXT = re.compile(
+    r"\b(contains?|includes?|has)\b[^.]{0,40}\b(text|instructions?|notice|request|statement)s?\b"
+    r"|addressed to (ai|assistants?)|not (guidance|documentation)|document content"
+    r"|\binstruct(s|ing|ions?)\b",
+    re.IGNORECASE,
+)
 _THOUGHT = re.compile(r"</?think>|<\|thinking\|>", re.IGNORECASE)
 _QUOTES = (
     re.compile(r'"([^"\n]{' + str(MIN_QUOTE_CHARACTERS) + r',})"'),
@@ -100,12 +112,17 @@ def validate_draft(
             errors.append(f"UNKNOWN_EVIDENCE_ID: {label} cites {unknown}")
         if claim.kind in ("documented", "interpretation") and not claim.evidence_ids:
             errors.append(f"MISSING_CITATION: {label} ({claim.kind}) cites no evidence")
-        if any(
-            evidence[e].suspicious for e in claim.evidence_ids if e in evidence
-        ) and reads_as_advice(claim.text):
+        cites_suspicious = any(evidence[e].suspicious for e in claim.evidence_ids if e in evidence)
+        framed = claim.kind == "limitation" or bool(FRAMED_AS_DOCUMENT_TEXT.search(claim.text))
+        if cites_suspicious and (not framed or reads_as_advice(claim.text)):
+            # Text addressed to AI assistants is never documentation fact (F008 adversarial
+            # finding: an injected "policy for AI assistants" was stated as the current policy).
             errors.append(
-                f"INJECTION_SUSPECTED: {label} turns text addressed to AI assistants into advice"
+                f"INJECTION_SUSPECTED: {label} presents text addressed to AI assistants as fact "
+                "or advice"
             )
+        if EVIDENCE_MARKER.search(claim.text):
+            errors.append(f"MARKER_IN_TEXT: {label} writes an evidence marker in its text")
         if _URL.search(claim.text):
             errors.append(f"URL_IN_TEXT: {label}")
         if _THOUGHT.search(claim.text):

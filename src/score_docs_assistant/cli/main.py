@@ -73,6 +73,7 @@ from score_docs_assistant.cli import doctor as _doctor  # noqa: E402,F401
 from score_docs_assistant.cli import evaluate as _evaluate  # noqa: E402,F401
 from score_docs_assistant.cli import index as _index  # noqa: E402,F401
 from score_docs_assistant.cli import models as _models  # noqa: E402,F401
+from score_docs_assistant.cli import qualify as _qualify  # noqa: E402,F401
 from score_docs_assistant.cli import search as _search  # noqa: E402,F401
 from score_docs_assistant.cli import serve as _serve  # noqa: E402,F401
 from score_docs_assistant.cli import snapshots as _snapshots  # noqa: E402,F401

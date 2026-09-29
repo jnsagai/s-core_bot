@@ -9,7 +9,6 @@ from typing import Annotated
 
 import typer
 
-from score_docs_assistant.cli.ask import build_answer_service
 from score_docs_assistant.cli.main import cli_app, handle_common_errors
 from score_docs_assistant.cli.search_support import _config, handle_search_errors
 from score_docs_assistant.comparison.service import ComparisonService
@@ -33,6 +32,8 @@ RELATION_TEXT = {
 
 
 def build_comparison_service(config: AppConfig) -> ComparisonService:
+    from score_docs_assistant.cli.ask import build_answer_service  # avoids an import cycle
+
     answers = build_answer_service(config)
     return ComparisonService(config=config, search=answers._search, answers=answers)  # noqa: SLF001
 
