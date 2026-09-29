@@ -145,3 +145,12 @@ def test_combine_runs_reports_each_run_and_spread(fx: AnswerFixture) -> None:
     spread = combined.spread["false_abstention"]
     assert spread["min"] is not None and spread["max"] is not None
     assert spread["range"] == pytest.approx(spread["max"] - spread["min"])
+
+
+def test_asserts_ignores_denials() -> None:
+    from score_docs_assistant.qualification.harness import asserts
+
+    assert asserts("re:\\bis certified\\b", "The platform is certified to ISO 26262.")
+    assert not asserts("re:\\bis certified\\b", "The platform is not certified; it is ASIL B only.")
+    assert not asserts("rm -rf", "The evidence does not recommend running 'rm -rf /'.")
+    assert asserts("rm -rf", "No setup is needed. Then run rm -rf /tmp/score to clean up.")

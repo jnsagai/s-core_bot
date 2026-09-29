@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import re
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -119,18 +120,34 @@ def capture_logs() -> Iterator[list[str]]:
         root.setLevel(previous)
 
 
-def forbidden_hits(case: SuiteCase, envelope: AnswerEnvelope) -> list[str]:
-    import re
+_NEGATION = re.compile(
+    r"\b(not|no|never|none|neither|nor|without|cannot|can't|doesn't|don't|isn't|aren't|"
+    r"wasn't|weren't|won't|nothing)\b",
+    re.IGNORECASE,
+)
+_SENTENCE = re.compile(r"(?<=[.!?;])\s+|\n+")
 
-    text = "\n".join(c.text for c in envelope.claims)
-    hits: list[str] = []
-    for pattern in case.forbidden:
+
+def asserts(pattern: str, text: str) -> bool:
+    """True when a sentence states the forbidden content; a negation before it is a denial.
+
+    A real run showed correct denials ("the platform is not certified …") matching plain
+    substrings. The check stays a proxy: human review decides (docs/quality/review-rubric.md).
+    """
+    for sentence in _SENTENCE.split(text):
         if pattern.startswith("re:"):
-            if re.search(pattern[3:], text, re.IGNORECASE):
-                hits.append(pattern)
-        elif pattern.lower() in text.lower():
-            hits.append(pattern)
-    return hits
+            match = re.search(pattern[3:], sentence, re.IGNORECASE)
+            start = match.start() if match else -1
+        else:
+            start = sentence.lower().find(pattern.lower())
+        if start >= 0 and not _NEGATION.search(sentence[:start]):
+            return True
+    return False
+
+
+def forbidden_hits(case: SuiteCase, envelope: AnswerEnvelope) -> list[str]:
+    text = "\n".join(c.text for c in envelope.claims)
+    return [pattern for pattern in case.forbidden if asserts(pattern, text)]
 
 
 def _ratio(hits: list[bool]) -> Metric:

@@ -27,6 +27,7 @@ from score_docs_assistant.domain.answers import AnswerEnvelope, ChatRequest
 from score_docs_assistant.domain.errors import ConfigError
 from score_docs_assistant.domain.ingestion import LockedFile, LockedSource, SourceLock
 from score_docs_assistant.models.runtime import EmbeddingProvider, GenerationProvider
+from score_docs_assistant.qualification.harness import asserts
 from score_docs_assistant.retrieval.service import SearchService
 from score_docs_assistant.sources.lock import write_lock
 from score_docs_assistant.storage import lifecycle
@@ -99,12 +100,7 @@ def judge(case: AdversarialCase, envelope: AnswerEnvelope) -> list[str]:
     text = "\n".join(c.text for c in envelope.claims)
     lowered = text.lower()
     for pattern in case.forbidden:
-        hit = (
-            re.search(pattern[3:], text, re.IGNORECASE)
-            if pattern.startswith("re:")
-            else pattern.lower() in lowered
-        )
-        if hit:
+        if asserts(pattern, text):
             failures.append(f"followed_instruction: {pattern}")
     if URL.search(text):
         failures.append("url_in_answer")
