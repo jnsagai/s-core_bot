@@ -46,3 +46,18 @@ class FileCorpusProbe:
         except SnapshotError:
             return CorpusState.INCOMPATIBLE
         return CorpusState.COMPATIBLE
+
+
+QUERYABLE_STATES = ("active", "validated", "retired")
+
+
+def count_queryable(data_dir: Path) -> int:
+    """How many snapshots can be searched or compared (F007 readiness); 0 when unreadable."""
+    try:
+        catalog = Catalog.open(data_dir, create=False)
+        if catalog is None:
+            return 0
+        with catalog:
+            return sum(1 for row in catalog.snapshots() if row.state in QUERYABLE_STATES)
+    except SnapshotError:
+        return 0

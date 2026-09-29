@@ -57,6 +57,7 @@ class LimitsOut(BaseModel):
     active_generations: int
     queued_generations: int
     request_deadline_seconds: int
+    comparison_deadline_seconds: int
 
 
 class ModelsOut(BaseModel):

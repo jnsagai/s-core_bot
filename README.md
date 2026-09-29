@@ -38,12 +38,18 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   `eval answers` measures status, citation integrity and evidence overlap; human-judged quality stays
   "not run" until reviewed.
 
-- **F006 (implemented)** — local web UI served by the same backend at `http://127.0.0.1:8080/`:
+- **F006 (done)** — local web UI served by the same backend at `http://127.0.0.1:8080/`:
   ask with progress, stop and retry, citation panel, direct search, snapshot selector, status view,
   Markdown/JSON export. Conversations stay in page memory only; no CDN, telemetry or third-party
   requests (strict CSP). Build once with `cd frontend && npm ci && npm run build`. See
   `docs/user/local-ui.md`. Its real-browser walkthrough has not been run on the development machine
   (no browser installed there).
+
+- **F007 (done)** — explicit two-snapshot comparison: `compare "question" --left A --right B`,
+  `POST /api/v1/compare`, and a Compare tab. It shows two separately cited answers, typed differences
+  (changed / unchanged / conflicting / not established) and per-source revisions of both snapshots.
+  It never claims that something was removed when coverage is missing, and never infers a release
+  label. `snapshots diff A B` shows identities without the model. See `docs/user/comparison.md`.
 
 ## Scope
 

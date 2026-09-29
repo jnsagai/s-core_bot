@@ -131,3 +131,69 @@ export function baseRoutes(overrides: Record<string, Handler> = {}): Record<stri
     ...overrides,
   };
 }
+
+export const BASELINE = "20260929T075830Z-9135a190";
+
+const citation = (id: string, snapshot: string, revision: string, excerpt: string) => ({
+  evidence_id: id, chunk_id: `${id.toLowerCase()}`.padEnd(64, "0"), snapshot_id: snapshot,
+  source_id: "score-process", revision, revision_status: "pinned",
+  path: "process/general_concepts/score_review_concept.rst", heading_path: ["Review", "Inspection"],
+  line_start: 28, line_end: 29, excerpt, immutable_url: null, revision_match: "none",
+});
+
+export const COMPARISON = {
+  schema_version: 1,
+  request_id: "cmp-1",
+  question: "How are inspections performed?",
+  left: { ...ENVELOPE, snapshot_id: BASELINE, citations: [{ ...ENVELOPE.citations[0], snapshot_id: BASELINE, excerpt: "Left snapshot excerpt about two reviewers." }] },
+  right: ENVELOPE,
+  differences: [
+    { type: "changed", statement: "The left requires two reviewers; the right requires three.", left_evidence_ids: ["L1"], right_evidence_ids: ["R1"], origin: "model", coverage_reason: null, missing_side: null },
+    { type: "not_established", statement: "Only the right excerpts describe the checklist.", left_evidence_ids: [], right_evidence_ids: ["R2"], origin: "model", coverage_reason: "not_retrieved", missing_side: "left" },
+  ],
+  evidence: {
+    left: [citation("L1", BASELINE, "82bca166065990e52b871de47c87668b6a3d5f49", "Inspections need two reviewers (left).")],
+    right: [
+      citation("R1", SNAPSHOT, "66321fe6bd131eae58fbd6395b0f0b92d63e00f5", "Inspections need three reviewers (right)."),
+      citation("R2", SNAPSHOT, "66321fe6bd131eae58fbd6395b0f0b92d63e00f5", "The checklist lists entry criteria."),
+    ],
+  },
+  snapshots: {
+    left_snapshot_id: BASELINE, right_snapshot_id: SNAPSHOT,
+    left_created_at: "2026-09-29T07:58:30Z", right_created_at: "2026-09-28T14:05:48Z",
+    sources: [
+      { source_id: "score-process", relation: "different", left_revision: "82bca166065990e52b871de47c87668b6a3d5f49", right_revision: "66321fe6bd131eae58fbd6395b0f0b92d63e00f5", left_revision_status: "pinned", right_revision_status: "pinned", left_status: "ok", right_status: "ok" },
+      { source_id: "score-process-needs", relation: "right_only", left_revision: null, right_revision: "98abdb6105f24bd4f469b2ae719f355fc2f135cccfa23a96c97697f0240f675c", left_revision_status: null, right_revision_status: "unverified", left_status: null, right_status: "ok" },
+    ],
+    processing: [],
+    release_label: null,
+    warnings: ["source_only_on_one_side: score-process-needs is only in the right snapshot; content from it cannot be compared"],
+  },
+  model: ENVELOPE.model,
+  origin: "model",
+  warnings: [],
+  policy_version: 1,
+  timings_ms: { total: 9000 },
+};
+
+export const COMPARE_CAPABILITIES = {
+  ...CAPABILITIES,
+  modes: { ...CAPABILITIES.modes, compare: { available: true, reasons: [] } },
+};
+
+export const TWO_SNAPSHOTS = {
+  active: SNAPSHOT,
+  snapshots: [
+    { ...SNAPSHOTS.snapshots[0], created_at: "2026-09-28T14:05:48Z" },
+    { ...SNAPSHOTS.snapshots[0], snapshot_id: BASELINE, state: "validated", active: false, created_at: "2026-09-29T07:58:30Z" },
+  ],
+};
+
+export function compareRoutes(overrides: Record<string, Handler> = {}): Record<string, Handler> {
+  return baseRoutes({
+    "GET /api/v1/capabilities": () => json(COMPARE_CAPABILITIES),
+    "GET /health/ready": () => json({ ready: true, capabilities: COMPARE_CAPABILITIES.modes }),
+    "GET /api/v1/snapshots": () => json(TWO_SNAPSHOTS),
+    ...overrides,
+  });
+}

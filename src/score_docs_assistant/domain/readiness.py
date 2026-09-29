@@ -24,6 +24,7 @@ class ReasonCode(StrEnum):
     MODEL_IDENTITY_MISMATCH = "model_identity_mismatch"
     NOT_IMPLEMENTED = "not_implemented"
     SEMANTIC_UNAVAILABLE = "semantic_unavailable"
+    SNAPSHOTS_INSUFFICIENT = "snapshots_insufficient"
 
 
 class CapabilityState(BaseModel):

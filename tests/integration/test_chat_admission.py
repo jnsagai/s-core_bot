@@ -76,7 +76,11 @@ def test_cancel_releases_slot_within_two_seconds(fx: AnswerFixture) -> None:
 
 
 async def _asgi_call(
-    app: Any, body: dict[str, Any], accept: str, disconnect_after: float
+    app: Any,
+    body: dict[str, Any],
+    accept: str,
+    disconnect_after: float,
+    path: str = "/api/v1/chat",
 ) -> list[dict[str, Any]]:
     """Drive the ASGI app directly and disconnect the client after a delay."""
     sent: list[dict[str, Any]] = []
@@ -105,8 +109,8 @@ async def _asgi_call(
         "http_version": "1.1",
         "method": "POST",
         "scheme": "http",
-        "path": "/api/v1/chat",
-        "raw_path": b"/api/v1/chat",
+        "path": path,
+        "raw_path": path.encode(),
         "query_string": b"",
         "headers": [
             (b"host", b"127.0.0.1:8080"),

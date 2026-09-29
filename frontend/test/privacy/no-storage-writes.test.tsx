@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "../../src/App";
-import { ENVELOPE, SNAPSHOT, baseRoutes, installFetch, sse } from "../helpers/fetch";
+import { COMPARISON, ENVELOPE, SNAPSHOT, baseRoutes, compareRoutes, installFetch, sse } from "../helpers/fetch";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -38,6 +38,39 @@ describe("privacy", () => {
       }
     }
     // FR-015: every request goes to this application's own API.
+    expect(mock.calls.every((c) => /^\/(api\/v1|health)\//.test(c.url))).toBe(true);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("privacy of comparisons (F007 T025)", () => {
+  it("compare → export writes no storage or cookies and calls only the application's API", async () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    const cookie = vi.spyOn(document, "cookie", "set");
+    const logs = ["log", "info", "warn", "error", "debug"].map((m) =>
+      vi.spyOn(console, m as "log").mockImplementation(() => undefined),
+    );
+    vi.stubGlobal("URL", { ...URL, createObjectURL: () => "blob:x", revokeObjectURL: () => undefined });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const mock = installFetch(compareRoutes({
+      "POST /api/v1/compare": () => sse([{ event: "comparison", data: COMPARISON }, { event: "done", data: {} }]),
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByText(`Snapshot: ${SNAPSHOT}`)).toBeInTheDocument());
+    await user.click(screen.getByRole("tab", { name: "Compare" }));
+    const question = "Secret comparison question";
+    await user.type(screen.getByLabelText("Question to compare"), question);
+    await user.click(screen.getByRole("button", { name: "Compare" }));
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Differences" })).toBeInTheDocument());
+    await user.click(screen.getAllByRole("button", { name: "Export JSON" }).at(-1)!);
+    expect(setItem).not.toHaveBeenCalled();
+    expect(cookie).not.toHaveBeenCalled();
+    for (const spy of logs) {
+      for (const args of spy.mock.calls) {
+        expect(args.map(String).join(" ")).not.toContain(question);
+      }
+    }
     expect(mock.calls.every((c) => /^\/(api\/v1|health)\//.test(c.url))).toBe(true);
     vi.unstubAllGlobals();
   });

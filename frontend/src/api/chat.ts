@@ -4,6 +4,7 @@
  * reads `response.body` itself and never retries.
  */
 import { apiFetch, apiFetchJson } from "./client";
+import { readSse } from "./sse";
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -45,26 +46,6 @@ export async function chat(request: ChatRequest): Promise<Record<string, unknown
   return apiFetchJson("/api/v1/chat", { method: "POST", body: toRequestBody(request) });
 }
 
-function parseFrame(frame: string): ChatStreamEvent | null {
-  let id: number | null = null;
-  let event: string | null = null;
-  let data: string | null = null;
-  for (const line of frame.split("\n")) {
-    if (line.startsWith("id:")) {
-      id = Number(line.slice(3).trim());
-    } else if (line.startsWith("event:")) {
-      event = line.slice(6).trim();
-    } else if (line.startsWith("data:")) {
-      data = line.slice(5).trim();
-    }
-  }
-  if (id === null || event === null || data === null) {
-    return null;
-  }
-  const parsed = JSON.parse(data) as Record<string, unknown>;
-  return { event, id, data: parsed } as ChatStreamEvent;
-}
-
 /**
  * Streams `POST /api/v1/chat` with `Accept: text/event-stream`. Aborting `signal` stops iteration
  * immediately with no reconnect and no further events — cancellation is the only control this
@@ -80,32 +61,7 @@ export async function* streamChat(
     accept: "text/event-stream",
     signal,
   });
-  const body = response.body;
-  if (!body) {
-    return;
-  }
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      buffer += decoder.decode(value, { stream: true });
-      let boundary = buffer.indexOf("\n\n");
-      while (boundary !== -1) {
-        const frame = buffer.slice(0, boundary);
-        buffer = buffer.slice(boundary + 2);
-        const parsedEvent = parseFrame(frame);
-        if (parsedEvent) {
-          yield parsedEvent;
-        }
-        boundary = buffer.indexOf("\n\n");
-      }
-    }
-  } finally {
-    reader.cancel().catch(() => undefined);
+  for await (const event of readSse(response)) {
+    yield event as ChatStreamEvent;
   }
 }

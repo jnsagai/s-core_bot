@@ -45,12 +45,13 @@ from score_docs_assistant.retrieval.semantic import RowAttributes, normalize, to
 from score_docs_assistant.retrieval.status import SemanticStatusCache, StatusResult
 from score_docs_assistant.storage.build import chunker_config
 from score_docs_assistant.storage.catalog import Catalog
+from score_docs_assistant.storage.corpus_probe import QUERYABLE_STATES
 from score_docs_assistant.storage.snapshot_store import FileSnapshotHandle, FileSnapshotStore
 from score_docs_assistant.storage.validation import SnapshotValidator
 
 T = TypeVar("T")
 CHUNK_KINDS = ("prose", "need", "table", "code", "literal", "diagram")
-_QUERYABLE = ("active", "validated", "retired")
+_QUERYABLE = QUERYABLE_STATES
 _REASON_FOR_STATUS = {
     "disabled": "embedding_identity_mismatch",
     "unverified": "embedding_runtime_unavailable",

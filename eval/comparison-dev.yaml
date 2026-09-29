@@ -1,0 +1,77 @@
+# F007 version-comparison benchmark (FR-020, master spec §13). Agent-authored from the two real
+# snapshots below by diffing their source revisions; NOT reviewed by the owner, so every report is
+# a development measurement, not release evidence. Expected types describe the dominant
+# observation a careful reader would make; `acceptable_types` lists defensible alternatives.
+schema_version: 1
+review_status: unreviewed (agent-authored 2026-09-29)
+left_snapshot: 20260929T075830Z-9135a190     # baseline: sources at 2026-05-29
+right_snapshot: 20260928T140548Z-7c6a05b3    # active: sources at 2026-09-28
+written_against:
+  score-platform: ba13d8296dd6021067bdeb6ba644b0546f8ad0c6 -> e2373d822fc2f6e9a3f8a0538904f3faa39309ea
+  score-process: 82bca166065990e52b871de47c87668b6a3d5f49 -> 66321fe6bd131eae58fbd6395b0f0b92d63e00f5
+cases:
+  - id: cmp-01
+    category: changed
+    question: How do I propose a new feature for the S-CORE platform?
+    expected_type: changed
+    acceptable_types: [not_established]
+    notes: feature_request.rst became the Feature & Enhancement Proposal (FEP) guide with a Shepherd and FEP track.
+  - id: cmp-02
+    category: changed
+    question: What must reviewers fill in on the requirements inspection checklist?
+    expected_type: changed
+    acceptable_types: [not_established]
+    notes: chklst_req_inspection.rst (left) was replaced by req_inspection.rst (right) with a mandatory passed column and a test expert role.
+  - id: cmp-03
+    category: changed
+    question: What guidance applies to writing safety-relevant Rust code in S-CORE?
+    expected_type: changed
+    acceptable_types: [not_established]
+    notes: coding_guidelines.rst gained a Safety Rust section and references score_rust_policies.
+  - id: cmp-04
+    category: changed
+    question: How are inspections of work products initiated and documented?
+    expected_type: changed
+    acceptable_types: [not_established]
+    notes: score_review_concept.rst adds ASIL/QM-specific initiation rules; statuses draft -> valid.
+  - id: cmp-05
+    category: unchanged
+    question: How do I set up Visual Studio Code for S-CORE development?
+    expected_type: unchanged
+    notes: docs/contribute/development/ide/vscode.rst is byte-identical in both revisions.
+  - id: cmp-06
+    category: unchanged
+    question: How is the documentation published to GitHub Pages?
+    expected_type: unchanged
+    notes: docs/contribute/ci/publishing-gh-pages.rst is byte-identical in both revisions.
+  - id: cmp-07
+    category: unchanged
+    question: What are feature flags and how should contributors use them?
+    expected_type: unchanged
+    notes: docs/contribute/general/feature_flags.rst is byte-identical in both revisions.
+  - id: cmp-08
+    category: missing_coverage
+    question: What does module 1 of the requirements engineering training cover?
+    expected_type: not_established
+    notes: process/trainings/ exists only in the right revision.
+  - id: cmp-09
+    category: missing_coverage
+    question: What changed in release 2.1.0 of the process description according to its release note?
+    expected_type: not_established
+    notes: release_note_v_2_1_0.rst exists only in the right revision.
+  - id: cmp-10
+    category: missing_coverage
+    question: What does the safety analysis of the baselibs result library contain?
+    expected_type: not_established
+    notes: docs/modules/baselibs/result/ exists only in the left revision; must never be reported as removed.
+  - id: cmp-11
+    category: exact_id
+    question: What does gd_req__req_attr_uid require?
+    expected_type: changed
+    acceptable_types: [unchanged]
+    notes: the record exists in both; its options gained a version attribute.
+  - id: cmp-12
+    category: exact_id
+    question: What is doc__number_decision_record_template?
+    expected_type: not_established
+    notes: the decision record template exists only in the right revision (record_not_found on the left).

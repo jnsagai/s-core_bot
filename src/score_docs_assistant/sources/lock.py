@@ -67,3 +67,29 @@ def verify_files(root: Path, locked: LockedSource) -> list[str]:
         if not target.is_file() or file_sha256(target) != entry.sha256:
             problems.append(entry.path)
     return problems
+
+
+LOCK_ARCHIVE_DIR = "source-locks"
+
+
+def archive_lock(data_dir: Path, lock_path: Path) -> Path:
+    """Keep a content-addressed copy of a written lock (F007 research R7).
+
+    Citations from an older snapshot can then prove their exact upstream revision after the
+    current lock has moved on. Copies are immutable and named by the file's SHA-256.
+    """
+    raw = lock_path.read_bytes()
+    target = data_dir / LOCK_ARCHIVE_DIR / f"{hashlib.sha256(raw).hexdigest()}.json"
+    if not target.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=".lock.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "wb") as handle:
+                handle.write(raw)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(tmp_name, target)
+        except BaseException:
+            Path(tmp_name).unlink(missing_ok=True)
+            raise
+    return target

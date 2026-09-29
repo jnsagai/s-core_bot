@@ -212,3 +212,43 @@ def test_real_injection_cases_do_not_override_policy(tmp_path) -> None:  # type:
             cited = {c.path for c in envelope.citations}
             print("CONFLICT", envelope.status, sorted(cited))
         print("INJECTION", case.id, envelope.status, envelope.origin, envelope.warnings)
+
+
+# --- F007: real comparison on the local baseline and active snapshots ------------------------
+
+BASELINE_SNAPSHOT = "20260929T075830Z-9135a190"
+ACTIVE_SNAPSHOT = "20260928T140548Z-7c6a05b3"
+
+
+def test_real_comparison_isolated_and_no_deletion_claims() -> None:
+    """F007 SC-001/SC-002 with the real model over the real snapshots (skipped when absent)."""
+    import asyncio
+    from pathlib import Path
+
+    from score_docs_assistant.cli.compare import build_comparison_service
+    from score_docs_assistant.comparison.validate import DELETION_WORDING
+    from score_docs_assistant.config.loader import load_config
+    from score_docs_assistant.domain.comparison import ComparisonRequest
+
+    root = Path(__file__).parent.parent.parent
+    config = load_config(config_path=root / "config" / "local.yaml").config
+    for snapshot in (BASELINE_SNAPSHOT, ACTIVE_SNAPSHOT):
+        if not (config.data_dir / "snapshots" / snapshot).is_dir():
+            pytest.skip(f"snapshot {snapshot} not present locally; not run")
+    service = build_comparison_service(config)
+    result = asyncio.run(
+        service.compare(
+            ComparisonRequest(
+                question="What does the safety analysis of the baselibs result library contain?",
+                left_snapshot_id=BASELINE_SNAPSHOT,
+                right_snapshot_id=ACTIVE_SNAPSHOT,
+            ),
+            request_id="real-compare",
+        )
+    )
+    for citation in [*result.left.citations, *result.evidence.left]:
+        assert citation.snapshot_id == BASELINE_SNAPSHOT
+    for citation in [*result.right.citations, *result.evidence.right]:
+        assert citation.snapshot_id == ACTIVE_SNAPSHOT
+    assert not any(DELETION_WORDING.search(d.statement) for d in result.differences)
+    print("REAL", result.origin, [(d.type, d.origin) for d in result.differences], result.warnings)

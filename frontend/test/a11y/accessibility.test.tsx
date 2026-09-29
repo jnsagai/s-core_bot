@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { App } from "../../src/App";
 import { Dialog } from "../../src/components/Dialog";
-import { ENVELOPE, SNAPSHOT, SNAPSHOTS, baseRoutes, installFetch, sse } from "../helpers/fetch";
+import { COMPARISON, ENVELOPE, SNAPSHOT, SNAPSHOTS, baseRoutes, compareRoutes, installFetch, sse } from "../helpers/fetch";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -42,6 +42,45 @@ describe("axe (T028)", () => {
     const { user, view } = await withAnswer();
     await user.click(screen.getAllByRole("button", { name: /Open citation E1/ })[0]);
     expect(await axeViolations(view.container)).toEqual([]);
+  });
+});
+
+async function withComparison() {
+  installFetch(compareRoutes({
+    "POST /api/v1/compare": () => sse([{ event: "comparison", data: COMPARISON }, { event: "done", data: {} }]),
+  }));
+  const user = userEvent.setup();
+  const view = render(<App />);
+  await waitFor(() => expect(screen.getByText(`Snapshot: ${SNAPSHOT}`)).toBeInTheDocument());
+  await user.click(screen.getByRole("tab", { name: "Compare" }));
+  await user.type(screen.getByLabelText("Question to compare"), "How are inspections performed?");
+  await user.click(screen.getByRole("button", { name: "Compare" }));
+  await waitFor(() => expect(screen.getByRole("heading", { name: "Differences" })).toBeInTheDocument());
+  return { user, view };
+}
+
+describe("Compare tab accessibility (F007 T025, FR-018)", () => {
+  it("has no axe violations with a result and with a side's evidence dialog open", async () => {
+    const { user, view } = await withComparison();
+    expect(await axeViolations(view.container)).toEqual([]);
+    await user.click(screen.getByRole("button", { name: /Open left evidence L1/ }));
+    expect(await axeViolations(view.container)).toEqual([]);
+  });
+
+  it("reaches pickers, question, compare, differences' evidence and export by keyboard", async () => {
+    const { user } = await withComparison();
+    screen.getByLabelText("Left snapshot").focus();
+    const reached: string[] = [];
+    for (let i = 0; i < 40; i++) {
+      const el = document.activeElement as HTMLElement;
+      const name = el.getAttribute("aria-label") || (el as HTMLInputElement).labels?.[0]?.textContent || el.textContent || "";
+      expect(name.trim(), `unnamed ${el.tagName}`).not.toBe("");
+      reached.push(name.trim());
+      await user.tab();
+    }
+    for (const name of ["Left snapshot", "Right snapshot", "Question to compare", "Compare", "Open left evidence L1", "Open right evidence R1", "Export Markdown"]) {
+      expect(reached.some((r) => r.startsWith(name)), name).toBe(true);
+    }
   });
 });
 

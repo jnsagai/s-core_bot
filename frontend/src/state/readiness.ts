@@ -11,6 +11,7 @@ export interface AppReadinessState {
   status: "loading" | "ready" | "failed";
   search: { available: boolean; degradedReason: string | null };
   chat: { available: boolean; reason: string | null };
+  compare: { available: boolean; reason: string | null };
   limits: { questionCharacters: number; historyCharacters: number } | null;
   models: { generation: string; embedding: string } | null;
   snapshots: SnapshotSummary[];
@@ -23,6 +24,7 @@ export const INITIAL_READINESS: AppReadinessState = {
   status: "loading",
   search: { available: false, degradedReason: null },
   chat: { available: false, reason: null },
+  compare: { available: false, reason: null },
   limits: null,
   models: null,
   snapshots: [],
@@ -36,6 +38,7 @@ export async function loadReadiness(): Promise<AppReadinessState> {
   const ready = await getHealthReady().catch(() => null);
   const search = capabilities.modes.search ?? { available: false, reasons: [] };
   const chat = capabilities.modes.chat ?? { available: false, reasons: [] };
+  const comparison = capabilities.modes.compare ?? { available: false, reasons: [] };
   const searchReasons = ready?.capabilities?.search?.reasons ?? search.reasons;
   return {
     status: "ready",
@@ -44,6 +47,7 @@ export async function loadReadiness(): Promise<AppReadinessState> {
       degradedReason: searchReasons.find((r) => r !== "not_implemented") ?? null,
     },
     chat: { available: chat.available, reason: chat.reasons[0] ?? null },
+    compare: { available: comparison.available, reason: comparison.reasons[0] ?? null },
     limits: {
       questionCharacters: capabilities.limits.questionCharacters,
       historyCharacters: capabilities.limits.historyCharacters,
