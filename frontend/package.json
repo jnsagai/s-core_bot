@@ -10,8 +10,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "license-check": "license-checker-rseidelsohn --json --production",
-    "check-no-third-party-assets": "node scripts/check-no-third-party-assets.mjs"
+    "license-check": "license-checker-rseidelsohn --json --excludePrivatePackages",
+    "check-no-third-party-assets": "node scripts/check-no-third-party-assets.mjs",
+    "check-no-telemetry": "node scripts/check-no-telemetry.mjs"
   },
   "dependencies": {
     "react": "19.3.0",

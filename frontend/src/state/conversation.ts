@@ -3,6 +3,7 @@
  * localStorage/sessionStorage/cookies (FR-013) — this module holds only React state.
  */
 import type { ChatStreamEvent } from "../api/chat";
+import { answerText, toAnswerViewModel } from "../answer/model";
 
 export type TurnStatus =
   | "queued"
@@ -19,6 +20,7 @@ export interface ConversationTurn {
   content: string;
   snapshotId?: string;
   status?: TurnStatus;
+  position?: number;
   answer?: Record<string, unknown>;
   error?: Record<string, unknown>;
 }
@@ -30,14 +32,14 @@ export interface ConversationState {
 
 export const EMPTY_CONVERSATION: ConversationState = { snapshotId: null, turns: [] };
 
-function makeId(): string {
+export function makeId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `turn-${Math.random().toString(36).slice(2)}`;
 }
 
 export type ConversationAction =
-  | { type: "ask"; question: string; snapshotId: string | null }
+  | { type: "ask"; question: string; snapshotId: string | null; turnId?: string }
   | { type: "streamEvent"; turnId: string; event: ChatStreamEvent }
   | { type: "cancel"; turnId: string }
   | { type: "setSnapshot"; snapshotId: string }
@@ -51,7 +53,7 @@ export function conversationReducer(
     case "ask": {
       const userTurn: ConversationTurn = { id: makeId(), role: "user", content: action.question };
       const assistantTurn: ConversationTurn = {
-        id: makeId(),
+        id: action.turnId ?? makeId(),
         role: "assistant",
         content: "",
         status: "queued",
@@ -69,15 +71,19 @@ export function conversationReducer(
             return turn;
           }
           const { event } = action.event;
+          if (turn.status === "cancelled") {
+            return turn; // a stopped turn ignores late events
+          }
           if (event === "progress") {
-            const stage = (action.event.data as { stage: TurnStatus }).stage;
-            return { ...turn, status: stage };
+            const data = action.event.data as { stage: TurnStatus; position?: number };
+            return { ...turn, status: data.stage, position: data.position };
           }
           if (event === "answer") {
             const answer = action.event.data;
             const snapshotId =
               typeof answer.snapshot_id === "string" ? answer.snapshot_id : undefined;
-            return { ...turn, status: "ready", answer, snapshotId };
+            const content = answerText(toAnswerViewModel(answer));
+            return { ...turn, status: "ready", answer, snapshotId, content };
           }
           if (event === "error") {
             return { ...turn, status: "failed", error: action.event.data };

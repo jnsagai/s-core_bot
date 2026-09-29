@@ -40,5 +40,44 @@ jobs:
       - name: Test (deterministic; real_runtime tests skip without a live Ollama)
         run: uv run pytest
 
-      - name: Dependency license check
+      - name: Install locked frontend dependencies (for the npm license inventory)
+        run: npm ci
+        working-directory: frontend
+
+      - name: Dependency license check (Python + npm)
         run: uv run python scripts/check_licenses.py
+
+  frontend:
+    # F006: the static UI bundle. Uses the Node.js preinstalled on the runner (no extra action).
+    name: Frontend lint, types, tests, build, asset and telemetry checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Node version
+        run: node --version && npm --version
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test (jsdom; no browser)
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: No third-party assets in the bundle
+        run: npm run check-no-third-party-assets
+
+      - name: No telemetry SDK
+        run: npm run check-no-telemetry

@@ -13,3 +13,23 @@ exceptions:
       tools/editors/emacs/rst.el, which is not shipped in the wheel; docutils/utils/math/math2html.py
       (ex-eLyXer) was relicensed to BSD-2-Clause. Installed files are Public Domain,
       BSD-2-Clause, BSD-3-Clause or PSF. Evidence: specs/002-source-ingestion/research.md R3.
+  - name: "npm:caniuse-lite"
+    license: "CC-BY-4.0"
+    reviewed_by: "agent review (Claude Opus 5.5), 2026-09-29"
+    reason: >-
+      Browser-support data used only at build time by browserslist/Vite tooling (dev
+      dependency); not included in the shipped frontend bundle. CC-BY-4.0 is a permissive
+      attribution license, not copyleft; attribution is kept via THIRD_PARTY_NOTICES.md.
+  - name: "npm:spdx-exceptions"
+    license: "CC-BY-3.0"
+    reviewed_by: "agent review (Claude Opus 5.5), 2026-09-29"
+    reason: >-
+      SPDX exception-list data used only by the license-checker dev tool; not shipped in the
+      bundle. CC-BY-3.0 is permissive (attribution), not copyleft.
+  - name: "npm:spdx-ranges"
+    license: "(MIT AND CC-BY-3.0)"
+    reviewed_by: "agent review (Claude Opus 5.5), 2026-09-29"
+    reason: >-
+      SPDX license-range data used only by the license-checker dev tool; not shipped in the
+      bundle. MIT code plus CC-BY-3.0 data, both permissive; attribution kept in
+      THIRD_PARTY_NOTICES.md.

@@ -40,8 +40,15 @@ ALLOWED_LICENSE_KEYWORDS = (
     "PSF",
     "MOZILLA PUBLIC LICENSE",
     "MPL",
-    "UNLICENSE",
+    # Added for the npm inventory (F006, docs/ASSUMPTIONS.md A-038): both are permissive and
+    # OSI/FSF-recognized; CC0 is a public-domain dedication.
+    "BLUEOAK",
+    "CC0",
 )
+# "The Unlicense" is allowed, but npm's "UNLICENSED" means *no license granted* (proprietary).
+# A plain substring test would accept the latter, so the Unlicense is matched as a whole word.
+UNLICENSE_PATTERN = re.compile(r"\bUNLICENSE\b")
+FRONTEND_DIR = REPO_ROOT / "frontend"
 
 
 @dataclass(frozen=True)
@@ -49,6 +56,8 @@ class PackageLicense:
     name: str
     version: str
     license: str
+    # "npm" licenses are SPDX expressions and are evaluated strictly (npm_expression_allowed).
+    ecosystem: str = "python"
 
 
 @dataclass(frozen=True)
@@ -73,7 +82,20 @@ def is_copyleft(license_str: str) -> bool:
 
 def is_allowed(license_str: str) -> bool:
     upper = license_str.upper()
-    return any(keyword in upper for keyword in ALLOWED_LICENSE_KEYWORDS)
+    return any(keyword in upper for keyword in ALLOWED_LICENSE_KEYWORDS) or bool(
+        UNLICENSE_PATTERN.search(upper)
+    )
+
+
+def npm_expression_allowed(expression: str) -> bool:
+    """SPDX expression rule for npm: any one OR-alternative must be fully allowed, and every
+    AND-part of that alternative must be allowed and not copyleft ("MIT AND CC-BY-3.0" fails)."""
+    cleaned = expression.replace("(", " ").replace(")", " ")
+    for alternative in re.split(r"\s+OR\s+", cleaned.strip(), flags=re.IGNORECASE):
+        parts = [p.strip() for p in re.split(r"\s+AND\s+", alternative, flags=re.IGNORECASE)]
+        if parts and all(p and is_allowed(p) and not is_copyleft(p) for p in parts):
+            return True
+    return False
 
 
 def evaluate(inventory: list[PackageLicense], exceptions: dict[str, str]) -> list[LicenseViolation]:
@@ -92,7 +114,10 @@ def evaluate(inventory: list[PackageLicense], exceptions: dict[str, str]) -> lis
                 )
             )
             continue
-        if is_allowed(pkg.license):
+        if pkg.ecosystem == "npm":
+            if npm_expression_allowed(pkg.license):
+                continue
+        elif is_allowed(pkg.license):
             continue
         violations.append(
             LicenseViolation(
@@ -136,6 +161,43 @@ def run_pip_licenses() -> list[PackageLicense]:
     return [PackageLicense(name=p["Name"], version=p["Version"], license=p["License"]) for p in raw]
 
 
+def run_npm_licenses(frontend_dir: Path = FRONTEND_DIR) -> list[PackageLicense]:
+    """Frontend inventory (F006 FR-020) from `license-checker-rseidelsohn`, run via the locked
+    `npm run license-check` script. Covers production *and* dev dependencies, like the Python
+    gate covers dev tools. The project's own private root package is excluded."""
+    if not (frontend_dir / "package-lock.json").exists():
+        return []
+    if not (frontend_dir / "node_modules").is_dir():
+        raise SystemExit(
+            "frontend/node_modules is missing; run `npm ci` in frontend/ before the license check."
+        )
+    result = subprocess.run(
+        ["npm", "run", "--silent", "license-check"],
+        cwd=frontend_dir,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return parse_npm_inventory(json.loads(result.stdout))
+
+
+def parse_npm_inventory(raw: dict[str, dict[str, object]]) -> list[PackageLicense]:
+    inventory: list[PackageLicense] = []
+    for key, info in sorted(raw.items()):
+        if info.get("private"):
+            continue
+        name, _, version = key.rpartition("@")
+        licenses = info.get("licenses", "UNKNOWN")
+        if isinstance(licenses, list):
+            licenses = " AND ".join(str(item) for item in licenses)
+        inventory.append(
+            PackageLicense(
+                name=f"npm:{name}", version=version, license=str(licenses), ecosystem="npm"
+            )
+        )
+    return inventory
+
+
 def render_notices(inventory: list[PackageLicense]) -> str:
     lines = [
         "# Third-party notices",
@@ -162,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--notices-path", type=Path, default=DEFAULT_NOTICES_PATH)
     args = parser.parse_args(argv)
 
-    inventory = run_pip_licenses()
+    inventory = run_pip_licenses() + run_npm_licenses()
     exceptions = load_exceptions(args.exceptions)
     violations = evaluate(inventory, exceptions)
 

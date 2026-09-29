@@ -8,6 +8,8 @@ from scripts.check_licenses import (
     PackageLicense,
     evaluate,
     load_exceptions,
+    npm_expression_allowed,
+    parse_npm_inventory,
     render_notices,
 )
 
@@ -130,3 +132,38 @@ def test_copyleft_variants_each_fail_even_alongside_permissive() -> None:
 def test_plain_word_containing_gpl_letters_is_not_misread() -> None:
     # "MIT License" must not trip on unrelated substrings; guards against over-broad matching.
     assert evaluate([pkg("a", "MIT License"), pkg("b", "ISC License (ISCL)")], exceptions={}) == []
+
+
+# --- F006: npm inventory (FR-020) -------------------------------------------------------------
+
+
+def test_unlicensed_is_not_the_unlicense() -> None:
+    violations = evaluate([pkg("proprietary", "UNLICENSED")], exceptions={})
+    assert [v.package for v in violations] == ["proprietary"]
+    assert evaluate([pkg("public", "Unlicense")], exceptions={}) == []
+
+
+def test_npm_expressions_are_strict() -> None:
+    assert npm_expression_allowed("MIT")
+    assert npm_expression_allowed("(MIT OR GPL-3.0)")
+    assert npm_expression_allowed("Apache-2.0 AND MIT")
+    assert npm_expression_allowed("BlueOak-1.0.0") and npm_expression_allowed("CC0-1.0")
+    assert not npm_expression_allowed("(MIT AND CC-BY-3.0)")
+    assert not npm_expression_allowed("MIT AND GPL-2.0")
+    assert not npm_expression_allowed("UNLICENSED")
+
+
+def test_npm_inventory_parsing_and_evaluation() -> None:
+    raw = {
+        "react@19.3.0": {"licenses": "MIT"},
+        "@scope/tool@1.2.3": {"licenses": ["MIT", "ISC"]},
+        "score-docs-assistant-frontend@0.1.0": {"licenses": "UNLICENSED", "private": True},
+        "caniuse-lite@1.0.0": {"licenses": "CC-BY-4.0"},
+        "left-pad@1.0.0": {"licenses": "GPL-3.0"},
+    }
+    inventory = parse_npm_inventory(raw)
+    names = [p.name for p in inventory]
+    assert "npm:@scope/tool" in names and "npm:score-docs-assistant-frontend" not in names
+    assert next(p for p in inventory if p.name == "npm:@scope/tool").license == "MIT AND ISC"
+    violations = {v.package for v in evaluate(inventory, exceptions={"npm:caniuse-lite": "ok"})}
+    assert violations == {"npm:left-pad"}
