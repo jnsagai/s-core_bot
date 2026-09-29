@@ -29,6 +29,8 @@ _KNOWN_LOG_KEYS = {
     "port",
     "app_version",
     "profile",
+    "deployment",  # F009: native | container (configuration, never message content)
+    "log_file",  # F009: configured log path or null
 }
 
 

@@ -8,6 +8,7 @@ violation (via `ValidationError.errors()`) rather than failing on the first one.
 from __future__ import annotations
 
 import ipaddress
+import os
 import re
 from pathlib import Path
 from typing import Literal
@@ -16,6 +17,15 @@ from urllib.parse import urlsplit
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 _ORIGIN_RE = re.compile(r"^https?://[^/@]+$")
+
+
+CONTAINER_MARKER = "SCORE_ASSISTANT_CONTAINER"
+_DNS_LABEL = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
+
+
+def in_container_image() -> bool:
+    """The application image sets this marker; configuration alone cannot enable container mode."""
+    return os.environ.get(CONTAINER_MARKER) == "1"
 
 
 def is_loopback_host(host: str) -> bool:
@@ -47,7 +57,8 @@ class ServerConfig(BaseModel):
     @field_validator("host")
     @classmethod
     def _host_is_loopback(cls, v: str) -> str:
-        if not is_loopback_host(v):
+        # Inside the application image, 0.0.0.0 is checked against deployment.mode by AppConfig.
+        if not is_loopback_host(v) and not (v == "0.0.0.0" and in_container_image()):
             raise ValueError("must be a loopback address (127.0.0.0/8, ::1, or localhost)")
         return v
 
@@ -92,7 +103,11 @@ class RuntimeConfig(BaseModel):
         if parts.path not in ("", "/"):
             raise ValueError("must not contain a path")
         host = parts.hostname
-        if host is None or not is_loopback_host(host):
+        if host is None:
+            raise ValueError("host must be a loopback address")
+        # Inside the application image a private service name is checked by AppConfig against
+        # deployment.runtime_private_hosts; everywhere else only loopback is accepted.
+        if not is_loopback_host(host) and not (in_container_image() and _DNS_LABEL.match(host)):
             raise ValueError("host must be a loopback address")
         return v
 
@@ -212,6 +227,32 @@ class BundleConfig(BaseModel):
     disk_margin_bytes: int = Field(default=1024**3, ge=0)
 
 
+class DeploymentConfig(BaseModel):
+    """Native (default) or container deployment (specs/009-portable-deployment research R3)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["native", "container"] = "native"
+    runtime_private_hosts: list[str] = Field(default_factory=list, max_length=4)
+
+    @field_validator("runtime_private_hosts")
+    @classmethod
+    def _labels(cls, v: list[str]) -> list[str]:
+        for name in v:
+            if not _DNS_LABEL.match(name):
+                raise ValueError(f"{name!r}: must be a single lowercase DNS label")
+        return v
+
+
+class LoggingConfig(BaseModel):
+    """Optional rotating file log (OPS-001): body-free records, at most seven days kept."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    file: Path | None = None
+    retention_days: int = Field(default=7, ge=1, le=7)
+
+
 class AppConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -228,6 +269,34 @@ class AppConfig(BaseModel):
     bundles: BundleConfig = Field(default_factory=BundleConfig)
     generation: GenerationConfig = Field(default_factory=GenerationConfig)
     comparison: ComparisonConfig = Field(default_factory=ComparisonConfig)
+    deployment: DeploymentConfig = Field(default_factory=DeploymentConfig)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
+
+    @model_validator(mode="after")
+    def _container_exception(self) -> AppConfig:
+        """The only way past the loopback rules: container mode, inside the application image."""
+        container = self.deployment.mode == "container"
+        if container and not in_container_image():
+            raise ValueError(
+                f"deployment.mode container requires the application image ({CONTAINER_MARKER}=1)"
+            )
+        if self.deployment.runtime_private_hosts and not container:
+            raise ValueError("deployment.runtime_private_hosts requires deployment.mode container")
+        if not is_loopback_host(self.server.host) and not container:
+            raise ValueError("server.host 0.0.0.0 requires deployment.mode container")
+        host = urlsplit(self.runtime.base_url).hostname or ""
+        if not is_loopback_host(host) and host not in self.deployment.runtime_private_hosts:
+            raise ValueError(
+                f"runtime.base_url host {host!r} must be loopback or listed in "
+                "deployment.runtime_private_hosts (container mode)"
+            )
+        return self
+
+    def runtime_allowed_hosts(self) -> frozenset[str]:
+        """Non-loopback runtime hosts the providers may contact (empty natively)."""
+        if self.deployment.mode != "container":
+            return frozenset()
+        return frozenset(self.deployment.runtime_private_hosts)
 
     @model_validator(mode="after")
     def _evidence_items_within_search_limit(self) -> AppConfig:

@@ -63,6 +63,11 @@ uv run score-assistant --config config/local.yaml eval adversarial | performance
 uv run score-assistant --config config/local.yaml models qualify && uv run score-assistant --config config/local.yaml release report
 scripts/offline_check.sh                     # blocked-egress scenario in a loopback-only namespace (no root)
 uv run python scripts/check_traceability.py  # every local requirement mapped (CI)
+docker compose build && docker compose --profile bundled up -d --pull never   # containers (app on 127.0.0.1:8080)
+scripts/container_check.sh                   # up → ports/hardening/cited answer → down
+scripts/prepare_package.sh OUT && scripts/fresh_install.sh OUT WORK          # offline install + restore check
+uv run python scripts/sbom.py --out data/reports/sbom-$(date -u +%Y%m%dT%H%M%SZ).cdx.json
+uv run score-assistant --config config/local.yaml release assemble
 cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run build   # web UI
 cd frontend && npm run check-no-third-party-assets && npm run check-no-telemetry
 # Opt-in tests: SCORE_ASSISTANT_REAL_RUNTIME=1 (Ollama), SCORE_ASSISTANT_REAL_NETWORK=1 (GitHub)

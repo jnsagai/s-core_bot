@@ -27,6 +27,7 @@ def build_embedding_provider(config: AppConfig) -> EmbeddingProvider:
         config=chunker_config(config),
         timeout_seconds=config.index.embedding_timeout_seconds,
         connect_timeout_seconds=config.diagnostics.runtime_connect_timeout_seconds,
+        allowed_hosts=config.runtime_allowed_hosts(),
     )
 
 
@@ -39,4 +40,5 @@ def build_generation_provider(config: AppConfig) -> GenerationProvider:
         config.runtime.generation_model,
         timeout_seconds=float(config.limits.request_deadline_seconds),
         connect_timeout_seconds=config.diagnostics.runtime_connect_timeout_seconds,
+        allowed_hosts=config.runtime_allowed_hosts(),
     )

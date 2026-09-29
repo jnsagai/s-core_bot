@@ -5,11 +5,30 @@ on every response, and writes a single body-free JSON access-log line per reques
 from __future__ import annotations
 
 import json
+import logging
 import sys
 import time
 import uuid
+from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+# Optional file copy of the same body-free records (OPS-001); no handler unless configured.
+ACCESS_LOGGER = logging.getLogger("score.access")
+ACCESS_LOGGER.propagate = False
+
+
+def configure_file_log(path: Path, retention_days: int) -> TimedRotatingFileHandler:
+    """Daily rotation at midnight; keeps at most `retention_days` rotated files."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handler = TimedRotatingFileHandler(
+        path, when="midnight", backupCount=retention_days, encoding="utf-8", utc=True
+    )
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    ACCESS_LOGGER.addHandler(handler)
+    ACCESS_LOGGER.setLevel(logging.INFO)
+    return handler
 
 
 class RequestContextMiddleware:
@@ -47,4 +66,7 @@ class RequestContextMiddleware:
                 "status": status_holder.get("status"),
                 "duration_ms": round(duration_ms, 2),
             }
-            print(json.dumps(log_line), file=sys.stderr, flush=True)
+            line = json.dumps(log_line)
+            print(line, file=sys.stderr, flush=True)
+            if ACCESS_LOGGER.handlers:
+                ACCESS_LOGGER.info(line)

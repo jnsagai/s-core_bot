@@ -79,6 +79,10 @@ def serve_command(
         typer.echo(f"BIND_FAILED: {exc}", err=True)
         raise typer.Exit(code=1) from None
 
+    if config.logging.file is not None:
+        from score_docs_assistant.api.logging import configure_file_log
+
+        configure_file_log(config.logging.file, config.logging.retention_days)
     runtime = build_runtime(config)
     search_service = build_search_service(config)
     readiness_service = ReadinessService(
@@ -108,6 +112,8 @@ def serve_command(
                 "port": config.server.port,
                 "app_version": __version__,
                 "profile": config.profile,
+                "deployment": config.deployment.mode,
+                "log_file": str(config.logging.file) if config.logging.file else None,
             }
         ),
         err=True,

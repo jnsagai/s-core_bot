@@ -38,9 +38,11 @@ class OllamaEmbeddingProvider:
         timeout_seconds: float = 120.0,
         connect_timeout_seconds: float = 1.0,
         client: httpx.Client | None = None,
+        allowed_hosts: frozenset[str] = frozenset(),
     ) -> None:
         host = httpx.URL(base_url).host
-        if not is_loopback_host(host):
+        # allowed_hosts: private runtime names, passed only in validated container mode (F009).
+        if not is_loopback_host(host) and host not in allowed_hosts:
             raise SnapshotError("EMBEDDING_UNAVAILABLE", f"{base_url}: not a loopback runtime")
         self._base_url = base_url.rstrip("/")
         self._tag = normalize_tag(model_tag)

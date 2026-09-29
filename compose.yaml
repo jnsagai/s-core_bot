@@ -1,0 +1,72 @@
+# S-CORE Docs Assistant — local container profiles (specs/009-portable-deployment research R2).
+#
+#   bundled       (portable default, CPU): app + model runtime on a private network. The runtime
+#                 has NO host port and reads an already-prepared models directory read-only; the
+#                 app is published on 127.0.0.1 only.
+#   host-runtime  (Linux): app on the host network, using the host's loopback runtime.
+#
+# Prepared machines start with `docker compose --profile bundled up -d --pull never`; pulling or
+# building images is a preparation step. Variables: SCORE_DATA_DIR (./data), SCORE_MODELS_DIR
+# (/var/snap/ollama/common/models), SCORE_UID/SCORE_GID (1000), SCORE_PORT (8080; must equal
+# server.port because the Host guard checks the port).
+
+x-app-hardening: &app-hardening
+  image: score-docs-assistant:0.1.0
+  user: "${SCORE_UID:-1000}:${SCORE_GID:-1000}"
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  mem_limit: 2g
+  cpus: 2.0
+  pids_limit: 256
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "7"}
+  restart: unless-stopped
+
+services:
+  ollama:
+    profiles: [bundled]
+    image: ollama/ollama:0.34.0@sha256:684d8674b4315fa18f4f0e973a118ec2652ed96f67563277839985175858e0ba
+    environment:
+      OLLAMA_MODELS: /models
+      OLLAMA_NOPRUNE: "1"
+      OLLAMA_HOST: 0.0.0.0:11434
+    volumes:
+      - ${SCORE_MODELS_DIR:-/var/snap/ollama/common/models}:/models:ro
+    networks: [internal]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 8g
+    cpus: 4.0
+    pids_limit: 512
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "7"}
+    restart: unless-stopped
+
+  app:
+    <<: *app-hardening
+    profiles: [bundled]
+    depends_on: [ollama]
+    volumes:
+      - ${SCORE_DATA_DIR:-./data}:/data
+    networks: [internal, edge]
+    ports:
+      - "127.0.0.1:${SCORE_PORT:-8080}:8080"
+
+  app-host:
+    <<: *app-hardening
+    profiles: [host-runtime]
+    network_mode: host
+    command: ["serve"]
+    entrypoint: ["score-assistant", "--config", "/app/config/host-runtime.yaml"]
+    volumes:
+      - ${SCORE_DATA_DIR:-./data}:/data
+
+networks:
+  internal:
+    internal: true     # no route out: the runtime cannot reach the internet
+  edge: {}             # only carries the app's 127.0.0.1-published port

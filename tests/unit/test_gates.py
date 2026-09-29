@@ -135,3 +135,18 @@ def test_committed_gate_file_covers_master_thresholds_budgets_and_scenarios() ->
     covered = set(re.findall(r"AT-\d{2}", refs))
     assert {f"AT-{n:02d}" for n in range(1, 19)} <= covered
     assert any(not g.required and "AT-19" in g.refs for g in gates.gates)
+
+
+def test_gate_file_covers_f009_deployment_requirements() -> None:
+    gates = load_gates(REPO / "eval" / "release-gates.yaml")
+    refs = " ".join(r for g in gates.gates for r in g.refs)
+    for ref in (
+        "LOC-004",
+        "OPS-001",
+        "OPS-003",
+        "OPS-005",
+        "§17.2",
+        "§18.3 fresh install",
+        "AT-16",
+    ):
+        assert ref in refs, ref
