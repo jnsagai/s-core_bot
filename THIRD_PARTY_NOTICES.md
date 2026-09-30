@@ -464,7 +464,7 @@ records attribution; it is not a substitute for reading each package's own licen
 - **PyYAML** 6.0.3 — MIT License
 - **rich** 15.0.0 — MIT License
 - **ruff** 0.16.9 — MIT
-- **s-core-docs-assistant** 0.1.0 — Apache-2.0
+- **s-core-docs-assistant** 1.0.0rc1 — Apache-2.0
 - **shellingham** 1.5.4 — ISC License (ISCL)
 - **starlette** 1.7.0 — BSD-3-Clause
 - **typer** 0.27.2 — MIT

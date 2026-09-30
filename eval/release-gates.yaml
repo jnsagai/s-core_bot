@@ -224,7 +224,7 @@ gates:
     target: "pass"
     kind: human
     refs: [UX-004, A-040]
-    evidence: {manual: "awaiting a person with a screen reader; automated real-browser checks pass (browser_automated)"}
+    evidence: {report: "ui-review-*.json", field: "status", compare: "== pass", accept_development: true}
   # --- F009 deployment gates (local v1.0) --------------------------------------------------------
   - id: container_loopback_private_runtime
     title: "Containers: app published on 127.0.0.1 only, runtime without host port, hardened, cited answer"

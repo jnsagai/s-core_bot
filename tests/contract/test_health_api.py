@@ -72,7 +72,9 @@ def test_readiness_503_with_reasons_and_no_leaks(client: TestClient) -> None:
     dumped = str(payload)
     assert "127.0.0.1" not in dumped
     assert "qwen3" not in dumped
-    assert "0.1.0" not in dumped
+    from score_docs_assistant import __version__
+
+    assert __version__ not in dumped
     _common_assertions(response)
 
 
