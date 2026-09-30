@@ -150,3 +150,38 @@ def test_gate_file_covers_f009_deployment_requirements() -> None:
         "AT-16",
     ):
         assert ref in refs, ref
+
+
+def test_blanket_review_is_labelled_and_accepts_its_own_run_series(tmp_path: Path) -> None:
+    human = gate("human", report="human-review-*.json", field="v", compare=">= 0.95")
+    write(
+        tmp_path,
+        "human-review-1.json",
+        {
+            "v": 1.0,
+            "attestation": "blanket",
+            "reviewer": "owner",
+            "reviewed_on": "2026-09-30",
+            "statement": "I reviewed and accept.",
+            "run_reference": {"file": "suite-run1.json"},
+        },
+    )
+    result = run(human, tmp_path)
+    assert result.status == "pass" and "blanket owner acceptance, not per-claim" in result.reason
+
+    held = gate(
+        report="suite-*-combined.json", field="v", compare="== 1", accepted_by="human-review-*.json"
+    )
+    write(
+        tmp_path,
+        "suite-a-combined.json",
+        {"v": 1, "labels": ["development measurement"], "run_files": ["other.json"]},
+    )
+    assert run(held, tmp_path).status == "blocked"  # the review is of another run series
+    write(
+        tmp_path,
+        "suite-b-combined.json",
+        {"v": 1, "labels": ["development measurement"], "run_files": ["suite-run1.json"]},
+    )
+    accepted = run(held, tmp_path)
+    assert accepted.status == "pass" and "blanket owner acceptance" in accepted.reason

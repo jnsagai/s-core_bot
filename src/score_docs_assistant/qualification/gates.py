@@ -32,6 +32,9 @@ class Evidence(BaseModel):
     field: str | None = None  # dotted path; `[*]` over lists; `[key=value]` selects list items
     compare: str | None = None  # ">= 0.9", "== 0", "== pass", "len == 0", "present"
     accept_development: bool = False
+    # A human review (glob) whose reviewed run belongs to this report's run series also accepts the
+    # cases themselves: the review sheet shows each case's expected facts next to its answer.
+    accepted_by: str | None = None
     tests: list[str] = []  # substrings of JUnit test names; all must be present and passed
     check: Literal["traceability"] | None = None
     manual: str | None = None  # a recorded reason; the gate is blocked (or not run if deferred)
@@ -254,9 +257,40 @@ def evaluate(
     if stale:
         return result("not run", "—", path.name, f"stale evidence: {stale}")
     ok, shown = compare(extract(data, ev.field), ev.compare)
+    reason = f"{ev.field} {ev.compare}"
+    if data.get("attestation") == "blanket":
+        reason = (
+            f"{reason}; blanket owner acceptance, not per-claim — {data.get('reviewer')} "
+            f"({data.get('reviewed_on')}): {data.get('statement')}"
+        )
     labels = data.get("labels") or []
     if "development measurement" in labels and not ev.accept_development:
-        return result(
-            "blocked", shown, path.name, "suite cases unreviewed (development measurement)"
-        )
-    return result("pass" if ok else "fail", shown, path.name, f"{ev.field} {ev.compare}")
+        review = _accepting_review(reports, ev.accepted_by, data, identity)
+        if review is None:
+            return result(
+                "blocked", shown, path.name, "suite cases unreviewed (development measurement)"
+            )
+        reason = f"{reason}; cases accepted in {review}"
+    return result("pass" if ok else "fail", shown, path.name, reason)
+
+
+def _accepting_review(
+    reports: Path, pattern: str | None, data: dict[str, Any], identity: Identity
+) -> str | None:
+    """The human review that accepted this run series' cases, if any (same runs, not stale)."""
+    if not pattern:
+        return None
+    path = latest(reports, pattern)
+    if path is None:
+        return None
+    try:
+        review = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+    reviewed_file = (review.get("run_reference") or {}).get("file")
+    if reviewed_file not in (data.get("run_files") or []) or _stale(review, identity):
+        return None
+    kind = (
+        "blanket owner acceptance" if review.get("attestation") == "blanket" else "per-item review"
+    )
+    return f"{path.name} ({kind})"

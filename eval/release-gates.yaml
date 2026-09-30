@@ -9,7 +9,7 @@ gates:
     target: ">= 90%"
     kind: real_model
     refs: [§13.3 recall@10, RET-001]
-    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].recall_at_10.value", compare: ">= 0.90"}
+    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].recall_at_10.value", compare: ">= 0.90", accepted_by: "human-review-*.json"}
   - id: exact_id_retrieval
     title: Exact-ID retrieval, every requirement ID in the active snapshot
     target: "100% correct first"
@@ -41,13 +41,13 @@ gates:
     target: ">= 95%"
     kind: real_model
     refs: [§13.3 safe handling, ANS-004, ANS-011, AT-05]
-    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].safe_handling.value", compare: ">= 0.95"}
+    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].safe_handling.value", compare: ">= 0.95", accepted_by: "human-review-*.json"}
   - id: false_abstention
     title: False abstention on answerable held-out cases, every run
     target: "<= 10%"
     kind: real_model
     refs: [§13.3 false abstention]
-    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].false_abstention.value", compare: "<= 0.10"}
+    evidence: {report: "suite-heldout-*-combined.json", field: "runs[*].false_abstention.value", compare: "<= 0.10", accepted_by: "human-review-*.json"}
   - id: snapshot_isolation
     title: Snapshot isolation (single-snapshot and comparison)
     target: "zero failures"
@@ -87,7 +87,7 @@ gates:
     target: "100 cases human-reviewed"
     kind: human
     refs: [§13.2, §22 reviewed suite]
-    evidence: {manual: "awaiting human review: all 100 cases are agent-authored and unreviewed (eval/suite/*.yaml)"}
+    evidence: {manual: "the 40 held-out cases were accepted with the held-out answer review (blanket owner acceptance, 2026-09-30); the 60 development cases are unreviewed"}
   # --- master §13.4 performance budgets -----------------------------------------------------------
   - id: lexical_retrieval_p95
     title: Lexical retrieval p95

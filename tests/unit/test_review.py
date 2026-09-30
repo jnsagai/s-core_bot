@@ -108,3 +108,28 @@ def test_mismatches_are_rejected(fx: AnswerFixture, tmp_path: Path, tamper: str)
         sheet["cases"][0]["claims"][0]["judgement"] = "looks fine"
     with pytest.raises(ConfigError):
         import_review(_save(tmp_path, sheet), report)
+
+
+def test_blanket_acceptance_is_recorded_as_such(fx: AnswerFixture, tmp_path: Path) -> None:
+    from score_docs_assistant.qualification.review import Blanket
+
+    report, sheet = _run(fx, tmp_path)
+    review = import_review(
+        _save(tmp_path, sheet), report, Blanket("owner", "2026-09-30", "I reviewed and accept.")
+    )
+    assert review.attestation == "blanket" and review.statement == "I reviewed and accept."
+    assert review.reviewer == "owner" and review.unreviewed_claims == 0
+    assert review.support_precision.value == 1.0
+    with pytest.raises(ConfigError, match="needs the reviewer"):
+        import_review(_save(tmp_path, sheet), report, Blanket("owner", "", "yes"))
+
+
+def test_per_item_judgements_win_over_blanket(fx: AnswerFixture, tmp_path: Path) -> None:
+    from score_docs_assistant.qualification.review import Blanket
+
+    report, sheet = _run(fx, tmp_path)
+    sheet["cases"][0]["claims"][0]["judgement"] = "unsupported"
+    review = import_review(
+        _save(tmp_path, sheet), report, Blanket("owner", "2026-09-30", "rest accepted")
+    )
+    assert review.support_precision.numerator == review.support_precision.denominator - 1

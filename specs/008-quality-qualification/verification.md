@@ -228,3 +228,18 @@ Two real gaps would remain even with a review: held-out safe handling dipped to 
 - Refreshed evidence on the final code: container check, fresh install + restore, contract parity,
   adversarial 0/10, offline pass, pytest 1123 passed, vitest pass. Release report: 36 pass, 7
   blocked (all human), 1 deferred.
+
+## Owner review imported (2026-09-30)
+
+```text
+$ score-assistant eval review import --sheet …/suite-heldout-20260929T170034Z-review.yaml \
+    --report …/suite-heldout-20260929T170034Z-run1.json --reviewer "project owner (jnsagai)" \
+    --reviewed-on 2026-09-30 --blanket "Owner's words: \"I review and I accept, import it for me\" …"
+support precision 100.0% of 51 claims; required-fact coverage 100.0% over 26 cases (attestation: blanket)
+$ score-assistant release report
+verdict: blocked  gates: {'pass': 41, 'blocked': 2, 'not run': 1}
+```
+
+The acceptance is recorded as blanket, not per-claim (A-055); `--blanket` and the gate labelling are
+covered by tests (`test_review.py`, `test_gates.py`). Remaining: `reviewed_suite` (60 development
+cases unreviewed) and `screen_reader`; public profile deferred. Tests: 1126 passed, 10 skipped.
