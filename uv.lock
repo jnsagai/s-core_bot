@@ -511,7 +511,7 @@ wheels = [
 
 [[package]]
 name = "s-core-docs-assistant"
-version = "1.0.0rc1"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "docutils" },

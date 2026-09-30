@@ -87,7 +87,10 @@ def test_committed_suite_meets_master_spec() -> None:
     heldout, sha = load_suite(SUITE / "heldout.yaml")
     assert composition_problems(dev, heldout) == []
     assert (len(dev.cases), len(heldout.cases)) == (60, 40)
-    assert not dev.human_reviewed and not heldout.human_reviewed  # agent-authored
+    # Development cases: owner's blanket acceptance recorded per case (A-056). Held-out cases are
+    # accepted through the held-out answer review, not in the frozen file (A-055).
+    assert dev.human_reviewed and all("blanket" in c.review.notes for c in dev.cases)
+    assert not heldout.human_reviewed
 
 
 def test_committed_heldout_matches_its_freeze() -> None:

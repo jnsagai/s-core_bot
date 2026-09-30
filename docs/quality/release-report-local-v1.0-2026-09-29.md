@@ -1,13 +1,9 @@
 # Release report
 
-Generated 2026-09-30 04:57 UTC by `release report` (app 1.0.0rc1).
+Generated 2026-09-30 05:10 UTC by `release report` (app 1.0.0).
 Active snapshot `20260928T140548Z-7c6a05b3`, locked generation model digest `0edcdef34593…`, held-out freeze `frozen on 2026-09-29`.
 
-## Verdict: **blocked**
-
-Blocking items:
-
-- reviewed_suite: blocked — the 40 held-out cases were accepted with the held-out answer review (blanket owner acceptance, 2026-09-30); the 60 development cases are unreviewed
+## Verdict: **ready**
 
 Statuses: `pass` (evidence meets the target), `fail`, `blocked` (a required input is
 missing, for example a human review), `not run` (no current evidence). No gate passes
@@ -24,48 +20,48 @@ without an evidence file; nothing here is an approval.
 | `required_fact_coverage` | Required-fact coverage (human-reviewed held-out answers) | >= 85% macro | 1.000 | pass | human | human-review-20260930T043525Z.json | required_fact_coverage.value >= 0.85; blanket owner acceptance, not per-claim — project owner (jnsagai) (2026-09-30): Owner's words: "I review and I accept, import it for me" (chosen: record as blanket acceptance). Covers all 51 claims and 29 required facts of held-out run 1, and the 40 held-out cases' expected facts shown in the sheet. Agent note: ho-022 was answered 'partial' in every run; accepted as is. |
 | `safe_handling` | Safe handling of unsupported and adversarial held-out cases, every run | >= 95% | 1.000, 1.000, 1.000 | pass | real_model | suite-heldout-20260929T170034Z-combined.json | runs[*].safe_handling.value >= 0.95; cases accepted in human-review-20260930T043525Z.json (blanket owner acceptance) |
 | `false_abstention` | False abstention on answerable held-out cases, every run | <= 10% | 0.000, 0.000, 0.000 | pass | real_model | suite-heldout-20260929T170034Z-combined.json | runs[*].false_abstention.value <= 0.10; cases accepted in human-review-20260930T043525Z.json (blanket owner acceptance) |
-| `snapshot_isolation` (critical) | Snapshot isolation (single-snapshot and comparison) | zero failures | 3/3 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
+| `snapshot_isolation` (critical) | Snapshot isolation (single-snapshot and comparison) | zero failures | 3/3 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
 | `comparison_isolation_real` (critical) | Comparison isolation and deletion claims on the real benchmark | 0 violations, 0 deletion claims | 0 | pass | real_model | comparison-20260929T165447Z.json | isolation_violations == 0 |
 | `injection_resistance` (critical) | Injection resistance, synthetic adversarial suite (real model) | zero failures | 0 | pass | real_model | adversarial-20260929T172026Z.json | failures == 0 |
 | `offline_operation` (critical) | Chat/search/evidence/export with external egress blocked | pass | pass | pass | real_model | offline-fresh-20260929T171824Z.json | status == pass |
-| `operational_recovery` | Failed update leaves service intact; rollback and restore succeed | pass | 4/4 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `reviewed_suite` | Evaluation suite reviewed by a person | 100 cases human-reviewed | — | blocked | human | — | the 40 held-out cases were accepted with the held-out answer review (blanket owner acceptance, 2026-09-30); the 60 development cases are unreviewed |
+| `operational_recovery` | Failed update leaves service intact; rollback and restore succeed | pass | 4/4 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `reviewed_suite` | Evaluation suite reviewed by a person | 100 cases human-reviewed | 100 | pass | human | suite-review-20260930T050434Z.json | cases_reviewed >= 100; blanket owner acceptance, not per-claim — project owner (jnsagai) (2026-09-30): Owner's words for the 60 development cases: "I accept" (after being offered blanket or case-by-case review). The 40 held-out cases were accepted with the held-out answer review human-review-20260930T043525Z.json (blanket). |
 | `lexical_retrieval_p95` | Lexical retrieval p95 | <= 500 ms | pass | pass | measurement | performance-20260929T124231Z.json | budgets[name=lexical_retrieval].status == pass |
 | `hybrid_retrieval_p95` | Hybrid retrieval p95, embedding model warm | <= 2 s | pass | pass | measurement | performance-20260929T124231Z.json | budgets[name=hybrid_retrieval_warm].status == pass |
 | `first_progress` | First visible progress event p95 | <= 1 s | pass | pass | measurement | performance-20260929T124231Z.json | budgets[name=first_progress_warm].status == pass |
 | `answer_p95` | Final validated answer p95, warm | <= 30 s | pass | pass | measurement | performance-20260929T124231Z.json | budgets[name=answer_warm].status == pass |
 | `cancellation` | Cancellation releases queue/application resources | <= 2 s | pass | pass | measurement | performance-20260929T124231Z.json | budgets[name=cancellation_release].status == pass |
 | `memory_recorded` | Peak GPU memory recorded (no OOM in the qualified profile) | recorded | present | pass | measurement | performance-20260929T124231Z.json | memory.gpu_peak present |
-| `deterministic_suite` (critical) | Deterministic test suites (pytest + vitest) pass | 0 failed | 8/8 tests passed | pass | deterministic | pytest-20260930T045359Z.xml, vitest-20260930T045359Z.xml | all listed tests passed |
+| `deterministic_suite` (critical) | Deterministic test suites (pytest + vitest) pass | 0 failed | 8/8 tests passed | pass | deterministic | pytest-20260930T050619Z.xml, vitest-20260930T050619Z.xml | all listed tests passed |
 | `traceability` | Traceability complete for every local requirement | complete | complete | pass | deterministic | docs/TRACEABILITY.md | every local requirement mapped |
 | `model_qualification` | Installed models match the model lock | all match | True, True | pass | real_model | models-20260929T122209Z.json | models[*].lock_match == true |
 | `privacy_logs` | No question text in logs during held-out runs | 0 occurrences | 0 | pass | real_model | suite-heldout-20260929T170034Z-run1.json | privacy.question_text_found == 0 |
-| `at_02_generation_unavailable` | AT-02: search works while generation is unavailable | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `at_08_embedding_change` | AT-08: changed embedding identity refused/degraded explicitly | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `at_09_fake_evidence_ids` | AT-09: fake evidence IDs rejected, repaired or fallen back | pass | 3/3 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `at_10_conflicts` | AT-10: conflicting excerpts surfaced without precedence | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `at_11_diagnostics` | AT-11: unsupported directives and includes keep diagnostics | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `at_12_concurrent_activation` | AT-12: citations stay on the request's snapshot during activation | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `at_13_deleted_content` | AT-13: deleted source content absent from the new snapshot | pass | 1/1 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `at_14_abort` | AT-14: browser abort cancels the job and admits the next | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `at_15_hostile_rendering` | AT-15: hostile Markdown/images inert in the UI | pass | 3/3 tests passed | pass | deterministic | vitest-20260930T045359Z.xml | all listed tests passed |
-| `at_18_host_origin` (critical) | AT-18: hostile website calling localhost is rejected | pass | 3/3 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
+| `at_02_generation_unavailable` | AT-02: search works while generation is unavailable | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `at_08_embedding_change` | AT-08: changed embedding identity refused/degraded explicitly | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `at_09_fake_evidence_ids` | AT-09: fake evidence IDs rejected, repaired or fallen back | pass | 3/3 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `at_10_conflicts` | AT-10: conflicting excerpts surfaced without precedence | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `at_11_diagnostics` | AT-11: unsupported directives and includes keep diagnostics | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `at_12_concurrent_activation` | AT-12: citations stay on the request's snapshot during activation | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `at_13_deleted_content` | AT-13: deleted source content absent from the new snapshot | pass | 1/1 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `at_14_abort` | AT-14: browser abort cancels the job and admits the next | pass | 2/2 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `at_15_hostile_rendering` | AT-15: hostile Markdown/images inert in the UI | pass | 3/3 tests passed | pass | deterministic | vitest-20260930T050619Z.xml | all listed tests passed |
+| `at_18_host_origin` (critical) | AT-18: hostile website calling localhost is rejected | pass | 3/3 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
 | `browser_automated` | Real browser (headless Firefox): same-origin, CSP, axe incl. contrast, keyboard, ask → citation → Escape, storage, reload | pass | pass | pass | real_model | browser-20260929T171545Z.json | status == pass |
 | `screen_reader` | Screen-reader use and human judgement of the UI | pass | pass | pass | human | ui-review-20260930T045118Z.json | status == pass |
-| `container_loopback_private_runtime` (critical) | Containers: app published on 127.0.0.1 only, runtime without host port, hardened, cited answer | pass | pass | pass | real_model | container-20260930T045232Z.json | status == pass |
-| `container_config_rules` (critical) | Container mode is the only, image-gated exception to the loopback rules | pass | 4/4 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
+| `container_loopback_private_runtime` (critical) | Containers: app published on 127.0.0.1 only, runtime without host port, hardened, cited answer | pass | pass | pass | real_model | container-20260930T050503Z.json | status == pass |
+| `container_config_rules` (critical) | Container mode is the only, image-gated exception to the loopback rules | pass | 4/4 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
 | `fresh_install_offline` | Fresh offline install from the prepared package reaches a cited answer | pass | pass | pass | real_model | fresh-install-20260929T171824Z.json | status == pass |
 | `restore_keeps_citations` (critical) | Restored corpus keeps snapshot identity, chunks and citations | pass | pass | pass | real_model | restore-20260929T171824Z.json | status == pass |
 | `contract_parity` | Same API contract natively and in containers | pass | pass | pass | real_model | contract-20260929T172133Z.json | status == pass |
-| `sbom` | Release SBOM (CycloneDX) from the locks | present | 1.5 | pass | deterministic | sbom-20260930T045359Z.cdx.json | specVersion == 1.5 |
-| `log_retention` | Logs are body-free, rotate, and keep at most seven days | pass | 1/1 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
-| `operator_documents` | Runbooks, hardware matrix and known limitations present | present | 1/1 tests passed | pass | deterministic | pytest-20260930T045359Z.xml | all listed tests passed |
+| `sbom` | Release SBOM (CycloneDX) from the locks | present | 1.5 | pass | deterministic | sbom-20260930T050619Z.cdx.json | specVersion == 1.5 |
+| `log_retention` | Logs are body-free, rotate, and keep at most seven days | pass | 1/1 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
+| `operator_documents` | Runbooks, hardware matrix and known limitations present | present | 1/1 tests passed | pass | deterministic | pytest-20260930T050619Z.xml | all listed tests passed |
 | `public_profile` (not required) | Public hosting profile (AT-19, AT-20, PUB-001–PUB-008) | deferred | — | not run | deterministic | — | deferred to F010 until a public-hosting decision |
 
 ## Deterministic tests and checks
 
-- `pytest-20260930T045359Z.xml`: 1126 passed, 0 failed, 10 skipped (skipped = not run)
-- `vitest-20260930T045359Z.xml`: 76 passed, 0 failed, 0 skipped (skipped = not run)
+- `pytest-20260930T050619Z.xml`: 1126 passed, 0 failed, 10 skipped (skipped = not run)
+- `vitest-20260930T050619Z.xml`: 76 passed, 0 failed, 0 skipped (skipped = not run)
 
 - `snapshot_isolation` — pass: 3/3 tests passed (all listed tests passed)
 - `operational_recovery` — pass: 4/4 tests passed (all listed tests passed)
@@ -109,7 +105,7 @@ without an evidence file; nothing here is an approval.
 
 - `support_precision` — pass: 1.000 (support_precision.value >= 0.95; blanket owner acceptance, not per-claim — project owner (jnsagai) (2026-09-30): Owner's words: "I review and I accept, import it for me" (chosen: record as blanket acceptance). Covers all 51 claims and 29 required facts of held-out run 1, and the 40 held-out cases' expected facts shown in the sheet. Agent note: ho-022 was answered 'partial' in every run; accepted as is.)
 - `required_fact_coverage` — pass: 1.000 (required_fact_coverage.value >= 0.85; blanket owner acceptance, not per-claim — project owner (jnsagai) (2026-09-30): Owner's words: "I review and I accept, import it for me" (chosen: record as blanket acceptance). Covers all 51 claims and 29 required facts of held-out run 1, and the 40 held-out cases' expected facts shown in the sheet. Agent note: ho-022 was answered 'partial' in every run; accepted as is.)
-- `reviewed_suite` — blocked: — (the 40 held-out cases were accepted with the held-out answer review (blanket owner acceptance, 2026-09-30); the 60 development cases are unreviewed)
+- `reviewed_suite` — pass: 100 (cases_reviewed >= 100; blanket owner acceptance, not per-claim — project owner (jnsagai) (2026-09-30): Owner's words for the 60 development cases: "I accept" (after being offered blanket or case-by-case review). The 40 held-out cases were accepted with the held-out answer review human-review-20260930T043525Z.json (blanket).)
 - `screen_reader` — pass: pass (status == pass)
 
 ## Measurements

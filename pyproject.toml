@@ -1,6 +1,6 @@
 [project]
 name = "s-core-docs-assistant"
-version = "1.0.0rc1"
+version = "1.0.0"
 description = "Local-first, open-source documentation assistant for Eclipse S-CORE (community project)"
 readme = "README.md"
 license = "Apache-2.0"

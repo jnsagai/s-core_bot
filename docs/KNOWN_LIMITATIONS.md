@@ -1,13 +1,11 @@
-# Known limitations (local release 1.0.0rc1)
+# Known limitations (local release 1.0.0)
 
 State on 2026-09-30, from `docs/ASSUMPTIONS.md` and the release report.
 
-- **Development cases unreviewed.** The 60 development cases of the evaluation suite have not been
-  reviewed by a person. This is the only open release gate (the 40 held-out cases were accepted with
-  the held-out review).
-- **Human review is a blanket acceptance.** The held-out answers were accepted in bulk by the owner,
-  not judged claim by claim (A-055). Support precision and required-fact coverage (100%) reflect
-  that acceptance, not a per-claim measurement; ho-022 is answered only partially in every run.
+- **Human review is a blanket acceptance.** The owner accepted the held-out answers and all 100
+  suite cases in bulk, not claim by claim or case by case (A-055, A-056). Support precision and
+  required-fact coverage (100%) reflect that acceptance, not a per-claim measurement; ho-022 is
+  answered only partially in every run. A per-claim review would give real numbers.
 - **Automated checks are proxies.** The forbidden-assertion and adversarial judges are heuristics
   (A-046, A-047).
 - **Comparisons trade completeness for speed.** Invalid model differences are dropped (with a
