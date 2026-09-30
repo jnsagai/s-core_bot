@@ -1,7 +1,7 @@
 {
   "name": "score-docs-assistant-frontend",
   "private": true,
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0",
   "type": "module",
   "description": "Local web UI for the S-CORE Docs Assistant (F006). Built to a static bundle served by the FastAPI backend; no separate server in production.",
   "scripts": {

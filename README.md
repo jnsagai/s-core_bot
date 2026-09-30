@@ -72,8 +72,8 @@ Eclipse Foundation or the Eclipse S-CORE maintainers.
   - a CycloneDX SBOM, `release assemble`, runbooks (`docs/runbooks/`), a hardware matrix and known
     limitations.
 
-  Local v1.0 report: `docs/quality/release-report-local-v1.0-2026-09-29.md` (blocked only by human
-  review and browser checks).
+  **Released as 1.0.0 (local)**: `docs/releases/v1.0.0.md`; release report verdict `ready`
+  (`docs/quality/release-report-local-v1.0-2026-09-29.md`).
 
 ## Scope
 

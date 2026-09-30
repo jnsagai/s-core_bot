@@ -11,7 +11,7 @@
 # server.port because the Host guard checks the port).
 
 x-app-hardening: &app-hardening
-  image: score-docs-assistant:1.0.0rc1
+  image: score-docs-assistant:1.0.0
   user: "${SCORE_UID:-1000}:${SCORE_GID:-1000}"
   read_only: true
   tmpfs:
