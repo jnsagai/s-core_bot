@@ -32,13 +32,14 @@ git bundle create "$OUT/source.git.bundle" HEAD
 git rev-parse HEAD > "$OUT/source-commit.txt"
 tar -C frontend -czf "$OUT/frontend-dist.tar.gz" dist
 cp data/model-lock.json "$OUT/model-lock.json"
-docker save score-docs-assistant:0.1.0 | gzip > "$OUT/app-image.tar.gz"
+APP_IMAGE=$(awk '/image: score-docs-assistant/ {print $2; exit}' compose.yaml)
+docker save "$APP_IMAGE" | gzip > "$OUT/app-image.tar.gz"
 RUNTIME_IMAGE=$(awk '/image: ollama/ {print $2}' compose.yaml)
 if [ "$WITH_RUNTIME" = 1 ]; then docker save "$RUNTIME_IMAGE" | gzip > "$OUT/runtime-image.tar.gz"; fi
 if [ "$WITH_MODELS" = 1 ]; then cp -r "${SCORE_MODELS_DIR:-/var/snap/ollama/common/models}" "$OUT/models"; fi
 .venv/bin/python -m score_docs_assistant.qualification.package manifest "$OUT" \
   --meta "snapshot_id=$SNAP" --meta "source_commit=$(git rev-parse HEAD)" \
-  --meta "app_image=$(docker image inspect score-docs-assistant:0.1.0 --format '{{.Id}}')" \
+  --meta "app_image=$APP_IMAGE $(docker image inspect "$APP_IMAGE" --format '{{.Id}}')" \
   --meta "runtime_image=$RUNTIME_IMAGE" --meta "runtime_image_included=$WITH_RUNTIME" \
   --meta "models_included=$WITH_MODELS" \
   --meta "native_dependencies=locked uv cache of the prepared machine (container images carry them)"
