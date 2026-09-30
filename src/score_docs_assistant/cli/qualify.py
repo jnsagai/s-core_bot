@@ -145,13 +145,30 @@ def review_import_command(
     ctx: typer.Context,
     sheet: Annotated[Path, typer.Option("--sheet", help="Filled review sheet (YAML).")],
     report: Annotated[Path, typer.Option("--report", help="The run report the sheet belongs to.")],
+    blanket: Annotated[
+        str | None,
+        typer.Option(
+            "--blanket",
+            help="The reviewer's own statement accepting every unjudged item in bulk; recorded "
+            "and shown as a blanket acceptance, never as a per-claim review.",
+        ),
+    ] = None,
+    reviewer: Annotated[str | None, typer.Option("--reviewer", help="With --blanket.")] = None,
+    reviewed_on: Annotated[
+        str | None, typer.Option("--reviewed-on", help="With --blanket (YYYY-MM-DD).")
+    ] = None,
 ) -> None:
     """Imports a human-filled review sheet and computes support precision and required-fact
     coverage."""
     from score_docs_assistant.qualification.harness import as_json
-    from score_docs_assistant.qualification.review import import_review
+    from score_docs_assistant.qualification.review import Blanket, import_review
 
-    review = import_review(sheet, report)
+    acceptance = None
+    if blanket is not None:
+        acceptance = Blanket(
+            reviewer=reviewer or "", reviewed_on=reviewed_on or "", statement=blanket
+        )
+    review = import_review(sheet, report, acceptance)
     path = reports_dir(_config(ctx)) / f"human-review-{stamp()}.json"
     path.write_text(as_json(review))
     typer.echo(
@@ -161,6 +178,8 @@ def review_import_command(
         f"{review.required_fact_coverage.denominator} cases; unreviewed claims "
         f"{review.unreviewed_claims}, facts {review.unreviewed_facts}"
     )
+    if review.attestation == "blanket":
+        typer.echo("attestation: blanket owner acceptance (not per-claim)")
     typer.echo(f"human review: {path}")
 
 

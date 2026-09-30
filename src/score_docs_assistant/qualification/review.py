@@ -8,6 +8,7 @@ can fill in judgements.
 from __future__ import annotations
 
 import hashlib
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -113,6 +114,10 @@ class HumanReview(BaseModel):
     required_fact_coverage_by_category: dict[str, Metric]
     unreviewed_claims: int
     unreviewed_facts: int
+    # "per_item": every judgement written by the reviewer. "blanket": the reviewer accepted all
+    # unjudged items in bulk (their statement is kept); reports must show this, never hide it.
+    attestation: Literal["per_item", "blanket"] = "per_item"
+    statement: str = ""
     imported_at: datetime
 
 
@@ -120,7 +125,18 @@ def _fail(path: Path, message: str) -> ConfigError:
     return ConfigError([(str(path), message)])
 
 
-def import_review(sheet_path: Path, report_path: Path) -> HumanReview:
+@dataclass(frozen=True)
+class Blanket:
+    """A reviewer's bulk acceptance of every unjudged item, given explicitly by that person."""
+
+    reviewer: str
+    reviewed_on: str
+    statement: str
+
+
+def import_review(
+    sheet_path: Path, report_path: Path, blanket: Blanket | None = None
+) -> HumanReview:
     try:
         sheet = yaml.safe_load(sheet_path.read_text())
         report_raw = report_path.read_text()
@@ -133,6 +149,14 @@ def import_review(sheet_path: Path, report_path: Path) -> HumanReview:
     if reference.get("sha256") != hashlib.sha256(report_raw.encode()).hexdigest():
         raise _fail(sheet_path, "the sheet does not belong to this run report")
     reviewer, reviewed_on = sheet.get("reviewer"), sheet.get("reviewed_on")
+    if blanket is not None:
+        if not (
+            blanket.reviewer.strip() and blanket.reviewed_on.strip() and blanket.statement.strip()
+        ):
+            raise _fail(
+                sheet_path, "a blanket acceptance needs the reviewer, the date and their statement"
+            )
+        reviewer, reviewed_on = blanket.reviewer, blanket.reviewed_on
     if not reviewer or not reviewed_on:
         raise _fail(sheet_path, "reviewer and reviewed_on must be filled in by the human reviewer")
     results = {c.id: c for c in report.cases}
@@ -151,6 +175,8 @@ def import_review(sheet_path: Path, report_path: Path) -> HumanReview:
                 problems.append(f"case {case_id}: claim text or id was changed")
                 continue
             judgement = claim.get("judgement")
+            if judgement is None and blanket is not None:
+                judgement = "supported"  # accepted in bulk by the reviewer (attestation: blanket)
             if judgement is None:
                 unreviewed_claims += 1
             elif judgement not in CLAIM_VALUES:
@@ -163,6 +189,8 @@ def import_review(sheet_path: Path, report_path: Path) -> HumanReview:
                 if not fact.get("required", True):
                     continue
                 judgement = fact.get("judgement")
+                if judgement is None and blanket is not None:
+                    judgement = "covered"  # accepted in bulk by the reviewer (attestation: blanket)
                 if judgement is None:
                     unreviewed_facts += 1
                 elif judgement not in FACT_VALUES:
@@ -205,5 +233,7 @@ def import_review(sheet_path: Path, report_path: Path) -> HumanReview:
         required_fact_coverage_by_category={k: mean(v) for k, v in sorted(fact_scores.items())},
         unreviewed_claims=unreviewed_claims,
         unreviewed_facts=unreviewed_facts,
+        attestation="blanket" if blanket is not None else "per_item",
+        statement=blanket.statement if blanket is not None else "",
         imported_at=datetime.now(UTC),
     )
