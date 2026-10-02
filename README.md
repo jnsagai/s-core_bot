@@ -1,143 +1,276 @@
-# S-CORE Docs Assistant — Community Project
+# S-CORE Docs Assistant
 
-A local-first, open-source documentation assistant for Eclipse S-CORE. This is an
-**independent community project** — it is not endorsed by, affiliated with, or certified by the
-Eclipse Foundation or the Eclipse S-CORE maintainers.
+Ask questions about the [Eclipse S-CORE](https://github.com/eclipse-score) documentation and get
+short answers that cite exactly where each statement comes from. It runs entirely on your own
+machine.
 
-## Status
+> **Community project.** This is an independent, open-source project. It is not endorsed by,
+> affiliated with, or certified by the Eclipse Foundation or the Eclipse S-CORE maintainers.
 
-- **F001 (done)** — validated configuration, Ollama runtime client, hardware/corpus probes,
-  `score-assistant doctor | models inspect | models pull | serve`, and a loopback-only HTTP service
-  exposing liveness, readiness, and capabilities.
-- **F002 (done)** — approved-source registry
-  (`config/sources.yaml`), `sources validate | sync | inspect`: pinned acquisition of the S-CORE
-  documentation repositories without executing any repository content, and offline normalization
-  of RST, Markdown (incl. MyST directives) and Sphinx-Needs requirement records with exact source
-  locations, relationships and licensing.
+## What it is
 
-- **F003 (done)** — immutable corpus snapshots: structure-aware chunking, an SQLite
-  corpus with a full-text index, local embeddings from `nomic-embed-text` (never truncated, reused
-  across builds), manifests with checksums, staged builds, atomic activation and rollback,
-  reader pins, retention, and verified bundle export/import:
-  `index build | validate`, `snapshots list | activate | rollback`,
-  `bundle export | inspect | import`.
+S-CORE has a large body of documentation: platform docs, process descriptions, and thousands of
+requirement records. The assistant downloads a pinned copy of that documentation once, indexes it,
+and then lets you:
 
-- **F004 (done)** — evidence search over one pinned snapshot: exact requirement-ID lookup
-  with stored relationships, keyword search, and semantic search with the local embedding model,
-  fused into a short ranked list with provenance. It falls back to keyword-only search (stated
-  plainly) when embeddings are unavailable, and never needs the answer model. `search`, `lookup`,
-  `eval retrieval | exact-ids | latency`, and HTTP `/api/v1/search`, `/entities`,
-  `/relationships`, `/snapshots`, `/sources`, `/citations/…`.
+- **Ask** a question in plain English and get a short answer where each statement cites a stored
+  excerpt, with a link to the exact upstream revision.
+- **Search** the documentation directly, by keyword or meaning, without the answer model.
+- **Look up** a requirement ID (for example `feat_req__com__interfaces`) and see its relationships.
+- **Compare** how two documentation snapshots answer the same question.
 
-- **F005 (done)** — grounded local answers: `ask "question"` and `POST /api/v1/chat`
-  (JSON or a server-sent-event progress stream) answer from one snapshot with the locked local
-  model. Answers are short claims, each documented claim citing stored excerpts (with exact-revision
-  GitHub links where provable). They are validated server-side, with one repair and otherwise a
-  labelled extractive fallback. Weak evidence gives `insufficient_evidence`/`partial`, one answer is
-  generated at a time with a bounded queue, and there is no cloud fallback.
-  `eval answers` measures status, citation integrity and evidence overlap; human-judged quality stays
-  "not run" until reviewed.
+You can use it from the command line, a local web page, or a local HTTP API.
 
-- **F006 (done)** — local web UI served by the same backend at `http://127.0.0.1:8080/`:
-  ask with progress, stop and retry, citation panel, direct search, snapshot selector, status view,
-  Markdown/JSON export. Conversations stay in page memory only; no CDN, telemetry or third-party
-  requests (strict CSP). Build once with `cd frontend && npm ci && npm run build`. See
-  `docs/user/local-ui.md`. Its real-browser walkthrough has not been run on the development machine
-  (no browser installed there).
+### What makes it different
 
-- **F007 (done)** — explicit two-snapshot comparison: `compare "question" --left A --right B`,
-  `POST /api/v1/compare`, and a Compare tab. It shows two separately cited answers, typed differences
-  (changed / unchanged / conflicting / not established) and per-source revisions of both snapshots.
-  It never claims that something was removed when coverage is missing, and never infers a release
-  label. `snapshots diff A B` shows identities without the model. See `docs/user/comparison.md`.
+- **Local only.** A small open model ([Ollama](https://ollama.com) with `qwen3:4b-instruct`)
+  answers on your machine. There are no API keys, paid services, accounts, telemetry, or cloud
+  fallback.
+- **Grounded.** Answers come only from the indexed documentation. When the evidence is weak, the
+  assistant says so (`insufficient_evidence` or `partial`) instead of guessing.
+- **Offline once prepared.** Only two explicit steps use the internet: downloading the models and
+  downloading the documentation. Asking, searching, and serving never do.
+- **Private by default.** The server listens on `127.0.0.1` only. Questions and answers are not
+  logged or saved.
 
-- **F008 (done)** — quality qualification and release evidence:
-  - a 100-case evaluation suite (60 development / 40 frozen held-out) with a review rubric and an
-    import for human review sheets;
-  - a synthetic adversarial suite, a no-root blocked-egress check, performance budgets and model
-    qualification;
-  - a traceability check in CI;
-  - `release report`, which marks every gate pass / fail / blocked / not run from recorded evidence.
+### How it works
 
-  The current report (`docs/quality/release-report-2026-09-29.md`) is **blocked** only by items
-  that need a person (suite review, human-judged metrics, browser walkthrough). See
-  `docs/user/quality.md`.
-
-- **F009 (done)** — portable local release:
-  - a hardened non-root image and `compose.yaml` (`bundled` CPU profile: app published on
-    127.0.0.1 only, model runtime on an internal network without a host port, models read-only;
-    Linux `host-runtime` profile; NVIDIA override documented, not run);
-  - offline package preparation and fresh install/restore scripts, and a native/container API
-    contract check;
-  - a CycloneDX SBOM, `release assemble`, runbooks (`docs/runbooks/`), a hardware matrix and known
-    limitations.
-
-  **Released as 1.0.0 (local)**: `docs/releases/v1.0.0.md`; release report verdict `ready`
-  (`docs/quality/release-report-local-v1.0-2026-09-29.md`).
-
-## Scope
-
-- Runs entirely on your own machine: no paid API, API key, vendor login, or cloud inference.
-- Network access is used only for explicit preparation steps (`uv sync`, `models pull`,
-  `sources sync`); `serve`, `sources inspect`, `snapshots` and `bundle` make no external calls.
-  `index build` talks only to the local embedding runtime on loopback.
-- Binds to `127.0.0.1` by default; a public-facing profile is a separate, not-yet-available mode.
-
-See `docs/PROJECT_SPEC.md` for the full product baseline and `.specify/memory/constitution.md` for
-the non-negotiable project principles.
-
-## Prerequisites
-
-- Linux x86-64
-- `git` ≥ 2.34 (also used by `sources sync`)
-- [`uv`](https://docs.astral.sh/uv/) ≥ 0.12 (manages the Python 3.12 environment)
-- Optional, for runtime-dependent commands: [Ollama](https://ollama.com) running on
-  `127.0.0.1:11434`
-
-## Quickstart
-
-```bash
-uv sync --locked                       # install the locked Python 3.12 environment
-uv run ruff format --check . && uv run ruff check .
-uv run mypy src
-uv run pytest                          # deterministic tests; no network, no models
-uv run python scripts/check_licenses.py
-uv run score-assistant --config config/local.yaml doctor
-
-# Documentation sources (sync uses the network; validate and inspect are offline)
-uv run score-assistant sources validate --config config/sources.yaml
-uv run score-assistant --config config/local.yaml sources sync --config config/sources.yaml
-uv run score-assistant --config config/local.yaml sources inspect --lock data/source-lock.json
-
-# Snapshots (offline; index build uses only the local Ollama embedding runtime)
-uv run score-assistant --config config/local.yaml index build --activate   # add --lexical-only without Ollama
-uv run score-assistant --config config/local.yaml snapshots list
-uv run score-assistant --config config/local.yaml index validate --snapshot <id>
-uv run score-assistant --config config/local.yaml snapshots rollback
-uv run score-assistant --config config/local.yaml bundle export --snapshot <id> --output <file>
-
-# Evidence search (offline; may use the local embedding runtime, never the answer model)
-uv run score-assistant --config config/local.yaml search "How do I build the documentation?"
-uv run score-assistant --config config/local.yaml lookup feat_req__com__interfaces --relationships
-uv run score-assistant --config config/local.yaml eval retrieval --cases eval/retrieval-dev.yaml
-
-# Grounded answers (local model; cites stored evidence)
-uv run score-assistant --config config/local.yaml ask "Which work products does the architecture process require?"
-uv run score-assistant --config config/local.yaml eval answers --cases eval/answers-dev.yaml
+```text
+ S-CORE repos ──sources sync──▶ pinned copy ──index build──▶ snapshot ──▶ search / ask / web UI
+ (GitHub, network)              (data/)        (local model)   (SQLite + embeddings)  (offline)
 ```
 
-A build ends `validated` (integrity-checked, not an engineering approval) and is served only after
-activation. See `specs/003-snapshot-index/quickstart.md` for the full walkthrough.
+Each **snapshot** is an immutable, checksummed index of one set of documentation revisions. You can
+keep several, switch between them, and roll back.
 
-The global `--config` (before the subcommand) selects the app configuration; `sources … --config`
-selects the source registry.
+## Requirements
 
-`doctor` reports local readiness (runtime reachable, models present, disk/memory, corpus state)
-with stable status codes and exit codes `0` (ok), `1` (operational failure), or `2`
-(configuration/usage error). See `specs/001-foundation/contracts/cli.md` for the full contract and
-`specs/001-foundation/quickstart.md` for the complete validation walkthrough.
+| What | Version | Why |
+|---|---|---|
+| Linux x86-64 | — | Supported platform (macOS and Windows are not validated) |
+| [`uv`](https://docs.astral.sh/uv/) | ≥ 0.12 | Installs Python 3.12 and the locked dependencies |
+| [Ollama](https://ollama.com) | 0.34.0 | Runs the local models on `127.0.0.1:11434` |
+| `git` | ≥ 2.34 | Downloads the documentation |
+| Node.js | 22 | Builds the web UI once (optional if you only use the CLI) |
 
-## Development
+Plan for about **3 GB of disk** for the models plus space for the documentation and indexes. A GPU
+makes answers fast (about 8 s on an RTX 4070 laptop); CPU-only works but a first answer can take
+about a minute.
 
-This project uses [Spec Kit](https://github.com/github/spec-kit) for spec-first development; see
-`CLAUDE.md` for the governing documents and workflow.
+## Build and set up
+
+Run these from the repository root. Steps 3 and 4 are the only ones that use the internet.
+
+**1. Install the Python environment**
+
+```bash
+uv sync
+```
+
+**2. Start Ollama** (if it is not already running as a service)
+
+```bash
+OLLAMA_NO_CLOUD=1 ollama serve
+```
+
+`OLLAMA_NO_CLOUD=1` disables Ollama's own cloud features so everything stays local.
+
+**3. Download the models** (network)
+
+```bash
+uv run score-assistant --config config/local.yaml models pull --profile local-small
+```
+
+This fetches `qwen3:4b-instruct` (answers) and `nomic-embed-text` (semantic search) through your
+local Ollama and records their exact digests.
+
+**4. Download the S-CORE documentation** (network)
+
+```bash
+uv run score-assistant sources sync --config config/sources.yaml
+```
+
+The approved sources are listed in `config/sources.yaml`. Nothing from the downloaded repositories
+is ever executed.
+
+**5. Build and activate a snapshot**
+
+```bash
+uv run score-assistant --config config/local.yaml index build --activate
+```
+
+This uses only the local embedding model. Without Ollama, add `--lexical-only` to get a
+keyword-only index.
+
+**6. Build the web UI** (optional, once)
+
+```bash
+(cd frontend && npm ci && npm run build)
+```
+
+**7. Check that everything is ready**
+
+```bash
+uv run score-assistant --config config/local.yaml doctor
+```
+
+You should see `[OK]` lines like these:
+
+```text
+[OK] config.valid: Configuration is valid.
+[OK] runtime.reachable: Ollama 0.34.0 reachable at http://127.0.0.1:11434.
+[OK] model.generation: qwen3:4b-instruct is installed.
+[OK] model.embedding: nomic-embed-text:latest is installed.
+[OK] model.lock: Installed models match the lock.
+[OK] corpus.state: An active, compatible corpus snapshot is installed.
+```
+
+`doctor` exits with `0` when ready, `1` on an operational problem, and `2` on a configuration
+error. Each problem comes with a suggested fix.
+
+> **Tip:** `--config config/local.yaml` is a global option and goes *before* the subcommand. The
+> `--config` after `sources …` points to the source list instead.
+
+## Hello world
+
+### Ask your first question
+
+```bash
+uv run score-assistant --config config/local.yaml ask "What is Eclipse S-CORE?"
+```
+
+```text
+snapshot 20260928T140548Z-7c6a05b3  status answered  model qwen3:4b-instruct (0edcdef34593)
+- Eclipse S-CORE is a comprehensive process model designed to establish organizational rules for
+  developing open source automotive software in safety and security-critical contexts. This
+  project is part of the Eclipse Foundation and provides standardized processes for the automotive
+  industry. [E1]
+citations:
+[E1] score-process  README.md:5-9  (pinned)
+     https://github.com/eclipse-score/process_description/blob/66321fe6bd131eae58fbd6395b0f0b92d63e00f5/README.md#L5-L9
+```
+
+Every statement ends with a citation such as `[E1]`, and the citation points to the exact file,
+lines, and upstream commit. Your snapshot ID, commit, and wording will differ. Add `--json` for
+machine-readable output or `--show-evidence` to print the cited excerpts.
+
+### Search without the answer model
+
+```bash
+uv run score-assistant --config config/local.yaml search "How do I build the documentation?"
+```
+
+```text
+snapshot 20260928T140548Z-7c6a05b3  mode hybrid  8 results
+ 1. [keyword semantic] score-platform  docs/users_guide/building_simple_application/doc_generation.rst:98-101  (code)  Documentation generation > Building documentation
+    % bazel build //:docs
+ ...
+```
+
+Look up a requirement by its ID:
+
+```bash
+uv run score-assistant --config config/local.yaml lookup feat_req__com__interfaces --relationships
+```
+
+### Open the web UI
+
+```bash
+uv run score-assistant --config config/local.yaml serve
+```
+
+Then open <http://127.0.0.1:8080/> in a browser on the same machine. You can ask questions, click a
+citation to read its excerpt, search, compare snapshots, and export an answer as Markdown or JSON.
+Conversations live only in the page and are cleared on reload. Press `Ctrl+C` to stop the server.
+
+## Running with Docker instead
+
+After steps 3–5 (models downloaded, active snapshot in `./data`), you can run the app and the model
+runtime in hardened containers. The app is published on `127.0.0.1:8080` only and the runtime has
+no internet access.
+
+```bash
+docker compose build
+docker compose --profile bundled pull ollama
+SCORE_DATA_DIR=./data SCORE_MODELS_DIR=/var/snap/ollama/common/models \
+  docker compose --profile bundled up -d --pull never
+docker compose --profile bundled down        # stop
+```
+
+`SCORE_MODELS_DIR` is where your Ollama keeps its models. Containers run on CPU by default, so
+answers are slower. See [`docs/runbooks/install.md`](docs/runbooks/install.md) for the
+`host-runtime` profile and GPU notes.
+
+## Common problems
+
+| Symptom | Fix |
+|---|---|
+| `runtime.reachable` fails | Start Ollama (`ollama serve`) and check it listens on `127.0.0.1:11434`. |
+| A model is reported missing | Run step 3 (`models pull --profile local-small`). |
+| "no active snapshot" | Run steps 4 and 5. |
+| Search shows keyword results only | The embedding model is unavailable. Search still works; start Ollama for semantic results. |
+| Web page shows "answers unavailable" | Start Ollama, then press **Check again** on the Status tab. |
+| The browser gets a 400/403 from the server | Use `http://127.0.0.1:8080` or `http://localhost:8080`. Other host names are rejected on purpose. |
+
+More in [`docs/runbooks/troubleshooting.md`](docs/runbooks/troubleshooting.md).
+
+## Day-to-day commands
+
+```bash
+# Refresh the documentation and build a new snapshot
+uv run score-assistant sources sync --config config/sources.yaml
+uv run score-assistant --config config/local.yaml index build --activate
+
+# Manage snapshots
+uv run score-assistant --config config/local.yaml snapshots list
+uv run score-assistant --config config/local.yaml snapshots rollback
+
+# Compare two snapshots
+uv run score-assistant --config config/local.yaml snapshots diff <left> <right>
+uv run score-assistant --config config/local.yaml compare "question" --left <id> --right <id>
+
+# Move a snapshot to another machine
+uv run score-assistant --config config/local.yaml bundle export --snapshot <id> --output <file>
+uv run score-assistant --config config/local.yaml bundle import <file>     # on the other machine
+uv run score-assistant --config config/local.yaml snapshots activate <id>
+```
+
+Run `uv run score-assistant --help` (or `<command> --help`) for every option.
+
+## Further reading
+
+- [Web UI guide](docs/user/local-ui.md) and [snapshot comparison](docs/user/comparison.md)
+- Runbooks: [install](docs/runbooks/install.md),
+  [offline preparation](docs/runbooks/offline-preparation.md),
+  [backup and restore](docs/runbooks/backup-restore.md),
+  [upgrade and rollback](docs/runbooks/upgrade-rollback.md), [logs](docs/runbooks/logs.md)
+- [Release notes 1.0.0](docs/releases/v1.0.0.md) and
+  [known limitations](docs/KNOWN_LIMITATIONS.md)
+- [Quality and evaluation](docs/user/quality.md)
+
+## Project status
+
+**1.0.0** is a local release: CLI, web UI, HTTP API, snapshot comparison, containers, and offline
+packaging. It is qualified on one Linux laptop with an NVIDIA GPU. Public hosting is not part of
+this release. Read the [known limitations](docs/KNOWN_LIMITATIONS.md) before relying on the
+answers.
+
+## Contributing and development
+
+Development is spec-first with [Spec Kit](https://github.com/github/spec-kit). Start with
+[`CLAUDE.md`](CLAUDE.md), the constitution in `.specify/memory/constitution.md`, and
+[`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md).
+
+```bash
+uv run pytest                                          # deterministic tests (no network, no models)
+uv run ruff check . && uv run ruff format --check .
+uv run mypy src
+uv run python scripts/check_licenses.py
+(cd frontend && npm run lint && npm run typecheck && npm test)
+```
+
+## License
+
+Apache License 2.0, see [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Model weights and documentation content are not
+redistributed with this project and keep their own licenses.
