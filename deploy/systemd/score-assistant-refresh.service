@@ -1,0 +1,15 @@
+# Template rendered by scripts/install_refresh_timer.sh (F011); the placeholders are replaced
+# with absolute paths. Do not install this file unrendered.
+[Unit]
+Description=S-CORE Docs Assistant: refresh the documentation snapshot from upstream
+Documentation=file://@REPO@/docs/runbooks/refresh.md
+
+[Service]
+Type=oneshot
+WorkingDirectory=@REPO@
+ExecStart=@REPO@/.venv/bin/score-assistant --config @CONFIG@ refresh
+# 4 = busy (another refresh, build or activation was running): harmless, the next run retries.
+# 3 = held and 1 = failed stay visible as a failed unit in `systemctl --user status`.
+SuccessExitStatus=4
+Nice=10
+IOSchedulingClass=idle

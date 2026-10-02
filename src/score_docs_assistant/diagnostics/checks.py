@@ -370,3 +370,61 @@ def check_corpus_state(probe: CorpusProbe) -> CheckResult:
             "roll back with `snapshots rollback`."
         ),
     )
+
+
+def check_refresh_state(data_dir: Path) -> CheckResult:
+    """Latest `refresh` outcome (F011 FR-011). Informational or a warning, never a failure."""
+    from score_docs_assistant.refresh.models import RefreshState
+    from score_docs_assistant.refresh.state import StateInvalid, read_state
+
+    state = read_state(data_dir)
+    if state is None or (isinstance(state, RefreshState) and state.last_run is None):
+        return CheckResult(
+            id="corpus.refresh",
+            status="info",
+            code="REFRESH_NOT_RUN",
+            message="Refresh has not run; the active snapshot changes only when you rebuild it.",
+            next_action=(
+                "Optional: run `score-assistant refresh`, or enable the timer "
+                "(docs/runbooks/refresh.md)."
+            ),
+        )
+    if isinstance(state, StateInvalid):
+        return CheckResult(
+            id="corpus.refresh",
+            status="warning",
+            code="REFRESH_STATE_INVALID",
+            message=state.reason,
+            next_action="Run `score-assistant refresh`; it replaces the state file.",
+        )
+    run = state.last_run
+    assert run is not None
+    finished = run.finished_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+    success = (
+        state.last_success_at.strftime("%Y-%m-%dT%H:%M:%SZ") if state.last_success_at else "never"
+    )
+    details: dict[str, str | int | float | bool | None] = {
+        "outcome": run.outcome,
+        "finished_at": finished,
+        "last_success_at": success,
+        "active_snapshot": run.active_after,
+    }
+    if run.outcome in ("up-to-date", "activated"):
+        return CheckResult(
+            id="corpus.refresh",
+            status="ok",
+            code="REFRESH_OK",
+            message=f"Last refresh {finished}: {run.outcome}.",
+            details=details,
+        )
+    code = {"held": "REFRESH_HELD", "failed": "REFRESH_FAILED"}.get(run.outcome, "REFRESH_BUSY")
+    return CheckResult(
+        id="corpus.refresh",
+        status="warning",
+        code=code,
+        message=f"Last refresh {finished}: {run.outcome} — {run.reason}. Last success: {success}.",
+        next_action=(
+            "See docs/runbooks/refresh.md; inspect with `score-assistant refresh --json`."
+        ),
+        details=details,
+    )

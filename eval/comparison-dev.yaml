@@ -4,7 +4,7 @@
 # observation a careful reader would make; `acceptable_types` lists defensible alternatives.
 schema_version: 1
 review_status: unreviewed (agent-authored 2026-09-29)
-left_snapshot: 20260929T075830Z-9135a190     # baseline: sources at 2026-05-29
+left_snapshot: 20261002T082618Z-1359115c     # baseline: sources at 2026-05-29 (rebuilt 2026-10-02 from the same lock, A-058)
 right_snapshot: 20260928T140548Z-7c6a05b3    # active: sources at 2026-09-28
 written_against:
   score-platform: ba13d8296dd6021067bdeb6ba644b0546f8ad0c6 -> e2373d822fc2f6e9a3f8a0538904f3faa39309ea

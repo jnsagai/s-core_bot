@@ -79,6 +79,7 @@ def run_doctor(
     results.append(checks_mod.check_model_lock(profile, installed, lock))
 
     results.append(checks_mod.check_corpus_state(corpus_probe))
+    results.append(checks_mod.check_refresh_state(config.data_dir))
 
     return DiagnosticReport.from_checks(app_version, results)
 

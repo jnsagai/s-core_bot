@@ -257,6 +257,16 @@ class DeploymentConfig(BaseModel):
         return v
 
 
+class RefreshConfig(BaseModel):
+    """Upstream check and promotion gate for `refresh` (specs/015-scheduled-refresh)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    # Largest allowed fractional drop of documents, chunks or entities against the active snapshot.
+    max_count_drop: float = Field(default=0.20, ge=0.0, lt=1.0)
+    check_exports: bool = True
+
+
 class LoggingConfig(BaseModel):
     """Optional rotating file log (OPS-001): body-free records, at most seven days kept."""
 
@@ -284,6 +294,7 @@ class AppConfig(BaseModel):
     comparison: ComparisonConfig = Field(default_factory=ComparisonConfig)
     deployment: DeploymentConfig = Field(default_factory=DeploymentConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    refresh: RefreshConfig = Field(default_factory=RefreshConfig)
 
     @model_validator(mode="after")
     def _container_exception(self) -> AppConfig:
