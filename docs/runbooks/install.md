@@ -10,7 +10,7 @@ Ollama 0.34.0 on `127.0.0.1:11434`.
 ```bash
 uv sync                                                    # locked dependencies
 (cd frontend && npm ci && npm run build)                   # UI, once
-uv run score-assistant --config config/local.yaml models pull          # NETWORK: acquire models
+uv run score-assistant --config config/local.yaml models pull --profile local-small   # NETWORK: acquire models
 uv run score-assistant sources sync --config config/sources.yaml       # NETWORK: acquire sources
 uv run score-assistant --config config/local.yaml index build --activate
 uv run score-assistant --config config/local.yaml doctor

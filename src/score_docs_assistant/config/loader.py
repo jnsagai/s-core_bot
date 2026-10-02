@@ -36,9 +36,6 @@ class EffectiveConfig:
     config: AppConfig
     sources: dict[str, ConfigSource]
     config_file: Path | None
-    # Set when a config path was requested (--config / SCORE_ASSISTANT_CONFIG) but the file did
-    # not exist, so built-in defaults were used instead (research.md R10).
-    requested_config_file: Path | None = None
 
 
 def _unwrap_optional(annotation: Any) -> Any:
@@ -116,15 +113,15 @@ def load_config(
             file_path = Path(env_config_path)
 
     resolved_file: Path | None = None
-    requested_missing_file: Path | None = None
     merged: dict[str, Any] = {}
     sources: dict[str, ConfigSource] = {}
 
     if file_path is not None:
         candidate = file_path if file_path.is_absolute() else (cwd / file_path)
         if not candidate.is_file():
-            file_path = None
-            requested_missing_file = candidate
+            # A requested but missing file is an error, never a silent fallback to the defaults:
+            # the defaults point at ./data, so a mistyped path would act on the real data (A-061).
+            raise ConfigError([("config_file", f"config file not found: {candidate}")])
 
     if file_path is not None:
         resolved_file = candidate
@@ -188,5 +185,4 @@ def load_config(
         config=config,
         sources=sources,
         config_file=resolved_file,
-        requested_config_file=requested_missing_file,
     )
