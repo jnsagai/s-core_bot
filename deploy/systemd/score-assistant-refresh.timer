@@ -1,0 +1,12 @@
+# Template rendered by scripts/install_refresh_timer.sh (F011); the interval is a systemd time span.
+[Unit]
+Description=Refresh the S-CORE Docs Assistant documentation every @INTERVAL@
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=@INTERVAL@
+RandomizedDelaySec=2min
+Unit=score-assistant-refresh.service
+
+[Install]
+WantedBy=timers.target

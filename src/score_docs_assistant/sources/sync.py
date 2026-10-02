@@ -16,9 +16,11 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import httpx
 
+from score_docs_assistant.domain.errors import ConfigError
 from score_docs_assistant.domain.ingestion import LockedSource, SourceAdapter, SourceLock
 from score_docs_assistant.sources.adapters import (
     Budget,
@@ -31,12 +33,21 @@ from score_docs_assistant.sources.http_fetch import FetchError
 from score_docs_assistant.sources.lock import (
     LOCK_FILENAME,
     archive_lock,
+    read_lock,
     source_root,
     verify_files,
     write_lock,
 )
 from score_docs_assistant.sources.paths import UnsafePathError
 from score_docs_assistant.sources.registry import ExportSource, GitSource, SourceRegistry
+
+
+def comparable_lock(lock: SourceLock) -> dict[str, Any]:
+    """The lock without acquisition timestamps: equal values mean the same upstream content."""
+    data = lock.model_dump(mode="json", exclude={"generated_at"})
+    for source in data["sources"]:
+        source.pop("fetched_at", None)
+    return data
 
 
 @dataclass
@@ -56,6 +67,7 @@ class SyncOutcome:
     lock_path: Path
     lock: SourceLock | None
     results: list[SourceResult] = field(default_factory=list)
+    lock_changed: bool = True
 
 
 class SyncService:
@@ -68,8 +80,10 @@ class SyncService:
         http_client: httpx.Client | None = None,
         now: Callable[[], datetime] | None = None,
         progress: Callable[[str], None] | None = None,
+        keep_unchanged_lock: bool = False,
     ) -> None:
         self._registry = registry
+        self._keep_unchanged_lock = keep_unchanged_lock
         self._data = data_dir
         limits = registry.limits
         self._git = git or GitClient(low_speed_seconds=limits.read_timeout_seconds)
@@ -129,9 +143,21 @@ class SyncService:
             redistribution_allowed_licenses=list(self._registry.redistribution_allowed_licenses),
             sources=entries,
         )
+        if self._keep_unchanged_lock and self._same_as_current(lock):
+            # Polling (F011): identical revisions must not create a new lock or archive copy.
+            return SyncOutcome(0, self.lock_path, lock, results, lock_changed=False)
         write_lock(self.lock_path, lock)
         archive_lock(self._data, self.lock_path)
         return SyncOutcome(0, self.lock_path, lock, results)
+
+    def _same_as_current(self, lock: SourceLock) -> bool:
+        if not self.lock_path.is_file():
+            return False
+        try:
+            current = read_lock(self.lock_path)
+        except ConfigError:
+            return False
+        return comparable_lock(current) == comparable_lock(lock)
 
     @staticmethod
     def _result(entry: LockedSource) -> SourceResult:

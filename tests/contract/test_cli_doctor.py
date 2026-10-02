@@ -116,3 +116,30 @@ def _fake_ollama(
     fake_runtime: Callable[[dict | None], httpx.Client], scenario: dict
 ) -> OllamaRuntime:
     return OllamaRuntime("http://127.0.0.1:11434", client=fake_runtime(scenario))
+
+
+@pytest.mark.parametrize("outcome", ["held", "failed"])
+def test_refresh_warning_never_changes_exit_code(
+    isolated_cwd: Path,
+    fake_runtime: Callable[[dict | None], httpx.Client],
+    monkeypatch: pytest.MonkeyPatch,
+    outcome: str,
+) -> None:
+    """F011 FR-011: a held/failed refresh is a warning; doctor still exits 0 when healthy."""
+    from datetime import UTC, datetime
+
+    from score_docs_assistant.refresh.models import RefreshRun, RefreshState
+    from score_docs_assistant.refresh.state import write_state
+
+    config_file = _write_local_config(isolated_cwd)
+    now = datetime(2026, 10, 2, tzinfo=UTC)
+    run = RefreshRun(started_at=now, finished_at=now, outcome=outcome, reason="gate failed: x")  # type: ignore[arg-type]
+    write_state(isolated_cwd / "data", RefreshState(last_run=run))
+    monkeypatch.setattr(
+        doctor_module, "build_runtime", lambda config: _fake_ollama(fake_runtime, {})
+    )
+    result = runner.invoke(cli_app, ["--config", str(config_file), "doctor", "--json"])
+    assert result.exit_code == 0, result.output
+    [check] = [c for c in json.loads(result.stdout)["checks"] if c["id"] == "corpus.refresh"]
+    assert check["status"] == "warning"
+    assert check["code"] == f"REFRESH_{outcome.upper()}"
