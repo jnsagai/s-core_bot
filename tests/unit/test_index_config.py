@@ -34,7 +34,8 @@ def test_committed_local_config_still_loads_without_new_sections() -> None:
     config = load_config(
         config_path=REPO_ROOT / "config" / "local.yaml", env={}, cwd=REPO_ROOT / "config"
     ).config
-    assert config.index == IndexConfig()
+    # Only retention is overridden, to keep a comparison baseline under `refresh` (F011 runbook).
+    assert config.index == IndexConfig(retention_count=4)
     assert config.bundles == BundleConfig()
 
 
