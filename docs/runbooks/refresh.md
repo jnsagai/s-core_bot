@@ -92,5 +92,5 @@ against the same data directory; the container picks up the new snapshot from it
   always name their snapshot, and you can roll back.
 - The gate catches broken builds (parser regressions, truncated exports, lost embeddings, mass
   deletions), not subtle content changes.
-- Check that `--config` points to an existing file: a missing config file falls back to the
-  defaults (`data_dir: data`).
+- A `--config` path that does not exist stops every command with exit 2 (A-061); before
+  2026-10-02 it silently fell back to the defaults (`data_dir: data`).

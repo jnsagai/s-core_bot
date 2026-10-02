@@ -42,7 +42,9 @@ dotted path + reason (e.g. `server.host: must be a loopback address`).
 built-in defaults < config file < environment < CLI flags (FR-016).
 
 - Config file: `--config PATH`, else `SCORE_ASSISTANT_CONFIG`, else none (defaults; doctor reports
-  "using built-in defaults").
+  "using built-in defaults"). A requested file that does not exist is a configuration error
+  (`config_file: config file not found: <path>`, exit 2), never a fallback to the defaults
+  (amended 2026-10-02, A-061).
 - Environment: `SCORE_ASSISTANT_<SECTION>__<KEY>` (upper-case, double underscore for nesting),
   e.g. `SCORE_ASSISTANT_SERVER__PORT=9000`. Values parsed as YAML scalars/flow sequences. Any
   other `SCORE_ASSISTANT_*` variable except `SCORE_ASSISTANT_CONFIG` and

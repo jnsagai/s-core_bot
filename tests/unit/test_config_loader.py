@@ -61,7 +61,11 @@ def test_unknown_env_var_is_config_error() -> None:
     ["SCORE_ASSISTANT_CONFIG", "SCORE_ASSISTANT_REAL_RUNTIME", "SCORE_ASSISTANT_REAL_PULL"],
 )
 def test_special_env_vars_are_never_unknown(special_var: str, tmp_path: Path) -> None:
-    load_config(config_path=None, env={special_var: "1"}, cwd=tmp_path)
+    value = "1"
+    if special_var == "SCORE_ASSISTANT_CONFIG":  # names a file, which must exist (A-061)
+        (tmp_path / "app.yaml").write_text("schema_version: 1\n")
+        value = "app.yaml"
+    load_config(config_path=None, env={special_var: value}, cwd=tmp_path)
 
 
 def test_relative_path_resolves_against_config_dir(tmp_path: Path) -> None:
@@ -79,9 +83,20 @@ def test_relative_path_resolves_against_cwd_when_no_file(tmp_path: Path) -> None
     assert effective.config.data_dir == (tmp_path / "data").resolve()
 
 
-def test_missing_config_file_falls_back_to_defaults_with_notice(tmp_path: Path) -> None:
+def test_missing_requested_config_file_is_an_error(tmp_path: Path) -> None:
+    """A-061: never fall back to the defaults (./data) when the requested file is missing."""
     missing = tmp_path / "does-not-exist.yaml"
-    effective = load_config(config_path=missing, env={}, cwd=tmp_path)
+    with pytest.raises(ConfigError) as info:
+        load_config(config_path=missing, env={}, cwd=tmp_path)
+    assert info.value.errors == [("config_file", f"config file not found: {missing}")]
+
+
+def test_missing_file_from_environment_is_an_error(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError):
+        load_config(env={"SCORE_ASSISTANT_CONFIG": "nope.yaml"}, cwd=tmp_path)
+
+
+def test_no_config_requested_still_uses_defaults(tmp_path: Path) -> None:
+    effective = load_config(config_path=None, env={}, cwd=tmp_path)
     assert effective.config_file is None
-    assert effective.requested_config_file == missing
     assert effective.config.server.port == 8080

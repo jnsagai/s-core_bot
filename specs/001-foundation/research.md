@@ -110,7 +110,8 @@ real pull. Qualification is out of scope (F005/F008).
 ## R10. Configuration loading and precedence
 
 - Defaults (Pydantic model defaults, `extra="forbid"`) ← YAML file (`--config` or
-  `SCORE_ASSISTANT_CONFIG`; absent file → defaults with notice) ← env vars
+  `SCORE_ASSISTANT_CONFIG`; requested but absent file → config error, A-061; no file requested →
+  defaults) ← env vars
   `SCORE_ASSISTANT_<SECTION>__<KEY>` (values parsed as YAML scalars) ← CLI flags.
 - Unknown env var under the prefix → config error. Relative paths resolve against the config file
   directory, or CWD when no file.
