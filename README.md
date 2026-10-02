@@ -214,10 +214,46 @@ answers are slower. See [`docs/runbooks/install.md`](docs/runbooks/install.md) f
 
 More in [`docs/runbooks/troubleshooting.md`](docs/runbooks/troubleshooting.md).
 
+## Keeping the documentation up to date
+
+One command checks upstream S-CORE and, only if something changed, downloads it, builds a new
+snapshot, checks it, and switches to it:
+
+```bash
+uv run score-assistant --config config/local.yaml refresh      # network
+```
+
+```text
+check  score-platform         changed    e2373d8 → 4e8b93a
+check  score-platform-needs   unknown    no stored validator
+check  score-process          changed    66321fe → d0f9291
+check  score-process-needs    unknown    no stored validator
+sync   lock updated (4 source(s) changed)
+build  20261002T082027Z-edd42609  (13.7 s)
+gate   integrity pass (…) | exact_ids pass (2177/2177 found first) | coverage_drop pass (…) | semantic pass (…) | required_sources pass (…)
+activated: activated 20261002T082027Z-edd42609 (previous 20260928T140548Z-7c6a05b3)
+```
+
+Running it again right away prints `up-to-date: no upstream change` in about 2 seconds and creates
+no files. A new snapshot that looks broken (for example far fewer documents, or semantic search
+lost) is **held**: the current snapshot keeps serving and the reason is shown. A running `serve`
+picks up a new snapshot without a restart.
+
+To run it automatically every 15 minutes (opt-in, systemd user timer):
+
+```bash
+scripts/install_refresh_timer.sh --config config/local.yaml
+scripts/install_refresh_timer.sh --uninstall                     # turn it off again
+```
+
+Read [`docs/runbooks/refresh.md`](docs/runbooks/refresh.md) first. In particular, every activation
+removes snapshots beyond `index.retention_count` (default 2), including a comparison baseline you
+never activated.
+
 ## Day-to-day commands
 
 ```bash
-# Refresh the documentation and build a new snapshot
+# Refresh the documentation by hand, step by step (what `refresh` automates)
 uv run score-assistant sources sync --config config/sources.yaml
 uv run score-assistant --config config/local.yaml index build --activate
 
@@ -243,7 +279,8 @@ Run `uv run score-assistant --help` (or `<command> --help`) for every option.
 - Runbooks: [install](docs/runbooks/install.md),
   [offline preparation](docs/runbooks/offline-preparation.md),
   [backup and restore](docs/runbooks/backup-restore.md),
-  [upgrade and rollback](docs/runbooks/upgrade-rollback.md), [logs](docs/runbooks/logs.md)
+  [upgrade and rollback](docs/runbooks/upgrade-rollback.md), [logs](docs/runbooks/logs.md),
+  [refresh](docs/runbooks/refresh.md)
 - [Release notes 1.0.0](docs/releases/v1.0.0.md) and
   [known limitations](docs/KNOWN_LIMITATIONS.md)
 - [Quality and evaluation](docs/user/quality.md)

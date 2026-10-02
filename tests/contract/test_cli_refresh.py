@@ -27,6 +27,7 @@ JSON_KEYS = {
     "active_before",
     "active_after",
     "candidate",
+    "candidate_semantic",
     "checks",
     "synced",
     "lock_changed",
@@ -76,6 +77,8 @@ def test_text_output_ends_with_summary(up: Upstream) -> None:
     last = result.stdout.strip().splitlines()[-1]
     assert last.startswith("activated: activated ")
     assert "gate   integrity pass" in result.stdout
+    [build] = [line for line in result.stdout.splitlines() if line.startswith("build  ")]
+    assert "  validated  semantic present  (" in build
 
 
 def test_held_exit_code_3(up: Upstream) -> None:

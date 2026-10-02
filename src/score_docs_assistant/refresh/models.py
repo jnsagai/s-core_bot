@@ -58,6 +58,7 @@ class RefreshRun(BaseModel):
     active_before: str | None = None
     active_after: str | None = None
     candidate: str | None = None
+    candidate_semantic: Literal["present", "absent"] | None = None
     checks: list[SourceCheck] = Field(default_factory=list)
     synced: bool = False
     lock_changed: bool = False

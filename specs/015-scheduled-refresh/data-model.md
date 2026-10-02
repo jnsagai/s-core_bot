@@ -38,6 +38,7 @@ All records are Pydantic models with `extra="forbid"`, independent of FastAPI/Ol
 | `active_before` | str \| null | active snapshot at start |
 | `active_after` | str \| null | active snapshot at end |
 | `candidate` | str \| null | snapshot built in this run |
+| `candidate_semantic` | `present` \| `absent` \| null | the candidate's search mode |
 | `checks` | list[SourceCheck] | empty if the check did not run |
 | `synced` | bool | sync ran |
 | `lock_changed` | bool | sync wrote a new lock |

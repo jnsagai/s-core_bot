@@ -18,3 +18,4 @@ State on 2026-09-30, from `docs/ASSUMPTIONS.md` and the release report.
   process-description files are CC-BY-SA-4.0 and need attribution if ever redistributed (agent
   license review, not legal advice: `docs/licensing/corpus-license-review.md`).
 - **Public hosting** is not part of this release (F010, deferred).
+- **Refresh (F011)** approximates real time by polling (default every 15 min, opt-in timer); it runs only natively on Linux with systemd user timers (not inside containers), and its promotion gate is a proxy for broken builds, not a content review. Each activation applies retention, which removes unactivated snapshots such as a comparison baseline (`docs/runbooks/refresh.md`). A duplicate need ID within one source fails the build (A-059).

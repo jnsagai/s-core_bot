@@ -51,10 +51,10 @@ no open dependency). Paths are relative to `src/score_docs_assistant/` unless th
 
 ## Phase 7: Polish & cross-cutting
 
-- [ ] T020 [P] Runbook `docs/runbooks/refresh.md` (what it does, enable/disable timer, outcomes and exit codes, gate tuning, retention warning, containers note, rollback), README "Keeping the documentation up to date" section, CLAUDE.md command list
-- [ ] T021 Gates: `uv run ruff format --check . && uv run ruff check .`, `uv run mypy src`, `uv run pytest`, `uv run python scripts/check_licenses.py`, `uv run python scripts/check_traceability.py`
-- [ ] T022 Real run per `quickstart.md` §2–§4 on a copy of `data/` in the scratchpad (network + local embedding); record commands and results in `specs/015-scheduled-refresh/verification.md`
-- [ ] T023 Update `docs/BACKLOG.md` (F011 row), `docs/TRACEABILITY.md` (SRC-002, SRC-009, OPS-002, LOC-003 owners + F011 FRs), `docs/ASSUMPTIONS.md`, `docs/KNOWN_LIMITATIONS.md` (containers, gate is a proxy)
+- [x] T020 [P] Runbook `docs/runbooks/refresh.md` (what it does, enable/disable timer, outcomes and exit codes, gate tuning, retention warning, containers note, rollback), README "Keeping the documentation up to date" section, CLAUDE.md command list
+- [x] T021 Gates: `uv run ruff format --check . && uv run ruff check .`, `uv run mypy src`, `uv run pytest`, `uv run python scripts/check_licenses.py`, `uv run python scripts/check_traceability.py`
+- [x] T022 Real run per `quickstart.md` §2–§4 on a copy of `data/` in the scratchpad (network + local embedding); record commands and results in `specs/015-scheduled-refresh/verification.md`
+- [x] T023 Update `docs/BACKLOG.md` (F011 row), `docs/TRACEABILITY.md` (SRC-002, SRC-009, OPS-002, LOC-003 owners + F011 FRs), `docs/ASSUMPTIONS.md`, `docs/KNOWN_LIMITATIONS.md` (containers, gate is a proxy)
 
 ## Dependencies
 
@@ -71,3 +71,7 @@ no open dependency). Paths are relative to `src/score_docs_assistant/` unless th
 MVP = Phase 1–3 (manual `refresh` with up-to-date detection), immediately followed by US2 because
 unattended activation without the gate is not shippable; then the timer (US3), doctor (US4), docs
 and real verification.
+
+## Phase 8: Convergence
+
+- [x] T024 Show the candidate's state and semantic mode on the `build` line of `refresh` text output in `cli/refresh.py`, with a contract test, per contracts/cli.md (partial)

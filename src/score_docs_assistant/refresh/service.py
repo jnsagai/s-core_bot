@@ -66,6 +66,7 @@ class _Run:
     started_at: datetime
     active_before: str | None = None
     candidate: str | None = None
+    candidate_semantic: str | None = None
     checks: list[SourceCheck] = field(default_factory=list)
     synced: bool = False
     lock_changed: bool = False
@@ -226,6 +227,7 @@ class RefreshService:
                     "failed", f"build failed: {exc.code}: {exc.message}", record.active_before
                 ) from exc
         record.candidate = result.snapshot_id
+        record.candidate_semantic = result.semantic
         self._progress(f"build {result.snapshot_id} {result.state} semantic {result.semantic}")
         return provider
 
@@ -312,6 +314,7 @@ class RefreshService:
             active_before=record.active_before,
             active_after=active_after,
             candidate=record.candidate,
+            candidate_semantic=record.candidate_semantic,  # type: ignore[arg-type]
             checks=record.checks,
             synced=record.synced,
             lock_changed=record.lock_changed,

@@ -91,7 +91,10 @@ def render_text(run: RefreshRun) -> str:
         else:
             lines.append("sync   lock unchanged")
     if run.candidate:
-        lines.append(f"build  {run.candidate}  ({run.timings.get('build', 0):.1f} s)")
+        lines.append(
+            f"build  {run.candidate}  validated  semantic {run.candidate_semantic}"
+            f"  ({run.timings.get('build', 0):.1f} s)"
+        )
     if run.gate:
         lines.append("gate   " + " | ".join(f"{g.id} {g.status} ({g.detail})" for g in run.gate))
     summary = f"{run.outcome}: {run.reason}"

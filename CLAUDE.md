@@ -55,6 +55,8 @@ uv run score-assistant --config config/local.yaml lookup <ID> [--relationships]
 uv run score-assistant --config config/local.yaml eval retrieval --cases eval/retrieval-dev.yaml | exact-ids | latency
 uv run score-assistant --config config/local.yaml ask "question" [--json] [--show-evidence]  # local model
 uv run score-assistant --config config/local.yaml eval answers --cases eval/answers-dev.yaml
+uv run score-assistant --config config/local.yaml refresh [--json] [--lexical-only]   # NETWORK: check → sync → build → gate → activate (0/1/3 held/4 busy)
+scripts/install_refresh_timer.sh [--interval 15min] [--uninstall]   # opt-in systemd user timer for refresh
 uv run score-assistant --config config/local.yaml snapshots diff <left> <right>            # offline, no model
 uv run score-assistant --config config/local.yaml compare "question" --left <id> --right <id> [--json]
 uv run score-assistant --config config/local.yaml eval comparison --cases eval/comparison-dev.yaml
