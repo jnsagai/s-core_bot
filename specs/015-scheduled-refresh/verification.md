@@ -96,3 +96,13 @@ Recorded as A-058; agent memory updated to use literal absolute `--config` paths
 | `uv run python scripts/check_traceability.py` | passed |
 
 CI on the pull request is recorded in the PR checks.
+
+## First refresh on the owner's data (real) — 2026-10-02, owner "go"
+
+With `index.retention_count: 4` added to `config/local.yaml`:
+`score-assistant --config /home/jefferson/s-core_bot/config/local.yaml refresh` → `activated
+20261002T085544Z-25c455f6` (previous `20260928T140548Z-7c6a05b3`), exit 0, wall 27.25 s; build
+16.6 s (5600 of 5684 embeddings reused); gate all pass (exact_ids 2177/2177). Retention deleted
+nothing: the comparison baseline `20261002T082618Z-1359115c` and the rollback target stayed. Rerun
+→ `up-to-date`; `doctor` → `[OK] corpus.refresh`; `ask "What is Eclipse S-CORE?"` answered from
+the new snapshot with a citation. The timer is not enabled (owner's decision).

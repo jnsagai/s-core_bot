@@ -29,6 +29,10 @@ retrieval:
   evidence_chunks: 8
   fusion_constant: 60
 
+index:
+  # Keep a comparison baseline and the rollback target when `refresh` activates (runbook).
+  retention_count: 4
+
 limits:
   question_characters: 4000
   history_characters: 12000
